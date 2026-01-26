@@ -1,0 +1,47 @@
+.home {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 70px 0px 0px 0px;
+}
+
+.home_container {
+    width: 35vw;
+    height: 25vh;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+
+    background: linear-gradient(
+        to bottom, 
+        #ffffff 0%,
+        #f2f2f29a 100%
+    );
+
+    padding: 0px 30px;
+
+    border-radius: 20px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.2);
+    border-width: 2px;
+    border-radius: 30px;
+    box-shadow:
+        10px 15px 10px rgba(0, 0, 0, 0.25);
+}
+
+.home_container h1 {
+    font-size: 40px;
+    font-weight: 700;
+    color: #000;
+}
+
+.home_container p {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+}
