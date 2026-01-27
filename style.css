@@ -22,6 +22,31 @@ body {
     min-height: 100vh;
 }
 
+section {
+    padding-top: 90px;
+}
+
+button {
+    background: linear-gradient(
+        to bottom, 
+        #ffffff 0%,
+        #f2f2f29a 100%
+    );
+
+    padding: 10px 20px;
+
+    border-radius: 20px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.2);
+    border-width: 2px;
+    border-radius: 20px;
+
+    cursor: pointer;
+
+    box-shadow:
+        8px 8px 8px rgba(0, 0, 0, 0.25);
+}
+
 .main_bg {
     position: fixed;
     top: 0;
@@ -31,8 +56,8 @@ body {
 
     background: radial-gradient(
         circle at top left,
-        rgba(218, 248, 227, 0.7) 0%,
-        rgb(0, 72, 110) 100%
+        #daf8e3b3 0%,
+        #00486e 100%
     );
 
     z-index: -100;
@@ -99,6 +124,8 @@ body {
     font-size: 16px;
     font-weight: 700;
 
+    border-radius: 20px;
+
     padding: 0px 20px;
     transition: 
         all 0.4s ease-in-out, 
@@ -107,16 +134,30 @@ body {
 }
 
 .navbar ul li a:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
     background: linear-gradient(
         to bottom,
         rgb(30, 30, 30) 0%,
         rgb(60, 60, 60) 100%
     );
     color: #fff;
-    border-radius: 20px;
+    border-radius: 10px;
 }
 
+.profile_menu {
+    position: relative;
+
+    transition:
+        opacity 0.3s ease-in-out,
+        transform 0.3s ease-in-out;
+}
+
+.profile_menu:hover .dropdown,
+.profile_menu .dropdown:hover {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
 
 .profile_img {
     width: 50px;
@@ -124,8 +165,9 @@ body {
 
     filter: drop-shadow(0 0 2px rgb(255, 255, 255));
     border: 2px solid rgba(0, 0, 0, 0.15);
-    cursor: pointer;
     border-radius: 50%;
+
+    cursor: pointer;
 
     transition: all 0.3s ease-in-out;
 }
@@ -135,33 +177,39 @@ body {
     filter: drop-shadow(0 0 4px rgb(255, 255, 255));
 }
 
-.dropdown_menu {
+.dropdown {
     position: absolute;
     top: 105%;
-    right: 40px;
+    right: 0;
+
     width: 120px;
     height: 100px;
 
     background: linear-gradient(
-        to bottom, 
+        to bottom,
         #ffffff 0%,
         #f2f2f29a 100%
     );
 
-    display: flex; /* Display none, flex when hover or clicked */
+    display: flex;
     flex-direction: column;
     justify-content: space-evenly;
     align-items: flex-start;
 
     border-radius: 20px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.2);
-    border-width: 2px;
-    box-shadow:
-        10px 15px 10px rgba(0, 0, 0, 0.25);
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 10px 15px 10px rgba(0, 0, 0, 0.25);
+
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+
+    transition:
+        opacity 0.3s ease-in-out,
+        transform 0.3s ease-in-out;
 }
 
-.dropdown_menu a {
+.dropdown a {
     text-decoration: none;
     width: 100%;
     height: 30px;
@@ -174,6 +222,8 @@ body {
     font-weight: 600;
     color: #000;
 
+    border-radius: 20px;
+
     padding: 20px 0px 20px 25px;
     transition: 
         all 0.4s ease-in-out, 
@@ -181,7 +231,7 @@ body {
         color 0.1s ease-in-out;
 }
 
-.dropdown_menu a:hover {
+.dropdown a:hover {
     transform: scale(1.1);
     background: linear-gradient(
         to bottom,
@@ -200,7 +250,7 @@ footer {
     align-items: center;
 
     margin-top: auto;
-    padding: 20px 0px 10px 0px;
+    padding: 10px 0px 10px 0px;
 }
 
 .footer_container {
