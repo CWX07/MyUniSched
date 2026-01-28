@@ -24,7 +24,7 @@
     display: flex;
     justify-content: space-evenly;
     align-items: center;
-    gap: 15px;
+    gap: 20px;
 }
 
 .myEntities_menu_items button {
@@ -33,7 +33,7 @@
 
     border-radius: 20px;
     box-shadow: 
-        4px 4px 8px rgba(0, 0, 0, 0.25);
+        6px 6px 8px rgba(0, 0, 0, 0.3);
 
     transition: 
         all 0.4s ease-in-out, 
@@ -52,7 +52,7 @@
     border-radius: 10px;
 }
 
-.addEntity {
+.addEntity_btn {
     font-size: 14px;
     font-weight: 600;
 
@@ -65,7 +65,7 @@
         color 0.1s ease-in-out;
 }
 
-.addEntity:hover {
+.addEntity_btn:hover {
     transform: scale(1.1);
     background: linear-gradient(
         to bottom,
@@ -75,6 +75,62 @@
     color: #fff;
     border-radius: 10px;
 }
+
+.addEntity:hover .dropdown,
+.addEntity .dropdown:hover {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.dropdown.addEntity {
+    top: 29%;
+    right: 85px;
+}
+
+.dropdown.addEntity a:hover {
+    transform: scale(1.1);
+    background: linear-gradient(
+        to bottom,
+        rgb(30, 30, 30) 0%,
+        rgb(60, 60, 60) 100%
+    );
+    color: #fff;
+    border-radius: 10px;
+}
+
+.courseName,
+.courseCode,
+.lecturerId,
+.courseYear,
+.courseSem,
+.lecturerName {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
+}
+
+.courseTime {
+    width: 100%;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.addLecturer_modal_content {
+    min-height: 450px;
+}
+
+/* .addLecturer_modal {
+    opacity: 1;
+    z-index: 100;
+} */
 
 .myEntities_container {
     width: 100%;
