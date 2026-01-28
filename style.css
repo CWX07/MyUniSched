@@ -242,6 +242,152 @@ button {
     border-radius: 10px;
 }
 
+.close {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+
+    color: #ffffff;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background-color: red;
+
+    border-radius: 5px;
+    cursor: pointer;
+
+    transition: all 0.2s ease-in-out;
+}
+
+.close:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 4px rgb(255, 0, 0));
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0, 0, 0, 0.5);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    opacity: 0;
+    pointer-events: auto;
+    z-index: -100;
+
+    transition:
+        opacity 0.3s ease-in-out;
+}
+
+.modal_content {
+    width: 500px;
+    min-height: 600px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    background: #fff;
+
+    border-radius: 20px;
+    padding: 25px 40px 15px 40px;
+
+    box-shadow:
+        10px 15px 10px rgba(0, 0, 0, 0.25);
+}
+
+.modal_content h2 {
+    padding-top: 60px;
+}
+
+.modal_content_form {
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+
+    padding-top: 10px;
+}
+
+h2 {
+    font-size: 26px;
+    font-weight: 800;
+}
+
+label {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+input {
+    width: 100%;
+    height: 40px;
+
+    padding: 0px 15px;
+
+    border-radius: 10px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+input:focus {
+  border-color: #000;
+  outline: none;
+}
+
+.submit_btn {
+    width: 40%;
+    height: 40px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-self: center;
+
+    background: linear-gradient(
+        to bottom, 
+        #4CAF50 0%,
+        #45a049 100%
+    );
+
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+
+    border: none;
+    border-radius: 20px;
+
+    cursor: pointer;
+    margin-top: 20px;
+
+    transition: 
+        all 0.3s ease-in-out, 
+        border-radius 0.2s ease-in-out,
+        color 0.1s ease-in-out;
+}
+
+.submit_btn:hover {
+    transform: scale(1.1);
+    background: linear-gradient(
+        to bottom,
+        rgb(30, 30, 30) 0%,
+        rgb(60, 60, 60) 100%
+    );
+    color: #fff;
+    border-radius: 10px;
+}
+
 footer {
     width: 100%;
 
