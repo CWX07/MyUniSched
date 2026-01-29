@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/css", express.static(path.join(__dirname, "../css")));
 app.use("/js", express.static(path.join(__dirname, "../js")));
 app.use("/img", express.static(path.join(__dirname, "../img")));
-app.use(express.static(path.join(__dirname, "../html")));
+app.use("/", express.static(path.join(__dirname, "../html")));
 
 // GET -- Lecturers
 app.get("/api/lecturers", async (req, res) => {
