@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/css", express.static(path.join(__dirname, "../css")));
 app.use("/js", express.static(path.join(__dirname, "../js")));
 app.use("/img", express.static(path.join(__dirname, "../img")));
-app.use("/", express.static(path.join(__dirname, "../html")));
+app.use("/", express.static(path.join(__dirname, "../docs")));
 
 // GET -- Lecturers
 app.get("/api/lecturers", async (req, res) => {
@@ -88,7 +88,7 @@ app.post("/api/courses", async (req, res) => {
 });
 
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "../html/index.html"));
+    res.sendFile(path.join(__dirname, "../docs/index.html"));
 });
 
 app.listen(3000, () => console.log("Server running on http://localhost:3000"));
