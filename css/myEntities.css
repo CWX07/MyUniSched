@@ -101,8 +101,8 @@
 .courseCode,
 .courseName,
 .lecturerId,
+.programmeName,
 .courseYear,
-.courseSem,
 .lecturerName {
     width: 100%;
 
@@ -120,6 +120,72 @@
     justify-content: space-between;
     align-items: center;
     gap: 20px;
+}
+
+.programmeName_container {
+    position: relative;
+    width: 100%;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.programmeName_selected {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(0,0,0,0.2);
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    background: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+
+.programmeName_selected::after {
+    content: "▾";
+    font-size: 14px;
+    color: #000000;
+}
+
+.programmeName_list {
+    list-style: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 0;
+    
+    background: #fff;
+
+    border-radius: 8px;
+    border: 1.5px solid rgba(0,0,0,0.2);
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+
+    margin: 5px 0 0 0;
+    padding: 0;
+
+    overflow: hidden;
+    opacity: 0;
+    z-index: 100;
+
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.programmeName_list.active {
+    max-height: 500px;
+    opacity: 1;
+}
+
+.programmeName_list li {
+    font-weight: 550;
+    padding: 10px 15px;
+    transition: all 0.2s ease-in-out;
+}
+
+.programmeName_list li:hover {
+    background: linear-gradient(to bottom, rgb(30,30,30), rgb(60,60,60));
+    color: #fff;
+    border-radius: 5px;
 }
 
 .addLecturer_modal_content {
@@ -168,8 +234,10 @@
 .myLecturer_list {
     position: relative;
     width: 65%;
+    max-height: 60vh;
 
     padding: 20px;
+    overflow: auto;
 }
 
 .myLecturer_list {
@@ -185,7 +253,7 @@
     top: 50%;
     left: 50%;
     
-    background: url("../img/logo.png");
+    background: url("..«/img/logo.png");
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;
