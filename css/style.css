@@ -402,30 +402,30 @@ footer {
 }
 
 .footer_container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-  padding: 5px 10px;
-  border-bottom: 0.5px solid #ffffff;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 5px 10px;
+    border-bottom: 0.5px solid #ffffff;
 }
 
 .footer_head {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .nav_logo.footer_logo {
-  width: 23px;
-  height: 23px;
-  margin: 0px 10px 0px 0px;
+    width: 23px;
+    height: 23px;
+    margin: 0px 10px 0px 0px;
 }
 
 .footer_title,
 .footer_description {
-  font-size: 12px;
-  color: #ffffff;
-  font-weight: 600;
+    font-size: 12px;
+    color: #ffffff;
+    font-weight: 600;
 }
