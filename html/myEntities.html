@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/myEntities.css">
+    <link rel="icon" type="image/png" href="/img/logo_whitebg.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <title>My Entities | MyUniSched</title>
+</head>
+<body>
+    <div class="main_bg"></div>
+
+    <nav class="navbar">
+        <a class="nav_logo" href="./index.html">
+            <img src="/img/logo.png" alt="" class="nav_logo_img">
+        </a>
+
+        <ul>
+            <li><a href="./index.html">Home</a></li>
+            <li><a href="./generate.html">Generate</a></li>
+            <li><a href="./myEntities.html">My Entities</a></li>
+            <li><a href="./mySchedule.html">My Schedule</a></li>
+        </ul>
+
+        <div class="profile_menu">
+            <img src="/img/pfp_icon.png" class="profile_img" alt="">
+
+            <div class="dropdown">
+                <a href="#" id="openLogIn">Log In</a>
+                <a href="#" id="openSignUp">Sign up</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="myEntities">
+        <div class="myEntities_menu">
+            <div class="myEntities_menu_items">
+                <button class="courseBtn" id="courseList">Course</button>
+                <button class="lecturerBtn" id="lecturerList">Lecturer</button>
+            </div>
+
+            <div class="addEntity">
+                <button class="addEntity_btn"><i class="fa-solid fa-plus"></i></button>
+                </button>
+
+                <div class="dropdown addEntity">
+                    <a href="#" id="addCourse">Course</a>
+                    <a href="#" id="addLecturer">Lecturer</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add course modal -->
+        <div class="modal addCourse_modal">
+            <div class="modal_content addCourse_modal_content">
+                <span class="close addCourse_close">&times;</span>
+                <h2>Add Course</h2>
+
+                <form class="modal_content_form addCourse_modal_content_form">
+                    <div class="courseCode">
+                        <label for="courseCode" class="courseCode_label">Course Code</label>
+                        <input id="courseCode" type="text" placeholder="Enter course code" class="input_field" required>
+                    </div>
+
+                    <div class="courseName">
+                        <label for="courseName" class="courseName_label">Course Name</label>
+                        <input id="courseName" type="text" placeholder="Enter course name" class="input_field" required>
+                    </div>
+
+                    <div class="lecturerId">
+                            <label for="lecturer" class="lecturer_label">Lecturer ID</label>
+                            <input id="lecturerId_course" type="text" placeholder="Enter lecturer ID" class="input_field" required>
+                    </div>
+
+                    <div class="courseTime">
+                        <div class="courseYear">
+                            <label for="courseYear" class="courseYear_label">Course Year</label>
+                            <input id="courseYear" type="number" placeholder="Enter course year" class="input_field" required>
+                        </div>
+
+                        <div class="courseSem">
+                            <label for="courseSem" class="courseSem_label">Course Semester</label>
+                            <input id="courseSem" type="number" placeholder="Enter course semester" class="input_field" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="submit_btn addCourse_submit_btn">Add Course</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Add lecturer modal -->
+        <div class="modal addLecturer_modal">
+            <div class="modal_content addLecturer_modal_content">
+                <span class="close addLecturer_close">&times;</span>
+                <h2>Add Lecturer</h2>
+
+                <form class="modal_content_form addLecturer_modal_content_form">
+                    <div class="lecturerId">
+                        <label for="lecturerId" class="lecturer_label">Lecturer ID</label>
+                        <input id="lecturerId" type="text" placeholder="Enter lecturer ID" class="input_field" required>
+                    </div>
+
+                    <div class="lecturerName">
+                        <label for="lecturerName" class="lecturerName_label">Lecturer Name</label>
+                        <input id="lecturerName" type="text" placeholder="Enter lecturer name" class="input_field" required>
+                    </div>
+
+                    <button type="submit" class="submit_btn addLecturer_submit_btn">Add Lecturer</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="myEntities_container">
+            <div class="myCourse_list"></div>
+
+            <div class="myLecturer_list"></div>
+
+            <div class="myEntities_details">
+                <h1 class="myEntities_noDetails_title">MyUniSched</h1>
+                <p class="myEntities_noDetails_desc">"Click on any course/lecturer to view details"</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>  
+        <div class="footer_container">
+            <div class="footer_head">
+                <img src="/img/logo.png" class="nav_logo footer_logo" alt="">
+                <div class="footer_title">MyUniSched.</div>
+            </div>
+            <div class="footer_description d1">Created by Poggers.</div>
+            <div class="footer_description d2">All Rights Reserved.</div>
+        </div>
+    </footer>
+
+    <script type="module" src="/js/addEntities.js"></script>
+    <script type="module" src="/js/lecturer.js"></script>
+    <script type="module" src="/js/course.js"></script>
+</body>
+</html>
