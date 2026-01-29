@@ -9,26 +9,37 @@ document.addEventListener("DOMContentLoaded", () => {
         const courseName = document.getElementById("courseName").value;
         const lecturerId = document.getElementById("lecturerId_course").value;
         const courseYear = document.getElementById("courseYear").value;
-        const courseSemester = document.getElementById("courseSem").value;
+
+        const programmeNameElement = document.getElementById("programmeName");
+        const programmeName = programmeNameElement.dataset.value;
 
         try {
             const res = await fetch("/api/courses", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ courseCode, courseName, lecturerId, courseYear, courseSemester })
+                body: JSON.stringify({ courseCode, courseName, lecturerId, programmeName, courseYear })
             });
 
             const result = await res.json();
 
             if (!res.ok) {
-                alert(result.error);
-                return;
+                // Debug alert for lecturer not found
+                if (result.error && result.error.includes("does not exist")) {
+                    alert(`⚠️ ERROR: Lecturer ID '${lecturerId}' not found!\n\nPlease add the lecturer first or use an existing lecturer ID.`);
+                } else {
+                    alert(result.error);
+                }
             }
 
-            alert("Course added successfully");
-            form.reset();
+            else {
+                alert("Course added successfully");
+                form.reset();
 
-            // Optional: close modal & refresh list
+                // Reset programme text and data
+                programmeNameElement.textContent = "Select programme";
+                delete programmeNameElement.dataset.value;
+            }
+            
             loadCourses();
 
         } catch (err) {
@@ -91,7 +102,6 @@ async function displayCourseDetails(courseId) {
     const res = await fetch("/api/courses");
     const data = await res.json();
 
-    // Find course using snake_case property name
     const course = data.find(c => c.course_code === courseId);
     
     if (!course) {
@@ -137,6 +147,6 @@ async function displayCourseDetails(courseId) {
     container.appendChild(createDetail("Course Name", course.course_name));
     container.appendChild(createDetail("Lecturer ID", course.lecturer_id));
     container.appendChild(createDetail("Lecturer Name", course.lecturer_name));
+    container.appendChild(createDetail("Programme Name", course.programme_name));
     container.appendChild(createDetail("Course Year", course.course_year));
-    container.appendChild(createDetail("Course Semester", course.course_semester));
 }

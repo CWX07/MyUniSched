@@ -2,6 +2,15 @@ import { loadCourses } from "./course.js";
 import { loadLecturers } from "./lecturer.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+    toggleAddEntitiesModal();
+
+    loadCourses();
+    toggleEntity();
+
+    toggleCourseProgrammeDropdown();
+});
+
+function toggleAddEntitiesModal() {
     const addCourseBtn = document.getElementById("addCourse");
     const addLecturerBtn = document.getElementById("addLecturer");
 
@@ -31,10 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.target === addCourseModal) closeModal(addCourseModal);
         if (e.target === addLecturerModal) closeModal(addLecturerModal);
     });
-
-    loadCourses();
-    toggleEntity();
-});
+}
 
 function openModal(modal) {
     modal.style.opacity = "1";
@@ -97,4 +103,33 @@ function displayDetails_default() {
     myEntities_desc.textContent = "\"Click on any course/lecturer to view details\"";
 
     container.appendChild(myEntities_desc);
+}
+
+function toggleCourseProgrammeDropdown() {
+    const programmeNameContainer = document.querySelector(".programmeName_container");
+    const programmeNameSelected = programmeNameContainer.querySelector(".programmeName_selected");
+    const programmeNameList = programmeNameContainer.querySelector(".programmeName_list");
+    const programmeNameOptions = programmeNameList.querySelectorAll("li");
+
+    programmeNameSelected.addEventListener("click", () => {
+        const isActive = programmeNameList.classList.toggle("active");
+        programmeNameSelected.style.borderColor = isActive ? "#000" : "rgba(0,0,0,0.2)";
+        programmeNameSelected.style.outline = "none";
+    });
+
+    programmeNameOptions.forEach(option => {
+        option.addEventListener("click", () => {
+            programmeNameSelected.textContent = option.textContent;
+            programmeNameSelected.dataset.value = option.dataset.value;
+            programmeNameList.classList.remove("active");
+            programmeNameSelected.style.borderColor = "rgba(0,0,0,0.2)";
+        });
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!programmeNameContainer.contains(e.target)) {
+            programmeNameList.classList.remove("active");
+            programmeNameSelected.style.borderColor = "rgba(0,0,0,0.2)";
+        }
+    });
 }
