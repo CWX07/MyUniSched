@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+export async function addCourse() {
     // Add course details through modal form
     const form = document.querySelector(".addCourse_modal_content_form");
 
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("Network error");
         }
     });
-});
+}
 
 // Load and display courses
 export async function loadCourses() {

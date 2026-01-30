@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+export async function addLecturer() {
     // Add lecturer details through modal form
     const form = document.querySelector(".addLecturer_modal_content_form");
 
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("Network error");
         }
     });
-});
+}
 
 // Load and display lecturers
 export async function loadLecturers() {
