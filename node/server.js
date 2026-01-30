@@ -109,4 +109,8 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../index.html"));
 });
 
+app.get("/index.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "../index.html"));
+});
+
 app.listen(3000, () => console.log("Server running on http://localhost:3000"));
