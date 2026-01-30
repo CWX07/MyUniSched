@@ -1,8 +1,17 @@
-import { loadCourses } from "./course.js";
-import { loadLecturers } from "./lecturer.js";
+import { 
+    addCourse,
+    loadCourses 
+} from "./course.js";
+
+import { 
+    addLecturer,
+    loadLecturers 
+} from "./lecturer.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     toggleAddEntitiesModal();
+    addCourse();
+    addLecturer();
 
     loadCourses();
     toggleEntity();
@@ -42,12 +51,12 @@ function toggleAddEntitiesModal() {
     });
 }
 
-function openModal(modal) {
+export async function openModal(modal) {
     modal.style.opacity = "1";
     modal.style.zIndex = "100";
 }
 
-function closeModal(modal) {
+export async function closeModal(modal) {
     modal.style.opacity = "0";
     modal.style.zIndex = "-100";
 }
