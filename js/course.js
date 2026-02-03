@@ -1,3 +1,6 @@
+let isEditMode = false;
+let currentEditCourseCode = null;
+
 export async function addCourse() {
     // Add course details through modal form
     const form = document.querySelector(".addCourse_modal_content_form");
@@ -14,30 +17,48 @@ export async function addCourse() {
         const programmeName = programmeNameElement.dataset.value;
 
         try {
-            const res = await fetch("/api/courses", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ courseCode, courseName, lecturerId, programmeName, courseYear })
-            });
+            let res, result;
 
-            const result = await res.json();
+            if (isEditMode && currentEditCourseCode) {
+                // UPDATE existing course
+                res = await fetch(`/api/courses/${currentEditCourseCode}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ courseCode, courseName, lecturerId, programmeName, courseYear })
+                });
 
-            if (!res.ok) {
-                // Debug alert for lecturer not found
-                if (result.error && result.error.includes("does not exist")) {
-                    alert(`⚠️ ERROR: Lecturer ID '${lecturerId}' not found!\n\nPlease add the lecturer first or use an existing lecturer ID.`);
+                result = await res.json();
+
+                if (!res.ok) {
+                    if (result.error && result.error.includes("does not exist")) {
+                        alert(`⚠️ ERROR: Lecturer ID '${lecturerId}' not found!\n\nPlease add the lecturer first or use an existing lecturer ID.`);
+                    } else {
+                        alert(result.error);
+                    }
                 } else {
-                    alert(result.error);
+                    alert("Course updated successfully");
+                    resetCourseForm();
                 }
-            }
+            } else {
+                // CREATE new course
+                res = await fetch("/api/courses", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ courseCode, courseName, lecturerId, programmeName, courseYear })
+                });
 
-            else {
-                alert("Course added successfully");
-                form.reset();
+                result = await res.json();
 
-                // Reset programme text and data
-                programmeNameElement.textContent = "Select programme";
-                delete programmeNameElement.dataset.value;
+                if (!res.ok) {
+                    if (result.error && result.error.includes("does not exist")) {
+                        alert(`⚠️ ERROR: Lecturer ID '${lecturerId}' not found!\n\nPlease add the lecturer first or use an existing lecturer ID.`);
+                    } else {
+                        alert(result.error);
+                    }
+                } else {
+                    alert("Course added successfully");
+                    resetCourseForm();
+                }
             }
             
             loadCourses();
@@ -46,6 +67,71 @@ export async function addCourse() {
             alert("Network error");
         }
     });
+}
+
+function resetCourseForm() {
+    const form = document.querySelector(".addCourse_modal_content_form");
+    form.reset();
+
+    const programmeNameElement = document.getElementById("programmeName");
+    programmeNameElement.textContent = "Select programme";
+    delete programmeNameElement.dataset.value;
+
+    // Reset to add mode
+    isEditMode = false;
+    currentEditCourseCode = null;
+
+    // Update modal title and button text
+    const modalTitle = document.querySelector(".addCourse_modal_content h2");
+    modalTitle.textContent = "Add Course";
+
+    const submitBtn = document.querySelector(".addCourse_submit_btn");
+    submitBtn.textContent = "Add Course";
+
+    // Re-enable course code field
+    document.getElementById("courseCode").disabled = false;
+}
+
+export function editCourse(courseCode) {
+    isEditMode = true;
+    currentEditCourseCode = courseCode;
+
+    // Fetch course details and populate form
+    fetch("/api/courses")
+        .then(res => res.json())
+        .then(data => {
+            const course = data.find(c => c.course_code === courseCode);
+            
+            if (course) {
+                // Update modal title and button
+                const modalTitle = document.querySelector(".addCourse_modal_content h2");
+                modalTitle.textContent = "Edit Course";
+
+                const submitBtn = document.querySelector(".addCourse_submit_btn");
+                submitBtn.textContent = "Update Course";
+
+                // Populate form fields
+                document.getElementById("courseCode").value = course.course_code;
+                document.getElementById("courseCode").disabled = true; // Can't change primary key
+                document.getElementById("courseName").value = course.course_name;
+                document.getElementById("lecturerId_course").value = course.lecturer_id;
+                document.getElementById("courseYear").value = course.course_year;
+
+                // Set programme dropdown
+                const programmeNameElement = document.getElementById("programmeName");
+                programmeNameElement.textContent = course.programme_name;
+                programmeNameElement.dataset.value = course.programme_name;
+
+                // Open modal
+                const modal = document.querySelector(".addCourse_modal");
+                import("./addEntities.js").then(module => {
+                    module.openModal(modal);
+                });
+            }
+        })
+        .catch(err => {
+            alert("Error loading course details");
+        });
 }
 
 // Load and display courses
@@ -78,7 +164,7 @@ export async function loadCourses() {
         
         btn.addEventListener("click", (e) => {
             e.stopPropagation(); // Prevent card click from firing
-            alert(`Course: ${c.course_name} (${c.course_code})`);
+            editCourse(c.course_code);
         });
 
         // Store course code for later use
