@@ -1,3 +1,6 @@
+let isEditMode = false;
+let currentEditLecturerId = null;
+
 export async function addLecturer() {
     // Add lecturer details through modal form
     const form = document.querySelector(".addLecturer_modal_content_form");
@@ -9,29 +12,105 @@ export async function addLecturer() {
         const lecturerName = document.getElementById("lecturerName").value;
 
         try {
-            const res = await fetch("/api/lecturers", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ lecturerId, lecturerName })
-            });
+            let res, result;
 
-            const result = await res.json();
+            if (isEditMode && currentEditLecturerId) {
+                // UPDATE existing lecturer
+                res = await fetch(`/api/lecturers/${currentEditLecturerId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ lecturerId, lecturerName })
+                });
 
-            if (!res.ok) {
-                alert(result.error);
-                return;
+                result = await res.json();
+
+                if (!res.ok) {
+                    alert(result.error);
+                    return;
+                }
+
+                alert("Lecturer updated successfully");
+                resetLecturerForm();
+            } else {
+                // CREATE new lecturer
+                res = await fetch("/api/lecturers", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ lecturerId, lecturerName })
+                });
+
+                result = await res.json();
+
+                if (!res.ok) {
+                    alert(result.error);
+                    return;
+                }
+
+                alert("Lecturer added successfully");
+                resetLecturerForm();
             }
 
-            alert("Lecturer added successfully");
-            form.reset();
-
-            // Optional: close modal & refresh list
+            // Refresh list
             loadLecturers();
 
         } catch (err) {
             alert("Network error");
         }
     });
+}
+
+function resetLecturerForm() {
+    const form = document.querySelector(".addLecturer_modal_content_form");
+    form.reset();
+
+    // Reset to add mode
+    isEditMode = false;
+    currentEditLecturerId = null;
+
+    // Update modal title and button text
+    const modalTitle = document.querySelector(".addLecturer_modal_content h2");
+    modalTitle.textContent = "Add Lecturer";
+
+    const submitBtn = document.querySelector(".addLecturer_submit_btn");
+    submitBtn.textContent = "Add Lecturer";
+
+    // Re-enable lecturer ID field
+    document.getElementById("lecturerId").disabled = false;
+}
+
+export function editLecturer(lecturerId) {
+    isEditMode = true;
+    currentEditLecturerId = lecturerId;
+
+    // Fetch lecturer details and populate form
+    fetch("/api/lecturers")
+        .then(res => res.json())
+        .then(data => {
+            const lecturer = data.find(l => l.lecturer_id === lecturerId);
+            
+            if (lecturer) {
+                // Update modal title and button
+                const modalTitle = document.querySelector(".addLecturer_modal_content h2");
+                modalTitle.textContent = "Edit Lecturer";
+
+                const submitBtn = document.querySelector(".addLecturer_submit_btn");
+                submitBtn.textContent = "Update Lecturer";
+
+                // Populate form fields
+                document.getElementById("lecturerId").value = lecturer.lecturer_id;
+                document.getElementById("lecturerId").disabled = true; // Can't change primary key
+                document.getElementById("lecturerName").value = lecturer.lecturer_name;
+
+                // Open modal
+                const modal = document.querySelector(".addLecturer_modal");
+                import("./addEntities.js").then(module => {
+                    module.openModal(modal);
+                });
+            }
+        })
+        .catch(err => {
+            alert("Error loading lecturer details");
+        });
 }
 
 // Load and display lecturers
@@ -64,7 +143,7 @@ export async function loadLecturers() {
         
         btn.addEventListener("click", (e) => {
             e.stopPropagation(); // Prevent card click from firing
-            alert(`Lecturer: ${l.lecturer_name} (${l.lecturer_id})`);
+            editLecturer(l.lecturer_id);
         });
 
         card.dataset.lecturerId = l.lecturer_id;
