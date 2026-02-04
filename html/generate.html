@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/generate.css">
     <link rel="icon" type="image/png" href="../img/logo_whitebg.png">
-    <title>Generate| MyUniSched</title>
+    <title>Generate | MyUniSched</title>
 </head>
 <body>
     <div class="main_bg"></div>
@@ -33,6 +33,30 @@
         </div>
     </nav>
 
+    <section class="generate">
+        <div class="generate_container">
+            <h1 class="generate_title">Generate Timetable</h1>
+            <p class="generate_description">"Best Timetable. No Hassle"</p>
+
+            <div class="generate_controls">
+                <button class="generate_btn" id="generateBtn">
+                    <span>Generate Timetable</span>
+                </button>
+                <button class="reset_btn" id="resetBtn">
+                    <span>Reset</span>
+                </button>
+            </div>
+
+            <div class="timetable_status" id="timetableStatus"></div>
+
+            <div class="timetable_wrapper">
+                <div class="timetable_container" id="timetableContainer">
+                    <p class="no_timetable">Click "Generate Timetable" to create your schedule</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <footer>  
         <div class="footer_container">
             <div class="footer_head">
@@ -44,6 +68,6 @@
         </div>
     </footer>
 
-    <script src=""></script>
+    <script type="module" src="../js/generate.js"></script>
 </body>
 </html>
