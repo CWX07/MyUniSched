@@ -74,6 +74,7 @@ button {
     align-items: center;
 
     padding: 0px 40px;
+    z-index: 100;
 }
 
 .nav_logo_img {
@@ -344,8 +345,8 @@ input {
 }
 
 input:focus {
-  border-color: #000;
-  outline: none;
+    border-color: #000;
+    outline: none;
 }
 
 .submit_btn {
