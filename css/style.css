@@ -346,8 +346,8 @@ input {
 }
 
 input:focus {
-  border-color: #000;
-  outline: none;
+    border-color: #000;
+    outline: none;
 }
 
 .submit_btn {
