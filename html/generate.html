@@ -39,6 +39,45 @@
             <h1 class="generate_title">Generate Timetable</h1>
             <p class="generate_description">"Best Timetable. No Hassle"</p>
 
+            <div class="modifier_container">
+                <!-- Constraint Modifiers -->
+                <div class="constraint_section">
+                    <h3 class="constraint_title">Timetable Constraints</h3>
+                    <div class="constraint_controls">
+                        <div class="constraint_item">
+                            <label for="minCoursesPerSlot">Min Courses/Time Slot:</label>
+                            <input type="number" id="minCoursesPerSlot" min="0" max="10" value="0">
+                        </div>
+                        <div class="constraint_item">
+                            <label for="maxCoursesPerSlot">Max Courses/Time Slot:</label>
+                            <input type="number" id="maxCoursesPerSlot" min="1" max="10" value="3">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="filter_section">
+                    <h3 class="filter_title">Filter Timetable</h3>
+                    <div class="filter_controls">
+                        <div class="filter_item">
+                            <label for="filterType">Filter By:</label>
+                            <select id="filterType">
+                                <option value="none">No Filter</option>
+                                <option value="course">Course</option>
+                                <option value="lecturer">Lecturer</option>
+                            </select>
+                        </div>
+                        <div class="filter_item">
+                            <label for="filterValue">Select:</label>
+                            <select id="filterValue" disabled>
+                                <option value="all">All</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
             <div class="generate_controls">
                 <button class="generate_btn" id="generateBtn">
                     <span>Generate Timetable</span>
@@ -70,6 +109,5 @@
     </footer>
 
     <script type="module" src="../js/generate.js"></script>
-    <script src="../js/animation.js"></script>
 </body>
 </html>
