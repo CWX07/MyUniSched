@@ -51,10 +51,90 @@
     text-align: center;
 }
 
+/* Constraint Section */
+.constraint_section,
+.filter_section {
+    background: linear-gradient(
+        to bottom, 
+        #ffffff 0%,
+        #f9f9f99a 100%
+    );
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.constraint_title,
+.filter_title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 15px;
+    text-align: center;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: 8px;
+}
+
+.modifier_container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+}
+
+.constraint_controls,
+.filter_controls {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.constraint_item,
+.filter_item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 200px;
+}
+
+.constraint_item label,
+.filter_item label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+}
+
+.constraint_item input,
+.filter_item select {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 15px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    background: #fff;
+    transition: all 0.3s ease-in-out;
+}
+
+.constraint_item input:focus,
+.filter_item select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+}
+
+.filter_item select:disabled {
+    background: #f0f0f0;
+    color: #999;
+    cursor: not-allowed;
+}
+
 .generate_controls {
     display: flex;
     justify-content: center;
     gap: 30px;
+    margin-top: 10px;
 }
 
 .generate_btn,
