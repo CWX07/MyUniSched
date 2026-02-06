@@ -1,102 +1,92 @@
 .mySchedule {
-    width: 90vw;
-    height: 100vh;
+  width: 90vw;
+  height: 100vh;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
 
-    padding-top: 160px;
-    margin: 0 auto;
+  padding-top: 160px;
+  margin: 0 auto;
 }
 
 .mySchedule_menu {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 
-    padding: 0px 15px;
+  padding: 0px 15px;
 }
 
 .mySchedule_menu_items {
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    gap: 15px;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 15px;
 }
 
 .addSchedule {
-    text-decoration: none;
-    color: #000;
-    font-size: 14px;
-    font-weight: 600;
+  text-decoration: none;
+  color: #000;
+  font-size: 14px;
+  font-weight: 600;
 
-    background: linear-gradient(
-        to bottom, 
-        #ffffff 0%,
-        #f2f2f29a 100%
-    );
+  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
 
-    padding: 10px 20px;
+  padding: 10px 20px;
 
-    border-radius: 20px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.2);
-    border-width: 2px;
-    border-radius: 20px;
+  border-radius: 20px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.2);
+  border-width: 2px;
+  border-radius: 20px;
 
-    cursor: pointer;
+  cursor: pointer;
 
-    box-shadow:
-        8px 8px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.25);
 
-    padding: 10px 15px;
+  padding: 10px 15px;
 
-    transition: 
-        all 0.4s ease-in-out, 
-        border-radius 0.2s ease-in-out,
-        color 0.1s ease-in-out;
+  transition:
+    all 0.4s ease-in-out,
+    border-radius 0.2s ease-in-out,
+    color 0.1s ease-in-out;
 }
 
 .addSchedule:hover {
-    transform: scale(1.1);
-    background: linear-gradient(
-        to bottom,
-        rgb(30, 30, 30) 0%,
-        rgb(60, 60, 60) 100%
-    );
-    color: #fff;
-    border-radius: 10px;
+  transform: scale(1.1);
+  background: linear-gradient(
+    to bottom,
+    rgb(30, 30, 30) 0%,
+    rgb(60, 60, 60) 100%
+  );
+  color: #fff;
+  border-radius: 10px;
 }
 
 .mySchedule_container {
-    width: 100%;
-    min-height: 60vh;
+  width: 100%;
+  min-height: 60vh;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 15px;
 
-    background: linear-gradient(
-        to bottom right,
-        #ffffffd8 0%, 
-        #e6f5eadd 100%
-    );
+  background: linear-gradient(to bottom right, #ffffffd8 0%, #e6f5eadd 100%);
 
-    padding: 10px 20px;
+  padding: 10px 20px;
 
-    border-radius: 20px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.2);
-    border-width: 2px;
-    border-radius: 20px;
+  border-radius: 20px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.2);
+  border-width: 2px;
+  border-radius: 20px;
 
-    box-shadow:
-        8px 8px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.25);
 
-    padding: 0px 15px;
+  padding: 0px 15px;
 }

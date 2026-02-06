@@ -1,411 +1,385 @@
 .generate {
-    width: 90vw;
+  width: 90vw;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
 
-    padding-top: 160px;
-    padding-bottom: 30px;
-    margin: 0 auto;
+  padding-top: 160px;
+  padding-bottom: 30px;
+  margin: 0 auto;
 }
 
 .generate_container {
-    width: 100%;
+  width: 100%;
 
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 
-    background: linear-gradient(
-        to bottom right,
-        #ffffffd8 0%, 
-        #e6f5eadd 100%
-    );
+  background: linear-gradient(to bottom right, #ffffffd8 0%, #e6f5eadd 100%);
 
-    padding: 30px;
+  padding: 30px;
 
-    border-radius: 20px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.2);
-    border-width: 2px;
+  border-radius: 20px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.2);
+  border-width: 2px;
 
-    box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.25);
 }
 
 .generate_title {
-    font-size: 30px;
-    font-weight: 800;
-    color: #000;
-    text-align: center;
+  font-size: 30px;
+  font-weight: 800;
+  color: #000;
+  text-align: center;
 
-    margin: 0 auto;
-    padding: 5px 15px;
+  margin: 0 auto;
+  padding: 5px 15px;
 }
 
 .generate_description {
-    font-size: 16px;
-    font-weight: 500;
-    color: #000;
-    text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  color: #000;
+  text-align: center;
 }
 
 /* Constraint Section */
 .constraint_section,
 .filter_section {
-    background: linear-gradient(
-        to bottom, 
-        #ffffff 0%,
-        #f9f9f99a 100%
-    );
-    padding: 20px;
-    border-radius: 15px;
-    border: 2px solid rgba(0, 0, 0, 0.15);
-    box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(to bottom, #ffffff 0%, #f9f9f99a 100%);
+  padding: 20px;
+  border-radius: 15px;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.15);
 }
 
 .constraint_title,
 .filter_title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #000;
-    margin-bottom: 15px;
-    text-align: center;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-    padding-bottom: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 15px;
+  text-align: center;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 8px;
 }
 
 .modifier_container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
 }
 
 .constraint_controls,
 .filter_controls {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    flex-wrap: wrap;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
 }
 
 .constraint_item,
 .filter_item {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
 }
 
 .constraint_item label,
 .filter_item label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #000;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
 }
 
 .constraint_item input,
 .filter_item select {
-    font-size: 14px;
-    font-weight: 500;
-    padding: 10px 15px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    border-radius: 10px;
-    background: #fff;
-    transition: all 0.3s ease-in-out;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 15px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  background: #fff;
+  transition: all 0.3s ease-in-out;
 }
 
 .constraint_item input:focus,
 .filter_item select:focus {
-    outline: none;
-    border-color: #4CAF50;
-    box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
 }
 
 .filter_item select:disabled {
-    background: #f0f0f0;
-    color: #999;
-    cursor: not-allowed;
+  background: #f0f0f0;
+  color: #999;
+  cursor: not-allowed;
 }
 
 .generate_controls {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 10px;
 }
 
 .generate_btn,
 .reset_btn {
-    font-size: 14px;
-    font-weight: 600;
+  font-size: 14px;
+  font-weight: 600;
 
-    background: linear-gradient(
-        to bottom, 
-        #ffffff 0%,
-        #f2f2f29a 100%
-    );
+  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
 
-    padding: 10px 30px;
+  padding: 10px 30px;
 
-    border-radius: 20px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.2);
-    border-width: 2px;
+  border-radius: 20px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.2);
+  border-width: 2px;
 
-    cursor: pointer;
+  cursor: pointer;
 
-    box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.3);
 
-    transition: 
-        all 0.4s ease-in-out, 
-        border-radius 0.2s ease-in-out,
-        color 0.1s ease-in-out;
+  transition:
+    all 0.4s ease-in-out,
+    border-radius 0.2s ease-in-out,
+    color 0.1s ease-in-out;
 }
 
 .generate_btn:hover,
 .reset_btn:hover {
-    transform: scale(1.1);
-    background: linear-gradient(
-        to bottom,
-        rgb(30, 30, 30) 0%,
-        rgb(60, 60, 60) 100%
-    );
-    color: #fff;
-    border-radius: 10px;
+  transform: scale(1.1);
+  background: linear-gradient(
+    to bottom,
+    rgb(30, 30, 30) 0%,
+    rgb(60, 60, 60) 100%
+  );
+  color: #fff;
+  border-radius: 10px;
 }
 
 /* Status Messages */
 .timetable_status {
-    min-height: 30px;
+  min-height: 30px;
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-    text-align: center;
+  text-align: center;
 }
 
 .status_loading {
-    color: #000;
-    font-size: 15px;
-    font-weight: 600;
-    animation: pulse 1.5s ease-in-out infinite;
+  color: #000;
+  font-size: 15px;
+  font-weight: 600;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .status_success {
-    color: #4CAF50;
-    font-size: 15px;
-    font-weight: 700;
+  color: #4caf50;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .status_error {
-    color: #e74c3c;
-    font-size: 15px;
-    font-weight: 600;
+  color: #e74c3c;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 /* Timetable Container */
 .timetable_wrapper {
-    overflow-x: auto;
+  overflow-x: auto;
 }
 
 .timetable_container {
-    min-height: 300px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
 }
 
 .timetable_container::before {
-    content: "";
-    position: absolute;
-    width: 30%;
-    height: 30%;
-    top: 50%;
-    left: 50%;
-    
-    background: url("../img/logo.png");
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: contain;
+  content: "";
+  position: absolute;
+  width: 30%;
+  height: 30%;
+  top: 50%;
+  left: 50%;
 
-    opacity: 0.1;
+  background: url("../img/logo.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
 
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    z-index: 0;
+  opacity: 0.1;
+
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .no_timetable {
-    color: #000;
-    font-size: 15px;
-    font-weight: 600;
-    text-align: center;
-    padding: 60px 20px;
-    opacity: 0.6;
+  color: #000;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  padding: 60px 20px;
+  opacity: 0.6;
 }
 
 /* Timetable Table */
 .timetable {
-    width: 100%;
-    border-collapse: collapse;
-    background: linear-gradient(
-        to bottom, 
-        #ffffff 0%,
-        #f2f2f29a 100%
-    );
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.25);
-    margin-bottom: 30px;
-    position: relative;
-    z-index: 1;
+  width: 100%;
+  border-collapse: collapse;
+  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.25);
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
 }
 
 .timetable thead {
-    background: linear-gradient(
-        to bottom,
-        rgb(30, 30, 30) 0%,
-        rgb(60, 60, 60) 100%
-    );
-    color: #fff;
+  background: linear-gradient(
+    to bottom,
+    rgb(30, 30, 30) 0%,
+    rgb(60, 60, 60) 100%
+  );
+  color: #fff;
 }
 
 .timetable th {
-    padding: 15px 10px;
-    font-size: 14px;
-    font-weight: 700;
-    text-align: center;
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    white-space: nowrap;
+  padding: 15px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
 }
 
 .day_header {
-    min-width: 120px;
-    position: sticky;
-    left: 0;
-    z-index: 10;
-    background: linear-gradient(
-        to bottom,
-        rgb(30, 30, 30) 0%,
-        rgb(60, 60, 60) 100%
-    );
+  min-width: 120px;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: linear-gradient(
+    to bottom,
+    rgb(30, 30, 30) 0%,
+    rgb(60, 60, 60) 100%
+  );
 }
 
 .time_header {
-    min-width: 80px;
+  min-width: 80px;
 }
 
 .timetable td {
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    text-align: center;
-    vertical-align: top;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  text-align: center;
+  vertical-align: top;
 }
 
 .day_cell {
-    background: linear-gradient(
-        to bottom, 
-        #ffffff 0%,
-        #f2f2f29a 100%
-    );
-    font-weight: 700;
-    color: #000;
-    font-size: 15px;
-    padding: 15px;
-    position: sticky;
-    left: 0;
-    z-index: 5;
-    border-right: 2px solid rgba(0, 0, 0, 0.3);
+  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
+  font-weight: 700;
+  color: #000;
+  font-size: 15px;
+  padding: 15px;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  border-right: 2px solid rgba(0, 0, 0, 0.3);
 }
 
 .schedule_cell {
-    min-width: 80px;
-    min-height: 100px;
-    position: relative;
-    transition: all 0.3s ease-in-out;
-    padding: 8px;
+  min-width: 100px;
+  min-height: 100px;
+  position: relative;
+  transition: all 0.3s ease-in-out;
+  padding: 8px;
 }
 
 .schedule_cell.empty {
-    background: linear-gradient(
-        to bottom, 
-        #ffffff 0%,
-        #f9f9f99a 100%
-    );
+  background: linear-gradient(to bottom, #ffffff 0%, #f9f9f99a 100%);
 }
 
 .schedule_cell.empty:hover {
-    background: linear-gradient(
-        to bottom,
-        #f0f0f0 0%,
-        #e8e8e8 100%
-    );
+  background: linear-gradient(to bottom, #f0f0f0 0%, #e8e8e8 100%);
 }
 
 .schedule_cell.occupied {
-    background: linear-gradient(
-        to bottom, 
-        #ffffff 0%,
-        #f2f2f29a 100%
-    );
-    padding: 10px;
+  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
+  padding: 10px;
 }
 
 /* Course Count Badge */
 .course_count_badge {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background: linear-gradient(
-        to bottom,
-        rgb(30, 30, 30) 0%,
-        rgb(60, 60, 60) 100%
-    );
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 10px;
-    z-index: 5;
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: linear-gradient(
+    to bottom,
+    rgb(30, 30, 30) 0%,
+    rgb(60, 60, 60) 100%
+  );
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  z-index: 5;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Course Block */
 .course_block {
-    background: linear-gradient(
-        to bottom, 
-        #ffffff 0%,
-        #f2f2f29a 100%
-    );
-    border-left: 4px solid #4CAF50;
-    padding: 10px;
-    margin: 4px 0;
-    border-radius: 15px;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    text-align: left;
-    box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.15);
+  width: 200px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
+  border-left: 4px solid #4caf50;
+  padding: 15px;
+  margin: 4px 0;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  text-align: left;
+  box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.15);
 }
 
 .course_block:hover {
-    transform: scale(1.02);
-    background: linear-gradient(
-        to bottom,
-        rgb(30, 30, 30) 0%,
-        rgb(60, 60, 60) 100%
-    );
-    color: #fff;
-    border-radius: 10px;
-    box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.25);
+  transform: scale(1.02);
+  background: linear-gradient(
+    to bottom,
+    rgb(30, 30, 30) 0%,
+    rgb(60, 60, 60) 100%
+  );
+  color: #fff;
+  border-radius: 10px;
+  box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.25);
 }
 
 .course_block:hover .course_code,
@@ -413,137 +387,129 @@
 .course_block:hover .time_range,
 .course_block:hover .lecturer_name,
 .course_block:hover .programme_info {
-    color: #fff;
+  color: #fff;
 }
 
 .course_separator {
-    height: 1px;
-    background: rgba(0, 0, 0, 0.2);
-    margin: 8px 0;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.2);
+  margin: 8px 0;
 }
 
 .course_code {
-    font-weight: 700;
-    font-size: 14px;
-    color: #000;
-    margin-bottom: 4px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #000;
+  margin-bottom: 4px;
 }
 
 .course_name {
-    font-size: 13px;
-    color: #000;
-    margin-bottom: 4px;
-    line-height: 1.3;
-    font-weight: 600;
+  font-size: 13px;
+  color: #000;
+  margin-bottom: 4px;
+  line-height: 1.3;
+  font-weight: 600;
 }
 
 .time_range {
-    font-size: 12px;
-    color: #4CAF50;
-    margin-bottom: 4px;
-    font-weight: 700;
+  font-size: 12px;
+  color: #4caf50;
+  margin-bottom: 4px;
+  font-weight: 700;
 }
 
 .lecturer_name {
-    font-size: 12px;
-    color: #000;
-    margin-bottom: 4px;
-    font-weight: 500;
+  font-size: 12px;
+  color: #000;
+  margin-bottom: 4px;
+  font-weight: 500;
 }
 
 .programme_info {
-    font-size: 11px;
-    color: #000;
-    font-weight: 700;
-    background: rgba(76, 175, 80, 0.2);
-    padding: 3px 8px;
-    border-radius: 8px;
-    display: inline-block;
-    margin-top: 4px;
+  font-size: 11px;
+  color: #000;
+  font-weight: 700;
+  background: rgba(76, 175, 80, 0.2);
+  padding: 3px 8px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-top: 4px;
 }
 
 /* Timetable Info Section */
 .timetable_info {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    margin: 30px 0px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin: 30px 0px;
 }
 
 /* Legend */
 .timetable_legend {
-    padding: 20px;
-    background: linear-gradient(
-        to bottom, 
-        #ffffff 0%,
-        #f2f2f29a 100%
-    );
-    border-radius: 20px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
+  border-radius: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.2);
 }
 
 .timetable_legend h3 {
-    font-size: 18px;
-    font-weight: 700;
-    color: #000;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #000;
-    padding-bottom: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
 }
 
 .legend_item {
-    display: inline-flex;
-    align-items: center;
-    margin-right: 20px;
-    margin-bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 20px;
+  margin-bottom: 10px;
 }
 
 .legend_color {
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
-    margin-right: 8px;
-    display: inline-block;
-    border: 2px solid rgba(0, 0, 0, 0.2);
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  margin-right: 8px;
+  display: inline-block;
+  border: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 /* Statistics */
 .timetable_stats {
-    padding: 20px;
-    background: linear-gradient(
-        to bottom, 
-        #ffffff 0%,
-        #f2f2f29a 100%
-    );
-    border-radius: 20px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
+  border-radius: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.2);
 }
 
 .timetable_stats h3 {
-    font-size: 18px;
-    font-weight: 700;
-    color: #000;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #000;
-    padding-bottom: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
 }
 
 .stat_item {
-    padding: 8px 0;
-    border-bottom: 1px dotted rgba(0, 0, 0, 0.3);
-    font-size: 14px;
-    font-weight: 500;
-    color: #000;
+  padding: 8px 0;
+  border-bottom: 1px dotted rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+  font-weight: 500;
+  color: #000;
 }
 
 .stat_item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .stat_item strong {
-    color: #000;
-    font-weight: 700;
-    margin-right: 8px;
+  color: #000;
+  font-weight: 700;
+  margin-right: 8px;
 }
