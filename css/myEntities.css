@@ -1,409 +1,443 @@
 .myEntities {
-    width: 90vw;
-    height: 100vh;
+  width: 90vw;
+  height: 100vh;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
 
-    padding-top: 160px;
-    margin: 0 auto;
-    z-index: 50;
+  padding-top: 160px;
+  margin: 0 auto;
 }
 
 .myEntities_menu {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 
-    padding: 0px 15px;
-    z-index: 100;
+  padding: 0px 15px;
+  z-index: 100;
 }
 
 .myEntities_menu_items {
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    gap: 20px;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 20px;
 }
 
 .myEntities_menu_items button {
-    font-size: 14px;
-    font-weight: 600;
+  font-size: 14px;
+  font-weight: 600;
 
-    border-radius: 20px;
-    box-shadow: 
-        6px 6px 8px rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.3);
 
-    transition: 
-        all 0.4s ease-in-out, 
-        border-radius 0.2s ease-in-out,
-        color 0.1s ease-in-out;
+  transition:
+    all 0.4s ease-in-out,
+    border-radius 0.2s ease-in-out,
+    color 0.1s ease-in-out;
 }
 
 .myEntities_menu_items button:hover {
-    transform: scale(1.1);
-    background: linear-gradient(
-        to bottom,
-        rgb(30, 30, 30) 0%,
-        rgb(60, 60, 60) 100%
-    );
-    color: #fff;
-    border-radius: 10px;
+  transform: scale(1.1);
+  background: linear-gradient(
+    to bottom,
+    rgb(30, 30, 30) 0%,
+    rgb(60, 60, 60) 100%
+  );
+  color: #fff;
+  border-radius: 10px;
 }
 
 .addEntity {
-    position: relative;
-    display: inline-block;
+  position: relative;
+  display: inline-block;
 }
 
 .addEntity_btn {
-    font-size: 14px;
+  font-size: 14px;
 
-    position: relative;  /* Add this */
-    z-index: 10;        /* Add this - higher than the cards */
+  position: relative;
+  z-index: 10;
 
- 
-    border-radius: 20px;
-    padding: 10px 15px;
+  border-radius: 20px;
+  padding: 10px 15px;
 
-    transition: 
-        all 0.4s ease-in-out, 
-        border-radius 0.2s ease-in-out,
-        color 0.1s ease-in-out;
+  transition:
+    all 0.4s ease-in-out,
+    border-radius 0.2s ease-in-out,
+    color 0.1s ease-in-out;
 }
 
 .addEntity_btn:hover {
-    transform: scale(1.1);
-    background: linear-gradient(
-        to bottom,
-        rgb(30, 30, 30) 0%,
-        rgb(60, 60, 60) 100%
-    );
-    color: #fff;
-    border-radius: 10px;
+  transform: scale(1.1);
+  background: linear-gradient(
+    to bottom,
+    rgb(30, 30, 30) 0%,
+    rgb(60, 60, 60) 100%
+  );
+  color: #fff;
+  border-radius: 10px;
 }
 
 .addEntity:hover .dropdown,
 .addEntity .dropdown:hover {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .dropdown.addEntity {
-    position:absolute;
-    top: 105%;
-    right: 0px;
-    display :flex;
-    flex-direction :column;
-    justify-content :center;
-    align-items: center;
-    z-index :200;
+  position: absolute;
+  top: 105%;
+  right: 0px;
+  height: 150px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
 }
 
 .dropdown.addEntity a:hover {
-    transform: scale(1.1);
-    background: linear-gradient(
-        to bottom,
-        rgb(30, 30, 30) 0%,
-        rgb(60, 60, 60) 100%
-    );
-    color: #fff;
-    border-radius: 10px;
+  transform: scale(1.1);
+  background: linear-gradient(
+    to bottom,
+    rgb(30, 30, 30) 0%,
+    rgb(60, 60, 60) 100%
+  );
+  color: #fff;
+  border-radius: 10px;
 }
 
 .courseCode,
 .courseName,
 .lecturerId,
 .programmeName,
-.courseYear,
-.lecturerName {
-    width: 100%;
+.lecturerName,
+.programmeLevel,
+.programmeYear {
+  width: 100%;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 15px;
 }
 
-.courseTime {
-    width: 100%;
+.programmeInfo {
+  width: 100%;
 
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
 }
 
-.programmeName_container {
-    position: relative;
-    width: 100%;
-    font-size: 14px;
-    cursor: pointer;
+/* Generic dropdown container styles */
+.programmeName_container,
+.programmeLevel_container,
+.lecturerId_container {
+  position: relative;
+  width: 100%;
+  font-size: 14px;
+  cursor: pointer;
 }
 
-.programmeName_selected {
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 1.5px solid rgba(0,0,0,0.2);
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-    background: #fff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    user-select: none;
+/* Generic dropdown selected styles */
+.programmeName_selected,
+.programmeLevel_selected,
+.lecturerId_selected {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
 }
 
-.programmeName_selected::after {
-    content: "▾";
-    font-size: 14px;
-    color: #000000;
+.programmeName_selected::after,
+.programmeLevel_selected::after,
+.lecturerId_selected::after {
+  content: "▾";
+  font-size: 14px;
+  color: #000000;
 }
 
-.programmeName_list {
-    list-style: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    max-height: 0;
-    
-    background: #fff;
+/* Generic dropdown list styles */
+.programmeName_list,
+.programmeLevel_list,
+.lecturerId_list {
+  list-style: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 0;
 
-    border-radius: 8px;
-    border: 1.5px solid rgba(0,0,0,0.2);
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+  background: #fff;
 
-    margin: 5px 0 0 0;
-    padding: 0;
+  border-radius: 8px;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
 
-    overflow: hidden;
-    opacity: 0;
-    z-index: 100;
+  margin: 5px 0 0 0;
+  padding: 0;
 
-    transition: max-height 0.3s ease, opacity 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  opacity: 0;
+  z-index: 100;
+
+  transition:
+    max-height 0.3s ease,
+    opacity 0.3s ease;
 }
 
-.programmeName_list.active {
-    max-height: 500px;
-    opacity: 1;
+.programmeName_list.active,
+.programmeLevel_list.active,
+.lecturerId_list.active {
+  max-height: 200px;
+  opacity: 1;
 }
 
-.programmeName_list li {
-    font-weight: 550;
-    padding: 10px 15px;
-    transition: all 0.2s ease-in-out;
+.programmeName_list li,
+.programmeLevel_list li,
+.lecturerId_list li {
+  font-weight: 550;
+  padding: 10px 15px;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
 }
 
-.programmeName_list li:hover {
-    background: linear-gradient(to bottom, rgb(30,30,30), rgb(60,60,60));
-    color: #fff;
-    border-radius: 5px;
+.programmeName_list li:hover,
+.programmeLevel_list li:hover,
+.lecturerId_list li:hover {
+  background: linear-gradient(to bottom, rgb(30, 30, 30), rgb(60, 60, 60));
+  color: #fff;
+  border-radius: 5px;
 }
 
 .addLecturer_modal_content {
-    min-height: 450px;
+  min-height: 350px;
+}
+
+.addProgramme_modal_content {
+  min-height: 450px;
 }
 
 .myEntities_container {
-    width: 100%;
-    min-height: 60vh;
+  width: 100%;
+  min-height: 60vh;
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
 
-    padding: 0px 15px;
-    z-index:-50;
+  padding: 0px 15px;
 }
 
 .myCourse_list,
 .myLecturer_list,
+.myProgramme_list,
 .myEntities_details {
-    height: 100%;
-    
-    display: flex;
-    flex-direction: column;
+  height: 100%;
 
-    background: linear-gradient(
-        to bottom right,
-        #ffffffd8 0%, 
-        #e6f5eadd 100%
-    );
+  display: flex;
+  flex-direction: column;
 
-    padding: 10px 20px;
+  background: linear-gradient(to bottom right, #ffffffd8 0%, #e6f5eadd 100%);
 
-    border-radius: 20px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.2);
-    border-width: 2px;
-    border-radius: 20px;
+  padding: 10px 20px;
 
-    box-shadow:
-        8px 8px 8px rgba(0, 0, 0, 0.25);
+  border-radius: 20px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.2);
+  border-width: 2px;
+  border-radius: 20px;
+
+  box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.25);
 }
 
 .myCourse_list,
-.myLecturer_list {
-    position: relative;
-    width: 65%;
-    max-height: 60vh;
+.myLecturer_list,
+.myProgramme_list {
+  position: relative;
+  width: 65%;
+  max-height: 60vh;
 
-    padding: 20px;
-    overflow: auto;
+  padding: 20px;
+  overflow: auto;
 }
 
-.myLecturer_list {
-    display: none;
+.myCourse_list,
+.myProgramme_list {
+  display: none;
 }
 
 .myCourse_list::before,
-.myLecturer_list::before {
-    content: "";
-    position: absolute;
-    width: 50%;
-    height: 50%;
-    top: 50%;
-    left: 50%;
-    
-    background: url("..«/img/logo.png");
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: contain;
+.myLecturer_list::before,
+.myProgramme_list::before {
+  content: "";
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  top: 50%;
+  left: 50%;
 
-    opacity: 0.2;
+  background: url("../img/logo.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
 
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    z-index: 0;
+  opacity: 0.2;
+
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .myCourse_card,
-.myLecturer_card {
-    position: relative;
-    width: 100%;
-    padding: 15px 25px;
-    margin-bottom: 10px;
+.myLecturer_card,
+.myProgramme_card {
+  position: relative;
+  width: 100%;
+  padding: 15px 25px;
+  margin-bottom: 10px;
 
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
-    background: linear-gradient(
-        to bottom, 
-        #ffffff 0%,
-        #f2f2f29a 100%
-    );
+  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
 
-    border-radius: 20px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.2);
-    border-width: 2px;
-    border-radius: 20px;
+  border-radius: 20px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.2);
+  border-width: 2px;
+  border-radius: 20px;
 
-    box-shadow:
-        6px 6px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 6px 6px 6px rgba(0, 0, 0, 0.2);
 
-    cursor: pointer;
+  cursor: pointer;
 
-    transition:
-        all 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
 }
 
 .myCourse_card:hover,
-.myLecturer_card:hover {
-    transform: scale(1.02);
-    background: linear-gradient(
-        to bottom,
-        rgb(30, 30, 30) 0%,
-        rgb(60, 60, 60) 100%
-    );
+.myLecturer_card:hover,
+.myProgramme_card:hover {
+  transform: scale(1.02);
+  background: linear-gradient(
+    to bottom,
+    rgb(30, 30, 30) 0%,
+    rgb(60, 60, 60) 100%
+  );
 
-    color: #fff;
-    border-radius: 10px;
+  color: #fff;
+  border-radius: 10px;
 }
 
 .myCourse_card:hover .viewEntity_btn,
-.myLecturer_card:hover .viewEntity_btn {
-    color: #fff;
+.myLecturer_card:hover .viewEntity_btn,
+.myProgramme_card:hover .viewEntity_btn {
+  color: #fff;
 }
 
 .displayItem1,
 .displayItem2 {
-    font-size: 15px;
-    font-weight: 600;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .viewEntity_btn {
-    font-size: 30px;
+  font-size: 30px;
 
-    background: none;
-    border: none;
+  background: none;
+  border: none;
 
-    padding: 0 10px;
+  padding: 0 10px;
 
-    box-shadow: none;
+  box-shadow: none;
 
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .myEntities_details p {
-    font-size: 14px;
+  font-size: 14px;
 }
 
 .myEntities_details {
-    display: flex;
-    flex: 1;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
+  max-height: 60vh;
 
-    padding: 20px 30px;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+
+  padding: 20px 30px;
+  overflow-y: auto;
 }
 
 .myEntities_details h1 {
-    font-size: 30px;
-    border-bottom: 3px solid #000000;
+  font-size: 30px;
+  border-bottom: 3px solid #000000;
 
-    margin: 20px;
-    margin-top: 0;
-    padding: 5px 15px;
+  margin: 20px;
+  margin-top: 10px;
+  padding: 5px 15px;
+}
+
+.myEntities_details.course_details {
+  justify-content: flex-start;
+}
+
+.myEntities_noDetails_title,
+.myEntities_noDetails_desc {
+  align-self: center;
 }
 
 .myEntities_noDetails_title {
-    border-bottom: none !important;
-    margin: 0 !important;
+  border-bottom: none !important;
+  margin: 0 !important;
 }
 
 .courseDetails,
-.lecturerDetails {
-    width: 100%;
-    
-    display: flex;
-    flex-direction: row;
-    justify-items: center;
-    align-items: center;
+.lecturerDetails,
+.programmeDetails {
+  width: 100%;
 
-    font-size: 15px;
-    font-weight: 500;
+  display: flex;
+  flex-direction: row;
+  justify-items: center;
+  align-items: center;
 
-    border-bottom: 2px dotted #000000;
+  font-size: 15px;
+  font-weight: 500;
 
-    padding: 10px;
+  border-bottom: 2px dotted #000000;
+
+  padding: 10px;
 }
 
 .courseDetails_title,
-.lecturerDetails_title {
-    min-width: 50%;
+.lecturerDetails_title,
+.programmeDetails_title {
+  min-width: 50%;
 
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 
-    margin-right: 20px;
+  margin-right: 20px;
 }

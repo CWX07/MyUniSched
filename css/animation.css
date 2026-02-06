@@ -1,178 +1,179 @@
 /* Animation Keyframes */
 @keyframes slideInFromLeft {
-    0% {
-        transform: translateX(-100%);
-        opacity: 0;
-    }
-    100% {
-        transform: translateX(0);
-        opacity: 1;
-    }
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInFromRight {
-    0% {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    100% {
-        transform: translateX(0);
-        opacity: 1;
-    }
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideOutToLeft {
-    0% {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    100% {
-        transform: translateX(-100%);
-        opacity: 0;
-    }
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
 }
 
 @keyframes slideOutToRight {
-    0% {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    100% {
-        transform: translateX(100%);
-        opacity: 0;
-    }
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }
 
 @keyframes gradientShift {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes gradientRotate {
-    0% {
-        background-position: 0% 0%;
-    }
-    25% {
-        background-position: 100% 0%;
-    }
-    50% {
-        background-position: 100% 100%;
-    }
-    75% {
-        background-position: 0% 100%;
-    }
-    100% {
-        background-position: 0% 0%;
-    }
+  0% {
+    background-position: 0% 0%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
 }
 
 /* Apply animations to elements */
 .home_container {
-    animation: slideInFromLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-} 
+  animation: slideInFromLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
 
 .navbar {
-    animation: slideInFromRight 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: slideInFromRight 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 footer {
-    animation: slideInFromLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    opacity: 0;
+  animation: slideInFromLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
 }
 
 /* Enhanced background with animation */
 .main_bg {
-    background: radial-gradient(
-        circle at top left,
-        #daf8e3b3 0%,
-        #97e7e1 25%,
-        #4fb3bf 50%,
-        #00486e 100%
-    );
-    background-size: 200% 200%;
-    animation: gradientShift 15s ease infinite;
+  background: radial-gradient(
+    circle at top left,
+    #daf8e3b3 0%,
+    #97e7e1 25%,
+    #4fb3bf 50%,
+    #00486e 100%
+  );
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
 }
 
 /* Alternative gradient animations you can use */
 .main_bg.rotate {
-    background: linear-gradient(
-        45deg,
-        #daf8e3b3 0%,
-        #97e7e1 25%,
-        #4fb3bf 50%,
-        #00486e 75%,
-        #daf8e3b3 100%
-    );
-    background-size: 400% 400%;
-    animation: gradientRotate 20s ease infinite;
+  background: linear-gradient(
+    45deg,
+    #daf8e3b3 0%,
+    #97e7e1 25%,
+    #4fb3bf 50%,
+    #00486e 75%,
+    #daf8e3b3 100%
+  );
+  background-size: 400% 400%;
+  animation: gradientRotate 20s ease infinite;
 }
 
 /* Modal animations */
 .modal {
-    transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.3s ease-in-out;
 }
 
 .modal.active {
-    opacity: 1;
-    z-index: 1000;
+  opacity: 1;
+  z-index: 1000;
 }
 
 .modal.active .modal_content {
-    animation: slideInFromRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: slideInFromRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 /* Stagger animation for navbar items */
 .navbar ul li {
-    opacity: 0;
-    animation: slideInFromRight 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
+  animation: slideInFromRight 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.navbar ul li:nth-child(1) { animation-delay: 0.1s; }
-.navbar ul li:nth-child(2) { animation-delay: 0.2s; }
-.navbar ul li:nth-child(3) { animation-delay: 0.3s; }
-.navbar ul li:nth-child(4) { animation-delay: 0.4s; }
-
-/* Hover effect with slide */
- /* .home_container:hover {
-    animation: none;
-    transform: translateX(10px);
-    transition: transform 0.3s ease;
-}  */
+.navbar ul li:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.navbar ul li:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.navbar ul li:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.navbar ul li:nth-child(4) {
+  animation-delay: 0.4s;
+}
 
 /* Profile menu animation */
 .profile_menu {
-    animation: slideInFromRight 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
-    opacity: 0;
+  animation: slideInFromRight 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
+  opacity: 0;
 }
 
 /* Animations for myEntities page */
 .myEntities_menu {
-    animation: slideInFromLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: slideInFromLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .myEntities_container {
-    animation: slideInFromRight 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
-    opacity: 0;
+  animation: slideInFromRight 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+  opacity: 0;
 }
 
 /* Animations for generate page */
 .generate_container {
-    animation: slideInFromLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: slideInFromLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 /* Animations for mySchedule page */
 .mySchedule_menu {
-    animation: slideInFromLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: slideInFromLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .mySchedule_container {
-    animation: slideInFromRight 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
-    opacity: 0;
+  animation: slideInFromRight 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+  opacity: 0;
 }
