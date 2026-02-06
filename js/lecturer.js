@@ -2,211 +2,213 @@ let isEditMode = false;
 let currentEditLecturerId = null;
 
 export async function addLecturer() {
-    // Add lecturer details through modal form
-    const form = document.querySelector(".addLecturer_modal_content_form");
+  // Add lecturer details through modal form
+  const form = document.querySelector(".addLecturer_modal_content_form");
 
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-        const lecturerId = document.getElementById("lecturerId").value;
-        const lecturerName = document.getElementById("lecturerName").value;
+    const lecturerName = document.getElementById("lecturerName").value;
 
-        try {
-            let res, result;
+    try {
+      let res, result;
 
-            if (isEditMode && currentEditLecturerId) {
-                // UPDATE existing lecturer
-                res = await fetch(`/api/lecturers/${currentEditLecturerId}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ lecturerId, lecturerName })
-                });
+      if (isEditMode && currentEditLecturerId) {
+        // UPDATE existing lecturer
+        const editedLecturerId = currentEditLecturerId;
+        res = await fetch(`/api/lecturers/${currentEditLecturerId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lecturerName }),
+        });
 
-                result = await res.json();
+        result = await res.json();
 
-                if (!res.ok) {
-                    alert(result.error);
-                    return;
-                }
-
-                alert("Lecturer updated successfully");
-                resetLecturerForm();
-            } else {
-                // CREATE new lecturer
-                res = await fetch("/api/lecturers", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ lecturerId, lecturerName })
-                });
-
-                result = await res.json();
-
-                if (!res.ok) {
-                    alert(result.error);
-                    return;
-                }
-
-                alert("Lecturer added successfully");
-                resetLecturerForm();
-            }
-
-            // Refresh list
-            loadLecturers();
-
-        } catch (err) {
-            alert("Network error");
+        if (!res.ok) {
+          alert(result.error);
+          return;
         }
-    });
+
+        alert("Lecturer updated successfully");
+        resetLecturerForm();
+        const modal = document.querySelector(".addLecturer_modal");
+        const { closeModal } = await import("./addEntities.js");
+        closeModal(modal);
+        await loadLecturers();
+        await displayLecturerDetails(editedLecturerId);
+      } else {
+        // CREATE new lecturer
+        res = await fetch("/api/lecturers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lecturerName }),
+        });
+
+        result = await res.json();
+
+        if (!res.ok) {
+          alert(result.error);
+          return;
+        }
+
+        alert(`Lecturer added successfully with ID: ${result.lecturer_id}`);
+        resetLecturerForm();
+      }
+
+      // Refresh list
+      await loadLecturers();
+    } catch (err) {
+      alert("Network error");
+    }
+  });
 }
 
 function resetLecturerForm() {
-    const form = document.querySelector(".addLecturer_modal_content_form");
-    form.reset();
+  const form = document.querySelector(".addLecturer_modal_content_form");
+  form.reset();
 
-    // Reset to add mode
-    isEditMode = false;
-    currentEditLecturerId = null;
+  // Reset to add mode
+  isEditMode = false;
+  currentEditLecturerId = null;
 
-    // Update modal title and button text
-    const modalTitle = document.querySelector(".addLecturer_modal_content h2");
-    modalTitle.textContent = "Add Lecturer";
+  // Update modal title and button text
+  const modalTitle = document.querySelector(".addLecturer_modal_content h2");
+  modalTitle.textContent = "Add Lecturer";
 
-    const submitBtn = document.querySelector(".addLecturer_submit_btn");
-    submitBtn.textContent = "Add Lecturer";
-
-    // Re-enable lecturer ID field
-    document.getElementById("lecturerId").disabled = false;
+  const submitBtn = document.querySelector(".addLecturer_submit_btn");
+  submitBtn.textContent = "Add Lecturer";
 }
 
 export function editLecturer(lecturerId) {
-    isEditMode = true;
-    currentEditLecturerId = lecturerId;
+  isEditMode = true;
+  currentEditLecturerId = lecturerId;
 
-    // Fetch lecturer details and populate form
-    fetch("/api/lecturers")
-        .then(res => res.json())
-        .then(data => {
-            const lecturer = data.find(l => l.lecturer_id === lecturerId);
-            
-            if (lecturer) {
-                // Update modal title and button
-                const modalTitle = document.querySelector(".addLecturer_modal_content h2");
-                modalTitle.textContent = "Edit Lecturer";
+  // Fetch lecturer details and populate form
+  fetch("/api/lecturers")
+    .then((res) => res.json())
+    .then((data) => {
+      const lecturer = data.find((l) => l.lecturer_id === lecturerId);
 
-                const submitBtn = document.querySelector(".addLecturer_submit_btn");
-                submitBtn.textContent = "Update Lecturer";
+      if (lecturer) {
+        // Update modal title and button
+        const modalTitle = document.querySelector(
+          ".addLecturer_modal_content h2",
+        );
+        modalTitle.textContent = "Edit Lecturer";
 
-                // Populate form fields
-                document.getElementById("lecturerId").value = lecturer.lecturer_id;
-                document.getElementById("lecturerId").disabled = true; // Can't change primary key
-                document.getElementById("lecturerName").value = lecturer.lecturer_name;
+        const submitBtn = document.querySelector(".addLecturer_submit_btn");
+        submitBtn.textContent = "Update Lecturer";
 
-                // Open modal
-                const modal = document.querySelector(".addLecturer_modal");
-                import("./addEntities.js").then(module => {
-                    module.openModal(modal);
-                });
-            }
-        })
-        .catch(err => {
-            alert("Error loading lecturer details");
+        // Populate form fields
+        document.getElementById("lecturerName").value = lecturer.lecturer_name;
+
+        // Open modal
+        const modal = document.querySelector(".addLecturer_modal");
+        import("./addEntities.js").then((module) => {
+          module.openModal(modal);
         });
+      }
+    })
+    .catch((err) => {
+      alert("Error loading lecturer details");
+    });
 }
 
 // Load and display lecturers
 export async function loadLecturers() {
-    const res = await fetch("/api/lecturers");
-    const data = await res.json();
+  const res = await fetch("/api/lecturers");
+  const data = await res.json();
 
-    const list = document.querySelector(".myLecturer_list");
-    list.innerHTML = "";
+  const list = document.querySelector(".myLecturer_list");
+  list.innerHTML = "";
 
-    data.forEach(l => {
-        // Create card
-        const card = document.createElement("div");
-        card.className = "myLecturer_card";
+  data.forEach((l) => {
+    // Create card
+    const card = document.createElement("div");
+    card.className = "myLecturer_card";
 
-        // displayItem1 <-- Lecturer ID
-        const displayId = document.createElement("div");
-        displayId.className = "displayItem1";
-        displayId.textContent = l.lecturer_id;
+    // displayItem1 <-- Lecturer ID
+    const displayId = document.createElement("div");
+    displayId.className = "displayItem1";
+    displayId.textContent = l.lecturer_id;
 
-        // displayItem2 <-- Lecturer Name
-        const displayName = document.createElement("div");
-        displayName.className = "displayItem2";
-        displayName.textContent = l.lecturer_name;
+    // displayItem2 <-- Lecturer Name
+    const displayName = document.createElement("div");
+    displayName.className = "displayItem2";
+    displayName.textContent = l.lecturer_name;
 
-        // viewEntity_btn
-        const btn = document.createElement("button");
-        btn.className = "viewEntity_btn";
-        btn.innerHTML = "&#9881;"; // gear icon
-        
-        btn.addEventListener("click", (e) => {
-            e.stopPropagation(); // Prevent card click from firing
-            editLecturer(l.lecturer_id);
-        });
+    // viewEntity_btn
+    const btn = document.createElement("button");
+    btn.className = "viewEntity_btn";
+    btn.innerHTML = "&#9881;"; // gear icon
 
-        card.dataset.lecturerId = l.lecturer_id;
-
-        // Add click event to show details
-        card.addEventListener("click", () => {
-            const lecturerId = card.dataset.lecturerId;
-            displayLecturerDetails(lecturerId);
-        });
-
-        card.appendChild(displayId);
-        card.appendChild(displayName);
-        card.appendChild(btn);
-
-        list.appendChild(card);
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation(); // Prevent card click from firing
+      editLecturer(l.lecturer_id);
     });
+
+    card.dataset.lecturerId = l.lecturer_id;
+
+    // Add click event to show details
+    card.addEventListener("click", () => {
+      const lecturerId = card.dataset.lecturerId;
+      displayLecturerDetails(lecturerId);
+    });
+
+    card.appendChild(displayId);
+    card.appendChild(displayName);
+    card.appendChild(btn);
+
+    list.appendChild(card);
+  });
 }
 
 async function displayLecturerDetails(lecturerId) {
-    const res = await fetch("/api/lecturers");
-    const data = await res.json();
+  const res = await fetch("/api/lecturers");
+  const data = await res.json();
 
-    // Find lecturer using snake_case property name
-    const lecturer = data.find(l => l.lecturer_id === lecturerId);
-    
-    if (!lecturer) {
-        console.error("Lecturer not found:", lecturerId);
-        return;
-    }
+  // Find lecturer using snake_case property name
+  const lecturer = data.find((l) => l.lecturer_id === lecturerId);
 
-    const container = document.querySelector(".myEntities_details");
-    container.innerHTML = "";
+  if (!lecturer) {
+    console.error("Lecturer not found:", lecturerId);
+    return;
+  }
 
-    const title = document.createElement("h1");
-    title.textContent = "Lecturer Details";
-    container.appendChild(title);
+  const container = document.querySelector(".myEntities_details");
+  container.classList.remove("course_details");
+  container.innerHTML = "";
 
-    function createDetail(label, value) {
-        const wrapper = document.createElement("div");
-        wrapper.classList.add("lecturerDetails");
+  const title = document.createElement("h1");
+  title.textContent = "Lecturer Details";
+  container.appendChild(title);
 
-        const titleDiv = document.createElement("div");
-        titleDiv.classList.add("lecturerDetails_title");
+  function createDetail(label, value) {
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("lecturerDetails");
 
-        const h3 = document.createElement("h3");
-        h3.textContent = label;
+    const titleDiv = document.createElement("div");
+    titleDiv.classList.add("lecturerDetails_title");
 
-        const colon = document.createElement("span");
-        colon.textContent = ":";
+    const h3 = document.createElement("h3");
+    h3.textContent = label;
 
-        titleDiv.appendChild(h3);
-        titleDiv.appendChild(colon);
+    const colon = document.createElement("span");
+    colon.textContent = ":";
 
-        const ans = document.createElement("div");
-        ans.classList.add("lecturerDetailsAns");
-        ans.textContent = value || "N/A";
+    titleDiv.appendChild(h3);
+    titleDiv.appendChild(colon);
 
-        wrapper.appendChild(titleDiv);
-        wrapper.appendChild(ans);
+    const ans = document.createElement("div");
+    ans.classList.add("lecturerDetailsAns");
+    ans.textContent = value || "N/A";
 
-        return wrapper;
-    }
+    wrapper.appendChild(titleDiv);
+    wrapper.appendChild(ans);
 
-    container.appendChild(createDetail("Lecturer ID", lecturer.lecturer_id));
-    container.appendChild(createDetail("Lecturer Name", lecturer.lecturer_name));
+    return wrapper;
+  }
+
+  container.appendChild(createDetail("Lecturer ID", lecturer.lecturer_id));
+  container.appendChild(createDetail("Lecturer Name", lecturer.lecturer_name));
 }
