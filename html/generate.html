@@ -1,113 +1,139 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/generate.css">
-    <link rel="stylesheet" href="../css/animation.css">
-    <link rel="icon" type="image/png" href="../img/logo_whitebg.png">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="../css/generate.css" />
+    <link rel="stylesheet" href="../css/animation.css" />
+    <link rel="icon" type="image/png" href="../img/logo_whitebg.png" />
     <title>Generate | MyUniSched</title>
-</head>
-<body>
+  </head>
+  <body>
     <div class="main_bg"></div>
 
     <nav class="navbar">
-        <a class="nav_logo" href="../index.html">
-            <img src="../img/logo.png" alt="" class="nav_logo_img">
-        </a>
+      <a class="nav_logo" href="../index.html">
+        <img src="../img/logo.png" alt="" class="nav_logo_img" />
+      </a>
 
-        <ul>
-            <li><a href="../index.html">Home</a></li>
-            <li><a href="./generate.html">Generate</a></li>
-            <li><a href="./myEntities.html">My Entities</a></li>
-            <li><a href="./mySchedule.html">My Schedule</a></li>
-        </ul>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="./generate.html">Generate</a></li>
+        <li><a href="./myEntities.html">My Entities</a></li>
+        <li><a href="./mySchedule.html">My Schedule</a></li>
+      </ul>
 
-        <div class="profile_menu">
-            <img src="../img/pfp_icon.png" class="profile_img" alt="">
+      <div class="profile_menu">
+        <img src="../img/pfp_icon.png" class="profile_img" alt="" />
 
-            <div class="dropdown">
-                <a href="#" id="openLogIn">Log In</a>
-                <a href="#" id="openSignUp">Sign up</a>
-            </div>
+        <div class="dropdown">
+          <a href="#" id="openLogIn">Log In</a>
+          <a href="#" id="openSignUp">Sign up</a>
         </div>
+      </div>
     </nav>
 
     <section class="generate">
-        <div class="generate_container">
-            <h1 class="generate_title">Generate Timetable</h1>
-            <p class="generate_description">"Best Timetable. No Hassle"</p>
+      <div class="generate_container">
+        <h1 class="generate_title">Generate Timetable</h1>
+        <p class="generate_description">"Best Timetable. No Hassle"</p>
 
-            <div class="modifier_container">
-                <!-- Constraint Modifiers -->
-                <div class="constraint_section">
-                    <h3 class="constraint_title">Timetable Constraints</h3>
-                    <div class="constraint_controls">
-                        <div class="constraint_item">
-                            <label for="minCoursesPerSlot">Min Courses/Time Slot:</label>
-                            <input type="number" id="minCoursesPerSlot" min="0" max="10" value="0">
-                        </div>
-                        <div class="constraint_item">
-                            <label for="maxCoursesPerSlot">Max Courses/Time Slot:</label>
-                            <input type="number" id="maxCoursesPerSlot" min="1" max="10" value="3">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filter Section -->
-                <div class="filter_section">
-                    <h3 class="filter_title">Filter Timetable</h3>
-                    <div class="filter_controls">
-                        <div class="filter_item">
-                            <label for="filterType">Filter By:</label>
-                            <select id="filterType">
-                                <option value="none">No Filter</option>
-                                <option value="course">Course</option>
-                                <option value="lecturer">Lecturer</option>
-                            </select>
-                        </div>
-                        <div class="filter_item">
-                            <label for="filterValue">Select:</label>
-                            <select id="filterValue" disabled>
-                                <option value="all">All</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+        <div class="modifier_container">
+          <!-- Constraint Modifiers -->
+          <div class="constraint_section">
+            <h3 class="constraint_title">Timetable Constraints</h3>
+            <div class="constraint_controls">
+              <div class="constraint_item">
+                <label for="minCoursesPerSlot">Min Courses/Time Slot:</label>
+                <input
+                  type="number"
+                  id="minCoursesPerSlot"
+                  min="0"
+                  max="10"
+                  value="0"
+                />
+              </div>
+              <div class="constraint_item">
+                <label for="maxCoursesPerSlot">Max Courses/Time Slot:</label>
+                <input
+                  type="number"
+                  id="maxCoursesPerSlot"
+                  min="1"
+                  max="10"
+                  value="3"
+                />
+              </div>
+              <div class="constraint_item">
+                <label for="maxSlotsPerCoursePerDay">
+                  Max Slots Same Course/Day:
+                </label>
+                <input
+                  type="number"
+                  id="maxSlotsPerCoursePerDay"
+                  min="1"
+                  max="10"
+                  value="2"
+                />
+              </div>
             </div>
+          </div>
 
-            <!-- Action Buttons -->
-            <div class="generate_controls">
-                <button class="generate_btn" id="generateBtn">
-                    <span>Generate Timetable</span>
-                </button>
-                <button class="reset_btn" id="resetBtn">
-                    <span>Reset</span>
-                </button>
+          <!-- Filter Section -->
+          <div class="filter_section">
+            <h3 class="filter_title">Filter Timetable</h3>
+            <div class="filter_controls">
+              <div class="filter_item">
+                <label for="filterType">Filter By:</label>
+                <select id="filterType">
+                  <option value="none">No Filter</option>
+                  <option value="course">Programme</option>
+                  <option value="lecturer">Lecturer</option>
+                </select>
+              </div>
+              <div class="filter_item">
+                <label for="filterValue">Select:</label>
+                <select id="filterValue" disabled>
+                  <option value="all">All</option>
+                </select>
+              </div>
             </div>
-
-            <div class="timetable_status" id="timetableStatus"></div>
-
-            <div class="timetable_wrapper">
-                <div class="timetable_container" id="timetableContainer">
-                    <p class="no_timetable">Click "Generate Timetable" to create your schedule</p>
-                </div>
-            </div>
+          </div>
         </div>
+
+        <!-- Action Buttons -->
+        <div class="generate_controls">
+          <button class="generate_btn" id="generateBtn">
+            <span>Generate Timetable</span>
+          </button>
+          <button class="reset_btn" id="resetBtn">
+            <span>Reset</span>
+          </button>
+        </div>
+
+        <div class="timetable_status" id="timetableStatus"></div>
+
+        <div class="timetable_wrapper">
+          <div class="timetable_container" id="timetableContainer">
+            <p class="no_timetable">
+              Click "Generate Timetable" to create your schedule
+            </p>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <footer>  
-        <div class="footer_container">
-            <div class="footer_head">
-                <img src="../img/logo.png" class="nav_logo footer_logo" alt="">
-                <div class="footer_title">MyUniSched.</div>
-            </div>
-            <div class="footer_description d1">Created by Poggers.</div>
-            <div class="footer_description d2">All Rights Reserved.</div>
+    <footer>
+      <div class="footer_container">
+        <div class="footer_head">
+          <img src="../img/logo.png" class="nav_logo footer_logo" alt="" />
+          <div class="footer_title">MyUniSched.</div>
         </div>
+        <div class="footer_description d1">Created by Poggers.</div>
+        <div class="footer_description d2">All Rights Reserved.</div>
+      </div>
     </footer>
 
     <script type="module" src="../js/generate.js"></script>
-</body>
+  </body>
 </html>

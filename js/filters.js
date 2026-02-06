@@ -1,78 +1,84 @@
-import { TIME_SLOTS, DAYS } from './config.js';
+import { TIME_SLOTS, DAYS } from "./config.js";
 
 export function filterTimetable(timetable, filters) {
-    const { filterType, filterValue } = filters;
+  const { filterType, filterValue } = filters;
 
-    if (!filterType || !filterValue || filterValue === 'all') {
-        return timetable;
-    }
+  if (!filterType || !filterValue || filterValue === "all") {
+    return timetable;
+  }
 
-    const filteredTimetable = {};
-    DAYS.forEach(day => {
-        filteredTimetable[day] = {};
-        TIME_SLOTS.forEach(slot => {
-            filteredTimetable[day][slot.id] = [];
-        });
+  const filteredTimetable = {};
+  DAYS.forEach((day) => {
+    filteredTimetable[day] = {};
+    TIME_SLOTS.forEach((slot) => {
+      filteredTimetable[day][slot.id] = [];
     });
+  });
 
-    DAYS.forEach(day => {
-        TIME_SLOTS.forEach(slot => {
-            const courses = timetable[day][slot.id];
-            
-            courses.forEach(course => {
-                let shouldInclude = false;
+  DAYS.forEach((day) => {
+    TIME_SLOTS.forEach((slot) => {
+      const courses = timetable[day][slot.id];
 
-                if (filterType === 'course') {
-                    shouldInclude = course.course_code === filterValue;
-                } else if (filterType === 'lecturer') {
-                    shouldInclude = course.lecturer_id === filterValue || 
-                                   course.lecturer_name === filterValue;
-                }
+      courses.forEach((course) => {
+        let shouldInclude = false;
 
-                if (shouldInclude) {
-                    filteredTimetable[day][slot.id].push(course);
-                }
-            });
-        });
+        if (filterType === "course") {
+          const key = `${course.programme_level}_${course.programme_name}_${course.programme_year}`;
+          shouldInclude = key === filterValue;
+        } else if (filterType === "lecturer") {
+          shouldInclude =
+            course.lecturer_id === filterValue ||
+            course.lecturer_name === filterValue;
+        }
+
+        if (shouldInclude) {
+          filteredTimetable[day][slot.id].push(course);
+        }
+      });
     });
+  });
 
-    return filteredTimetable;
+  return filteredTimetable;
 }
 
 export function getUniqueCourses(timetable) {
-    const courses = new Set();
-    
-    DAYS.forEach(day => {
-        TIME_SLOTS.forEach(slot => {
-            timetable[day][slot.id].forEach(course => {
-                courses.add(JSON.stringify({
-                    code: course.course_code,
-                    name: course.course_name
-                }));
-            });
-        });
-    });
+  const programmes = new Set();
 
-    return Array.from(courses).map(c => JSON.parse(c)).sort((a, b) => 
-        a.code.localeCompare(b.code)
-    );
+  DAYS.forEach((day) => {
+    TIME_SLOTS.forEach((slot) => {
+      timetable[day][slot.id].forEach((course) => {
+        programmes.add(
+          JSON.stringify({
+            id: `${course.programme_level}_${course.programme_name}_${course.programme_year}`,
+            label: `${course.programme_level} in ${course.programme_name} Year ${course.programme_year}`,
+          }),
+        );
+      });
+    });
+  });
+
+  return Array.from(programmes)
+    .map((p) => JSON.parse(p))
+    .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 export function getUniqueLecturers(timetable) {
-    const lecturers = new Set();
-    
-    DAYS.forEach(day => {
-        TIME_SLOTS.forEach(slot => {
-            timetable[day][slot.id].forEach(course => {
-                lecturers.add(JSON.stringify({
-                    id: course.lecturer_id,
-                    name: course.lecturer_name || course.lecturer_id
-                }));
-            });
-        });
-    });
+  const lecturers = new Set();
 
-    return Array.from(lecturers).map(l => JSON.parse(l)).sort((a, b) => 
-        a.name.localeCompare(b.name)
-    );
+  DAYS.forEach((day) => {
+    TIME_SLOTS.forEach((slot) => {
+      timetable[day][slot.id].forEach((course) => {
+        lecturers.add(
+          JSON.stringify({
+            id: course.lecturer_id,
+            name: course.lecturer_name || course.lecturer_id,
+          }),
+        );
+      });
+    });
+  });
+
+  return Array.from(lecturers)
+    .map((l) => JSON.parse(l))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
