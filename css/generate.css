@@ -297,7 +297,6 @@
 .timetable td {
   border: 2px solid rgba(0, 0, 0, 0.2);
   text-align: center;
-  vertical-align: top;
 }
 
 .day_cell {

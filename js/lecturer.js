@@ -1,3 +1,5 @@
+import { API_BASE } from "./config.js";
+
 let isEditMode = false;
 let currentEditLecturerId = null;
 
@@ -16,7 +18,7 @@ export async function addLecturer() {
       if (isEditMode && currentEditLecturerId) {
         // UPDATE existing lecturer
         const editedLecturerId = currentEditLecturerId;
-        res = await fetch(`/api/lecturers/${currentEditLecturerId}`, {
+        res = await fetch(`${API_BASE}/api/lecturers/${currentEditLecturerId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ lecturerName }),
@@ -38,7 +40,7 @@ export async function addLecturer() {
         await displayLecturerDetails(editedLecturerId);
       } else {
         // CREATE new lecturer
-        res = await fetch("/api/lecturers", {
+        res = await fetch(`${API_BASE}/api/lecturers`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ lecturerName }),
@@ -84,7 +86,7 @@ export function editLecturer(lecturerId) {
   currentEditLecturerId = lecturerId;
 
   // Fetch lecturer details and populate form
-  fetch("/api/lecturers")
+  fetch(`${API_BASE}/api/lecturers`)
     .then((res) => res.json())
     .then((data) => {
       const lecturer = data.find((l) => l.lecturer_id === lecturerId);
@@ -116,7 +118,7 @@ export function editLecturer(lecturerId) {
 
 // Load and display lecturers
 export async function loadLecturers() {
-  const res = await fetch("/api/lecturers");
+  const res = await fetch(`${API_BASE}/api/lecturers`);
   const data = await res.json();
 
   const list = document.querySelector(".myLecturer_list");
@@ -164,7 +166,7 @@ export async function loadLecturers() {
 }
 
 async function displayLecturerDetails(lecturerId) {
-  const res = await fetch("/api/lecturers");
+  const res = await fetch(`${API_BASE}/api/lecturers`);
   const data = await res.json();
 
   // Find lecturer using snake_case property name
