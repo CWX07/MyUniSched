@@ -1,5 +1,12 @@
 // Shared configuration for MyUniSched
 
+// Backend API base URL.
+// For local dev, you can leave this as "" and rely on relative paths.
+// For production (GitHub Pages + Render backend), set this in HTML
+// via a global variable if needed, or hard-code your Render URL here.
+export const API_BASE =
+  window.MYUNISCHED_API_BASE || "https://myunisched.onrender.com";
+
 // Time slots configuration (1-hour slots, but courses take 2 hours)
 export const TIME_SLOTS = [
   { id: 1, time: "08:00" },

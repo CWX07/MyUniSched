@@ -1,4 +1,4 @@
-import { getProgrammeColor } from "./config.js";
+import { API_BASE, getProgrammeColor } from "./config.js";
 
 let isEditMode = false;
 let currentEditCourseCode = null;
@@ -34,7 +34,7 @@ export async function addCourse() {
       if (isEditMode && currentEditCourseCode) {
         // UPDATE existing course
         const editedCourseCode = currentEditCourseCode;
-        res = await fetch(`/api/courses/${currentEditCourseCode}`, {
+        res = await fetch(`${API_BASE}/api/courses/${currentEditCourseCode}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseName, lecturerId, programmeId }),
@@ -55,7 +55,7 @@ export async function addCourse() {
         }
       } else {
         // CREATE new course
-        res = await fetch("/api/courses", {
+        res = await fetch(`${API_BASE}/api/courses`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseName, lecturerId, programmeId }),
@@ -107,7 +107,7 @@ export async function editCourse(courseCode) {
 
   // Fetch course details and populate form
   try {
-    const res = await fetch("/api/courses");
+    const res = await fetch(`${API_BASE}/api/courses`);
     const data = await res.json();
     const course = data.find((c) => c.course_code === courseCode);
 
@@ -149,7 +149,7 @@ export async function editCourse(courseCode) {
 // Populate lecturer dropdown
 export async function populateLecturerDropdown() {
   try {
-    const res = await fetch("/api/lecturers");
+    const res = await fetch(`${API_BASE}/api/lecturers`);
     const lecturers = await res.json();
 
     const lecturerList = document.querySelector(".lecturerId_list");
@@ -169,7 +169,7 @@ export async function populateLecturerDropdown() {
 // Populate programme dropdown
 export async function populateProgrammeDropdown() {
   try {
-    const res = await fetch("/api/programmes");
+    const res = await fetch(`${API_BASE}/api/programmes`);
     const programmes = await res.json();
 
     const programmeList = document.querySelector(".programmeName_list");
@@ -188,7 +188,7 @@ export async function populateProgrammeDropdown() {
 
 // Load and display courses
 export async function loadCourses() {
-  const res = await fetch("/api/courses");
+  const res = await fetch(`${API_BASE}/api/courses`);
   const data = await res.json();
 
   const list = document.querySelector(".myCourse_list");
@@ -265,7 +265,7 @@ export async function loadCourses() {
 }
 
 async function displayCourseDetails(courseId) {
-  const res = await fetch("/api/courses");
+  const res = await fetch(`${API_BASE}/api/courses`);
   const data = await res.json();
 
   const course = data.find((c) => c.course_code === courseId);
