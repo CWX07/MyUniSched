@@ -47,19 +47,38 @@ export function getUniqueCourses(timetable) {
   DAYS.forEach((day) => {
     TIME_SLOTS.forEach((slot) => {
       timetable[day][slot.id].forEach((course) => {
+        const programme_level = course.programme_level;
+        const programme_name = course.programme_name;
+        const programme_year = course.programme_year;
+
         programmes.add(
           JSON.stringify({
-            id: `${course.programme_level}_${course.programme_name}_${course.programme_year}`,
-            label: `${course.programme_level} in ${course.programme_name} Year ${course.programme_year}`,
+            id: `${programme_level}_${programme_name}_${programme_year}`,
+            label: `${programme_level} in ${programme_name} Year ${programme_year}`,
+            programme_level,
+            programme_name,
+            programme_year,
           }),
         );
       });
     });
   });
 
+  const levelOrder = ["Foundation", "Diploma", "Degree", "Master", "PhD"];
+
   return Array.from(programmes)
     .map((p) => JSON.parse(p))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    .sort((a, b) => {
+      const levelDiff =
+        levelOrder.indexOf(a.programme_level) -
+        levelOrder.indexOf(b.programme_level);
+      if (levelDiff !== 0) return levelDiff;
+
+      const nameDiff = a.programme_name.localeCompare(b.programme_name);
+      if (nameDiff !== 0) return nameDiff;
+
+      return Number(a.programme_year) - Number(b.programme_year);
+    });
 }
 
 export function getUniqueLecturers(timetable) {

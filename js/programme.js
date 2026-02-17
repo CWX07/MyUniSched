@@ -6,6 +6,41 @@ let currentEditProgrammeId = null;
 export async function addProgramme() {
   // Add programme details through modal form
   const form = document.querySelector(".addProgramme_modal_content_form");
+  const deleteBtn = document.querySelector(".deleteProgramme_btn");
+
+  if (deleteBtn) {
+    deleteBtn.style.display = "none";
+
+    deleteBtn.addEventListener("click", async () => {
+      if (!isEditMode || !currentEditProgrammeId) return;
+
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this programme?",
+      );
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(`/api/programmes/${currentEditProgrammeId}`, {
+          method: "DELETE",
+        });
+        const result = await res.json();
+
+        if (!res.ok) {
+          alert(result.error || "Failed to delete programme");
+          return;
+        }
+
+        alert("Programme deleted successfully");
+        resetProgrammeForm();
+        const modal = document.querySelector(".addProgramme_modal");
+        const { closeModal } = await import("./addEntities.js");
+        closeModal(modal);
+        await loadProgrammes();
+      } catch (err) {
+        alert("Error deleting programme");
+      }
+    });
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -100,6 +135,11 @@ function resetProgrammeForm() {
 
   const submitBtn = document.querySelector(".addProgramme_submit_btn");
   submitBtn.textContent = "Add Programme";
+
+  const deleteBtn = document.querySelector(".deleteProgramme_btn");
+  if (deleteBtn) {
+    deleteBtn.style.display = "none";
+  }
 }
 
 export function editProgramme(programmeId) {
@@ -121,6 +161,11 @@ export function editProgramme(programmeId) {
 
         const submitBtn = document.querySelector(".addProgramme_submit_btn");
         submitBtn.textContent = "Update Programme";
+
+        const deleteBtn = document.querySelector(".deleteProgramme_btn");
+        if (deleteBtn) {
+          deleteBtn.style.display = "inline-flex";
+        }
 
         // Populate form fields
         document.getElementById("programmeName_input").value =

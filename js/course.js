@@ -6,6 +6,42 @@ let currentEditCourseCode = null;
 export async function addCourse() {
   // Add course details through modal form
   const form = document.querySelector(".addCourse_modal_content_form");
+  const deleteBtn = document.querySelector(".deleteCourse_btn");
+
+  if (deleteBtn) {
+    deleteBtn.style.display = "none";
+
+    deleteBtn.addEventListener("click", async () => {
+      if (!isEditMode || !currentEditCourseCode) return;
+
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this course?",
+      );
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/courses/${currentEditCourseCode}`,
+          { method: "DELETE" },
+        );
+        const result = await res.json();
+
+        if (!res.ok) {
+          alert(result.error || "Failed to delete course");
+          return;
+        }
+
+        alert("Course deleted successfully");
+        resetCourseForm();
+        const modal = document.querySelector(".addCourse_modal");
+        const { closeModal } = await import("./addEntities.js");
+        closeModal(modal);
+        await loadCourses();
+      } catch (err) {
+        alert("Error deleting course");
+      }
+    });
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -99,6 +135,11 @@ function resetCourseForm() {
 
   const submitBtn = document.querySelector(".addCourse_submit_btn");
   submitBtn.textContent = "Add Course";
+
+  const deleteBtn = document.querySelector(".deleteCourse_btn");
+  if (deleteBtn) {
+    deleteBtn.style.display = "none";
+  }
 }
 
 export async function editCourse(courseCode) {
@@ -118,6 +159,11 @@ export async function editCourse(courseCode) {
 
       const submitBtn = document.querySelector(".addCourse_submit_btn");
       submitBtn.textContent = "Update Course";
+
+      const deleteBtn = document.querySelector(".deleteCourse_btn");
+      if (deleteBtn) {
+        deleteBtn.style.display = "inline-flex";
+      }
 
       // Populate form fields
       document.getElementById("courseName").value = course.course_name;

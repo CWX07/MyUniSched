@@ -6,6 +6,43 @@ let currentEditLecturerId = null;
 export async function addLecturer() {
   // Add lecturer details through modal form
   const form = document.querySelector(".addLecturer_modal_content_form");
+  const deleteBtn = document.querySelector(".deleteLecturer_btn");
+
+  if (deleteBtn) {
+    // Hidden by default; only shown in edit mode
+    deleteBtn.style.display = "none";
+
+    deleteBtn.addEventListener("click", async () => {
+      if (!isEditMode || !currentEditLecturerId) return;
+
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this lecturer?",
+      );
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/lecturers/${currentEditLecturerId}`,
+          { method: "DELETE" },
+        );
+        const result = await res.json();
+
+        if (!res.ok) {
+          alert(result.error || "Failed to delete lecturer");
+          return;
+        }
+
+        alert("Lecturer deleted successfully");
+        resetLecturerForm();
+        const modal = document.querySelector(".addLecturer_modal");
+        const { closeModal } = await import("./addEntities.js");
+        closeModal(modal);
+        await loadLecturers();
+      } catch (err) {
+        alert("Error deleting lecturer");
+      }
+    });
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -79,6 +116,11 @@ function resetLecturerForm() {
 
   const submitBtn = document.querySelector(".addLecturer_submit_btn");
   submitBtn.textContent = "Add Lecturer";
+
+  const deleteBtn = document.querySelector(".deleteLecturer_btn");
+  if (deleteBtn) {
+    deleteBtn.style.display = "none";
+  }
 }
 
 export function editLecturer(lecturerId) {
@@ -100,6 +142,11 @@ export function editLecturer(lecturerId) {
 
         const submitBtn = document.querySelector(".addLecturer_submit_btn");
         submitBtn.textContent = "Update Lecturer";
+
+        const deleteBtn = document.querySelector(".deleteLecturer_btn");
+        if (deleteBtn) {
+          deleteBtn.style.display = "inline-flex";
+        }
 
         // Populate form fields
         document.getElementById("lecturerName").value = lecturer.lecturer_name;

@@ -192,9 +192,10 @@ function createLegend(timetable) {
   // Get unique programme-level+name+year combos
   const programmes = getUniqueProgrammes(timetable);
 
-  // Sort programmes to match My Entities ordering:
-  // level -> programme name -> year
+  // Sort programmes similar to My Entities:
+  // level -> programme name -> year (ascending)
   const levelOrder = ["Foundation", "Diploma", "Degree", "Master", "PhD"];
+
   programmes
     .slice()
     .sort((a, b) => {
@@ -206,6 +207,7 @@ function createLegend(timetable) {
       const nameDiff = a.programme_name.localeCompare(b.programme_name);
       if (nameDiff !== 0) return nameDiff;
 
+      // Ensure numeric ascending order for year
       return Number(a.programme_year) - Number(b.programme_year);
     })
     .forEach((programme) => {
