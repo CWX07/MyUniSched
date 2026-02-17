@@ -56,6 +56,7 @@ export const DEFAULT_COLORS = [
 
 // Shared color mapping - single source of truth for consistent colors
 const programmeColorMap = new Map();
+const usedProgrammeColors = new Set();
 
 /**
  * Get consistent color for a programme across the entire application
@@ -68,8 +69,31 @@ export function getProgrammeColor(programme_level, programme_name, programme_yea
   const key = `${programme_level}_${programme_name}_${programme_year}`;
 
   if (!programmeColorMap.has(key)) {
-    const index = programmeColorMap.size % DEFAULT_COLORS.length;
-    programmeColorMap.set(key, DEFAULT_COLORS[index]);
+    // Deterministic index based on the key so that the same
+    // programme+year always maps to the same color across
+    // different pages / reloads, regardless of call order.
+    let hash = 0;
+    for (let i = 0; i < key.length; i += 1) {
+      hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+    }
+    const baseIndex = hash % DEFAULT_COLORS.length;
+
+    // Try to find a color that is not yet used by another programme,
+    // starting from the hashed index and wrapping around.
+    let chosenColor = DEFAULT_COLORS[baseIndex];
+    if (usedProgrammeColors.has(chosenColor)) {
+      for (let offset = 1; offset < DEFAULT_COLORS.length; offset += 1) {
+        const idx = (baseIndex + offset) % DEFAULT_COLORS.length;
+        const candidate = DEFAULT_COLORS[idx];
+        if (!usedProgrammeColors.has(candidate)) {
+          chosenColor = candidate;
+          break;
+        }
+      }
+    }
+
+    programmeColorMap.set(key, chosenColor);
+    usedProgrammeColors.add(chosenColor);
   }
 
   return programmeColorMap.get(key);
@@ -80,4 +104,5 @@ export function getProgrammeColor(programme_level, programme_name, programme_yea
  */
 export function resetProgrammeColors() {
   programmeColorMap.clear();
+  usedProgrammeColors.clear();
 }

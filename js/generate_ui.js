@@ -192,7 +192,25 @@ function createLegend(timetable) {
   // Get unique programme-level+name+year combos
   const programmes = getUniqueProgrammes(timetable);
 
-  programmes.forEach((programme) => {
+  // Sort programmes similar to My Entities:
+  // level -> programme name -> year (ascending)
+  const levelOrder = ["Foundation", "Diploma", "Degree", "Master", "PhD"];
+
+  programmes
+    .slice()
+    .sort((a, b) => {
+      const levelDiff =
+        levelOrder.indexOf(a.programme_level) -
+        levelOrder.indexOf(b.programme_level);
+      if (levelDiff !== 0) return levelDiff;
+
+      const nameDiff = a.programme_name.localeCompare(b.programme_name);
+      if (nameDiff !== 0) return nameDiff;
+
+      // Ensure numeric ascending order for year
+      return Number(a.programme_year) - Number(b.programme_year);
+    })
+    .forEach((programme) => {
     const item = document.createElement("div");
     item.className = "legend_item";
 

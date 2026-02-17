@@ -148,8 +148,8 @@ function displayDetails_default() {
 
   const myEntities_desc = document.createElement("p");
   myEntities_desc.classList.add("myEntities_noDetails_desc");
-  myEntities_desc.textContent =
-    '"Click on any course/lecturer/programme to view details"';
+  myEntities_desc.innerHTML =
+    '"Click on any course/lecturer/programme<br>to view details"';
 
   container.appendChild(myEntities_desc);
 }

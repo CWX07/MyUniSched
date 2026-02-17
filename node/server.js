@@ -100,6 +100,26 @@ app.put("/api/lecturers/:id", async (req, res) => {
   }
 });
 
+// DELETE -- Remove Lecturer
+app.delete("/api/lecturers/:id", async (req, res) => {
+  const lecturerId = req.params.id;
+
+  try {
+    const docRef = lecturersCol.doc(lecturerId);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      return res.status(404).json({ error: "Lecturer not found" });
+    }
+
+    await docRef.delete();
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 // ==================== PROGRAMMES ====================
 
 // GET -- Programmes
@@ -163,6 +183,26 @@ app.put("/api/programmes/:id", async (req, res) => {
       programme_year: programmeYear,
     });
 
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// DELETE -- Remove Programme
+app.delete("/api/programmes/:id", async (req, res) => {
+  const programmeId = req.params.id;
+
+  try {
+    const docRef = programmesCol.doc(programmeId);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      return res.status(404).json({ error: "Programme not found" });
+    }
+
+    await docRef.delete();
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -312,6 +352,26 @@ app.put("/api/courses/:id", async (req, res) => {
   }
 });
 
+// DELETE -- Remove Course
+app.delete("/api/courses/:id", async (req, res) => {
+  const courseCode = req.params.id;
+
+  try {
+    const docRef = coursesCol.doc(courseCode);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    await docRef.delete();
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../index.html"));
 });
@@ -330,5 +390,3 @@ app.listen(PORT, () => {
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
-
-
