@@ -330,7 +330,7 @@ input:focus {
 }
 
 .submit_btn {
-  width: 40%;
+  width: 45%;
   height: 40px;
 
   display: flex;
@@ -348,7 +348,6 @@ input:focus {
   border-radius: 20px;
 
   cursor: pointer;
-  margin-top: 20px;
 
   transition:
     all 0.3s ease-in-out,

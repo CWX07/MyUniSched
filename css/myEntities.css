@@ -221,9 +221,9 @@
 .programmeName_list li:hover,
 .programmeLevel_list li:hover,
 .lecturerId_list li:hover {
-  background: linear-gradient(to bottom, rgb(30, 30, 30), rgb(60, 60, 60));
-  color: #fff;
-  border-radius: 5px;
+  background-color: #f5f6fa;
+  color: #2d3436;
+  border-radius: 4px;
 }
 
 .addLecturer_modal_content {
@@ -232,6 +232,32 @@
 
 .addProgramme_modal_content {
   min-height: 450px;
+}
+
+.modal_actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.delete_btn {
+  background: #e84118 !important;
+  color: #ffffff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+.delete_btn:hover {
+  background: #e84118 !important;
+  transform: none;
+  filter: drop-shadow(0 0 4px rgb(255, 0, 0));
 }
 
 .myEntities_container {
@@ -373,10 +399,6 @@
   transition: all 0.3s ease-in-out;
 }
 
-.myEntities_details p {
-  font-size: 14px;
-}
-
 .myEntities_details {
   max-height: 60vh;
 
@@ -385,6 +407,9 @@
   justify-content: center;
   align-items: flex-start;
   gap: 10px;
+
+  font-size: 14px;
+  text-align: center;
 
   padding: 20px 30px;
   overflow-y: auto;
