@@ -47,6 +47,8 @@ export async function addCourse() {
     e.preventDefault();
 
     const courseName = document.getElementById("courseName").value;
+    const durationElement = document.getElementById("courseDuration");
+    const durationHours = Number(durationElement.dataset.value || "2") || 2;
 
     const lecturerElement = document.getElementById("lecturerId_course");
     const lecturerId = lecturerElement.dataset.value;
@@ -64,6 +66,15 @@ export async function addCourse() {
       return;
     }
 
+    // Debug: log payload before sending
+    console.log("[Add/Update Course] Payload:", {
+      mode: isEditMode ? "edit" : "add",
+      courseName,
+      lecturerId,
+      programmeId,
+      durationHours,
+    });
+
     try {
       let res, result;
 
@@ -73,7 +84,12 @@ export async function addCourse() {
         res = await fetch(`${API_BASE}/api/courses/${currentEditCourseCode}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ courseName, lecturerId, programmeId }),
+          body: JSON.stringify({
+            courseName,
+            lecturerId,
+            programmeId,
+            durationHours,
+          }),
         });
 
         result = await res.json();
@@ -94,7 +110,12 @@ export async function addCourse() {
         res = await fetch(`${API_BASE}/api/courses`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ courseName, lecturerId, programmeId }),
+          body: JSON.stringify({
+            courseName,
+            lecturerId,
+            programmeId,
+            durationHours,
+          }),
         });
 
         result = await res.json();
@@ -113,7 +134,7 @@ export async function addCourse() {
   });
 }
 
-function resetCourseForm() {
+export function resetCourseForm() {
   const form = document.querySelector(".addCourse_modal_content_form");
   form.reset();
 
@@ -124,6 +145,12 @@ function resetCourseForm() {
   const programmeElement = document.getElementById("programmeName");
   programmeElement.textContent = "Select programme";
   delete programmeElement.dataset.value;
+
+  const durationElement = document.getElementById("courseDuration");
+  if (durationElement) {
+    durationElement.textContent = "2 hours";
+    durationElement.dataset.value = "2";
+  }
 
   // Reset to add mode
   isEditMode = false;
@@ -167,6 +194,14 @@ export async function editCourse(courseCode) {
 
       // Populate form fields
       document.getElementById("courseName").value = course.course_name;
+
+      const durationElement = document.getElementById("courseDuration");
+      if (durationElement) {
+        const dur = String(course.duration_hours || 2);
+        durationElement.dataset.value = dur;
+        durationElement.textContent =
+          dur === "1" ? "1 hour" : `${dur} hours`;
+      }
 
       // Set lecturer dropdown
       const lecturerElement = document.getElementById("lecturerId_course");
@@ -372,15 +407,23 @@ async function displayCourseDetails(courseId) {
     return wrapper;
   }
 
-  // Use snake_case property names from API response
+  // Display only the key details
   container.appendChild(createDetail("Course Code", course.course_code));
   container.appendChild(createDetail("Course Name", course.course_name));
-  container.appendChild(createDetail("Lecturer ID", course.lecturer_id));
-  container.appendChild(createDetail("Lecturer Name", course.lecturer_name));
-  container.appendChild(createDetail("Programme ID", course.programme_id));
-  container.appendChild(createDetail("Programme Name", course.programme_name));
-  container.appendChild(
-    createDetail("Programme Level", course.programme_level),
-  );
-  container.appendChild(createDetail("Programme Year", course.programme_year));
+
+  const durationHours = course.duration_hours || 2;
+  const durationLabel = durationHours === 1 ? "1 hour" : `${durationHours} hours`;
+  container.appendChild(createDetail("Duration", durationLabel));
+
+  const lecturerLabel =
+    course.lecturer_name && course.lecturer_id
+      ? `${course.lecturer_id} - ${course.lecturer_name}`
+      : course.lecturer_name || course.lecturer_id || "N/A";
+  container.appendChild(createDetail("Lecturer", lecturerLabel));
+
+  const programmeLabel =
+    course.programme_level && course.programme_name && course.programme_year
+      ? `${course.programme_level} in ${course.programme_name} Year ${course.programme_year}`
+      : course.programme_name || course.programme_id || "N/A";
+  container.appendChild(createDetail("Programme", programmeLabel));
 }

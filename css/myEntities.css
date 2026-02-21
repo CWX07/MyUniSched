@@ -116,6 +116,7 @@
 
 .courseCode,
 .courseName,
+.courseDuration,
 .lecturerId,
 .programmeName,
 .lecturerName,
@@ -127,6 +128,89 @@
   flex-direction: column;
   justify-content: center;
   gap: 15px;
+}
+
+.courseDuration_label {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.courseDuration_container {
+  position: relative;
+  width: 100%;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.courseDuration_selected {
+  width: 100%;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+.courseDuration_container::after {
+  content: "▾";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #000000;
+  pointer-events: none;
+}
+
+.courseDuration_list {
+  list-style: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 0;
+
+  background: #fff;
+
+  border-radius: 8px;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+
+  margin: 5px 0 0 0;
+  padding: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+  opacity: 0;
+  z-index: 100;
+
+  transition:
+    max-height 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.courseDuration_list.active {
+  max-height: 200px;
+  opacity: 1;
+}
+
+.courseDuration_list li {
+  font-weight: 550;
+  padding: 10px 15px;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.courseDuration_list li:hover {
+  background-color: #f5f6fa;
+  color: #2d3436;
+  border-radius: 4px;
 }
 
 .programmeInfo {
@@ -421,10 +505,6 @@
   margin: 20px;
   margin-top: 10px;
   padding: 5px 15px;
-}
-
-.myEntities_details.course_details {
-  justify-content: flex-start;
 }
 
 .myEntities_noDetails_title,

@@ -64,16 +64,18 @@ export function generateSchedule(courses, constraints = {}) {
   for (const course of allCourses) {
     let assigned = false;
 
+    const durationSlots = Number(course.duration_hours) || COURSE_DURATION;
+
     // Try each possible (day, start-slot) in global preferred order
     for (const { day, startSlotId } of daySlotOrder) {
+      const startIndex = TIME_SLOTS.findIndex((s) => s.id === startSlotId);
+      if (startIndex === -1) continue;
+
+      const endIndex = startIndex + durationSlots - 1;
+      if (endIndex >= TIME_SLOTS.length) continue;
+
       const startSlot = TIME_SLOTS.find((s) => s.id === startSlotId);
-      const nextSlotIndex =
-        TIME_SLOTS.findIndex((s) => s.id === startSlotId) + 1;
-
-      // Safety check: need a following slot to make a 2-hour block
-      if (nextSlotIndex >= TIME_SLOTS.length) continue;
-
-      const endSlot = TIME_SLOTS[nextSlotIndex];
+      const endSlot = TIME_SLOTS[endIndex];
 
       // Check if adding this course would exceed max courses per slot
       const currentSlotCourses = timetable[day][startSlot.id].length;
@@ -98,7 +100,7 @@ export function generateSchedule(courses, constraints = {}) {
           course,
           day,
           startSlot.id,
-          endSlot.id,
+          durationSlots,
           lecturerSchedule,
           lecturerBlocks,
           programmeYearSchedule,
@@ -109,7 +111,7 @@ export function generateSchedule(courses, constraints = {}) {
           ...course,
           startSlot: startSlot.id,
           endSlot: endSlot.id,
-          timeRange: `${startSlot.time} - ${getEndTime(endSlot.id)}`,
+          timeRange: `${startSlot.time} - ${getEndTimeWithDuration(startSlot.id, durationSlots)}`,
         });
 
         // Update schedules
@@ -117,7 +119,7 @@ export function generateSchedule(courses, constraints = {}) {
           course,
           day,
           startSlot.id,
-          endSlot.id,
+          durationSlots,
           lecturerSchedule,
           lecturerBlocks,
           programmeYearSchedule,
@@ -195,20 +197,21 @@ function canAssignCourse(
   course,
   day,
   startSlotId,
-  endSlotId,
+  durationSlots,
   lecturerSchedule,
   lecturerBlocks,
   programmeYearSchedule,
 ) {
   const programmeYearKey = `${course.programme_name}_${course.course_year}`;
 
+  const endSlotId = startSlotId + durationSlots - 1;
+
   // Check lecturer availability for both slots
   if (lecturerSchedule[course.lecturer_id]) {
-    if (
-      lecturerSchedule[course.lecturer_id].has(`${day}_${startSlotId}`) ||
-      lecturerSchedule[course.lecturer_id].has(`${day}_${endSlotId}`)
-    ) {
-      return false;
+    for (let slotId = startSlotId; slotId <= endSlotId; slotId += 1) {
+      if (lecturerSchedule[course.lecturer_id].has(`${day}_${slotId}`)) {
+        return false;
+      }
     }
   }
 
@@ -230,11 +233,10 @@ function canAssignCourse(
 
   // Check programme-year conflict for both slots
   if (programmeYearSchedule[programmeYearKey]) {
-    if (
-      programmeYearSchedule[programmeYearKey].has(`${day}_${startSlotId}`) ||
-      programmeYearSchedule[programmeYearKey].has(`${day}_${endSlotId}`)
-    ) {
-      return false;
+    for (let slotId = startSlotId; slotId <= endSlotId; slotId += 1) {
+      if (programmeYearSchedule[programmeYearKey].has(`${day}_${slotId}`)) {
+        return false;
+      }
     }
   }
 
@@ -300,7 +302,7 @@ function updateSchedules(
   course,
   day,
   startSlotId,
-  endSlotId,
+  durationSlots,
   lecturerSchedule,
   lecturerBlocks,
   programmeYearSchedule,
@@ -308,12 +310,15 @@ function updateSchedules(
 ) {
   const programmeYearKey = `${course.programme_name}_${course.course_year}`;
 
+  const endSlotId = startSlotId + durationSlots - 1;
+
   // Update lecturer schedule
   if (!lecturerSchedule[course.lecturer_id]) {
     lecturerSchedule[course.lecturer_id] = new Set();
   }
-  lecturerSchedule[course.lecturer_id].add(`${day}_${startSlotId}`);
-  lecturerSchedule[course.lecturer_id].add(`${day}_${endSlotId}`);
+  for (let slotId = startSlotId; slotId <= endSlotId; slotId += 1) {
+    lecturerSchedule[course.lecturer_id].add(`${day}_${slotId}`);
+  }
 
   // Update lecturer blocks (start/end) for gap rules
   if (!lecturerBlocks[course.lecturer_id]) {
@@ -331,8 +336,9 @@ function updateSchedules(
   if (!programmeYearSchedule[programmeYearKey]) {
     programmeYearSchedule[programmeYearKey] = new Set();
   }
-  programmeYearSchedule[programmeYearKey].add(`${day}_${startSlotId}`);
-  programmeYearSchedule[programmeYearKey].add(`${day}_${endSlotId}`);
+  for (let slotId = startSlotId; slotId <= endSlotId; slotId += 1) {
+    programmeYearSchedule[programmeYearKey].add(`${day}_${slotId}`);
+  }
 
   // Update per-programme-per-day usage (count slots used)
   const programmeDayKey = `${course.programme_level}_${course.programme_name}_${course.programme_year}_${day}`;
@@ -358,9 +364,17 @@ function canAssignSlotsForProgrammeDay(
 }
 
 function getEndTime(slotId) {
-  const nextSlotIndex = TIME_SLOTS.findIndex((slot) => slot.id === slotId) + 1;
-  if (nextSlotIndex < TIME_SLOTS.length) {
-    return TIME_SLOTS[nextSlotIndex].time;
+  return getEndTimeWithDuration(slotId, COURSE_DURATION);
+}
+
+function getEndTimeWithDuration(slotId, durationSlots) {
+  const startIndex = TIME_SLOTS.findIndex((slot) => slot.id === slotId);
+  if (startIndex === -1) {
+    return "18:00";
+  }
+  const endIndex = startIndex + durationSlots;
+  if (endIndex < TIME_SLOTS.length) {
+    return TIME_SLOTS[endIndex].time;
   }
   return "18:00";
 }

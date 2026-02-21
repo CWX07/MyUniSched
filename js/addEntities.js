@@ -3,6 +3,7 @@ import {
   loadCourses,
   populateLecturerDropdown,
   populateProgrammeDropdown,
+  resetCourseForm,
 } from "./course.js";
 
 import { addLecturer, loadLecturers } from "./lecturer.js";
@@ -22,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
   toggleProgrammeLevelDropdown();
   toggleLecturerDropdown();
   toggleCourseProgrammeDropdown();
+  toggleCourseDurationDropdown();
 });
 
 function toggleAddEntitiesModal() {
@@ -38,6 +40,9 @@ function toggleAddEntitiesModal() {
   const addProgrammeCloseBtn = document.querySelector(".addProgramme_close");
 
   addCourseBtn.addEventListener("click", async () => {
+    // Reset course form to "add" mode before opening
+    resetCourseForm();
+
     // Populate dropdowns when opening course modal
     await populateLecturerDropdown();
     await populateProgrammeDropdown();
@@ -264,6 +269,41 @@ function toggleCourseProgrammeDropdown() {
     if (!programmeNameContainer.contains(e.target)) {
       programmeNameList.classList.remove("active");
       programmeNameSelected.style.borderColor = "rgba(0,0,0,0.2)";
+    }
+  });
+}
+
+// Course Duration Dropdown (in addCourse modal)
+function toggleCourseDurationDropdown() {
+  const durationContainer = document.querySelector(".courseDuration_container");
+  if (!durationContainer) return;
+
+  const durationSelected = durationContainer.querySelector(
+    ".courseDuration_selected",
+  );
+  const durationList = durationContainer.querySelector(".courseDuration_list");
+
+  durationSelected.addEventListener("click", () => {
+    const isActive = durationList.classList.toggle("active");
+    durationSelected.style.borderColor = isActive
+      ? "#000"
+      : "rgba(0,0,0,0.2)";
+    durationSelected.style.outline = "none";
+  });
+
+  durationList.addEventListener("click", (e) => {
+    if (e.target.tagName === "LI") {
+      durationSelected.textContent = e.target.textContent;
+      durationSelected.dataset.value = e.target.dataset.value;
+      durationList.classList.remove("active");
+      durationSelected.style.borderColor = "rgba(0,0,0,0.2)";
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!durationContainer.contains(e.target)) {
+      durationList.classList.remove("active");
+      durationSelected.style.borderColor = "rgba(0,0,0,0.2)";
     }
   });
 }

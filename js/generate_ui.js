@@ -17,6 +17,51 @@ export function displayTimetable(timetable) {
 
   // Add legend and statistics
   addLegendAndStats(container, timetable);
+
+  // After DOM is rendered, position bars using real pixel widths of header cells
+  requestAnimationFrame(() => positionGanttBars(table));
+}
+
+function positionGanttBars(table) {
+  // Gather the pixel left offset and width of each time-slot header cell.
+  // The header row has: [day_header, time_header_0, time_header_1, ...]
+  const headerCells = table.querySelectorAll("thead th");
+  if (headerCells.length < 2) return;
+
+  const laneCell = table.querySelector(".schedule_lane_cell");
+  if (!laneCell) return;
+  const laneLeft = laneCell.getBoundingClientRect().left;
+
+  // Build a lookup: slotIndex -> { left (px relative to lane), width (px) }
+  const slotRects = [];
+  // headerCells[0] is the day header; the rest are time slots
+  for (let i = 1; i < headerCells.length; i++) {
+    const rect = headerCells[i].getBoundingClientRect();
+    slotRects.push({
+      left: rect.left - laneLeft,
+      width: rect.width,
+    });
+  }
+
+  // Now position every course_bar using its data attributes
+  const bars = table.querySelectorAll(".course_bar");
+  bars.forEach((bar) => {
+    const startIndex = parseInt(bar.dataset.startIndex, 10);
+    const durationSlots = parseInt(bar.dataset.durationSlots, 10);
+
+    if (isNaN(startIndex) || isNaN(durationSlots)) return;
+
+    const startRect = slotRects[startIndex];
+    if (!startRect) return;
+
+    // Width spans from left edge of start slot to right edge of last slot
+    const endIndex = Math.min(startIndex + durationSlots - 1, slotRects.length - 1);
+    const endRect = slotRects[endIndex];
+    const totalWidth = (endRect.left + endRect.width) - startRect.left;
+
+    bar.style.left = `${startRect.left + 4}px`;   // 4px inset
+    bar.style.width = `${totalWidth - 8}px`;       // 8px total inset (left+right)
+  });
 }
 
 function createTimetableTable(timetable) {
@@ -74,63 +119,104 @@ function createDayRow(day, timetable) {
   dayCell.textContent = day;
   row.appendChild(dayCell);
 
-  // Track which columns have been consumed by colspan
-  const renderedSlots = new Set();
+  // Single lane cell spanning all time columns (Gantt-style)
+  const laneCell = document.createElement("td");
+  laneCell.className = "schedule_lane_cell";
+  laneCell.colSpan = TIME_SLOTS.length;
 
+  const lane = document.createElement("div");
+  lane.className = "timetable_lane";
+
+  // Collect all unique courses for this day (scheduler stores by start slot)
+  const coursesMap = new Map();
   TIME_SLOTS.forEach((slot) => {
-    if (renderedSlots.has(slot.id)) return;
-
-    const coursesInSlot = timetable[day][slot.id];
-
-    if (coursesInSlot && coursesInSlot.length > 0) {
-      const cell = createOccupiedCell(coursesInSlot, slot.id, renderedSlots);
-      row.appendChild(cell);
-    } else {
-      const cell = createEmptyCell();
-      row.appendChild(cell);
-    }
+    const list = timetable[day][slot.id] || [];
+    list.forEach((course) => {
+      if (!coursesMap.has(course.course_code)) {
+        coursesMap.set(course.course_code, course);
+      }
+    });
   });
+
+  const courses = Array.from(coursesMap.values());
+  const bars = buildCourseBarsForDay(courses);
+
+  // Group bars by laneIndex so each stacking level gets its own flex row.
+  // This avoids any hardcoded top/height — the row's natural height drives
+  // the lane height, and course blocks use align-self: stretch inside it.
+  const laneRows = new Map();
+  bars.forEach((bar) => {
+    if (!laneRows.has(bar.laneIndex)) {
+      const row = document.createElement("div");
+      row.className = "timetable_lane_row";
+      laneRows.set(bar.laneIndex, row);
+    }
+    const courseBlock = createCourseBlock(bar.course);
+    courseBlock.classList.add("course_bar");
+    courseBlock.dataset.startIndex = bar.startIndex;
+    courseBlock.dataset.durationSlots = bar.durationSlots;
+    laneRows.get(bar.laneIndex).appendChild(courseBlock);
+  });
+
+  // Append rows in order
+  [...laneRows.keys()].sort((a, b) => a - b).forEach((idx) => {
+    lane.appendChild(laneRows.get(idx));
+  });
+
+  laneCell.appendChild(lane);
+  row.appendChild(laneCell);
 
   return row;
 }
 
-function createOccupiedCell(coursesInSlot, slotId, renderedSlots) {
-  const cell = document.createElement("td");
-  cell.className = "schedule_cell occupied";
-  cell.colSpan = COURSE_DURATION;
+function buildCourseBarsForDay(courses) {
+  const bars = [];
 
-  // Reserve both columns this course block spans
-  renderedSlots.add(slotId);
-  renderedSlots.add(slotId + 1);
+  // Each segment is between visible time labels
+  const segments = TIME_SLOTS.length - 1 || 1;
 
-  // Add count badge if multiple courses
-  if (coursesInSlot.length > 1) {
-    const countBadge = document.createElement("div");
-    countBadge.className = "course_count_badge";
-    countBadge.textContent = `${coursesInSlot.length} courses`;
-    cell.appendChild(countBadge);
-  }
+  const rawBars = courses
+    .map((course) => {
+      const startId = course.startSlot;
+      const endId = course.endSlot;
+      const startIndex = TIME_SLOTS.findIndex((s) => s.id === startId);
+      let durationSlots = 2;
 
-  // Render each course
-  coursesInSlot.forEach((course, index) => {
-    const courseBlock = createCourseBlock(course);
-    cell.appendChild(courseBlock);
+      if (
+        typeof startId === "number" &&
+        typeof endId === "number" &&
+        startIndex !== -1
+      ) {
+        durationSlots = endId - startId + 1;
+      } else if (course.duration_hours) {
+        durationSlots = Number(course.duration_hours) || 2;
+      }
 
-    // Separator between courses
-    if (index < coursesInSlot.length - 1) {
-      const separator = document.createElement("div");
-      separator.className = "course_separator";
-      cell.appendChild(separator);
-    }
-  });
+      if (startIndex === -1) return null;
 
-  return cell;
-}
+      return {
+        course,
+        startIndex,
+        endIndex: startIndex + durationSlots - 1,
+        durationSlots,
+      };
+    })
+    .filter(Boolean);
 
-function createEmptyCell() {
-  const cell = document.createElement("td");
-  cell.className = "schedule_cell empty";
-  return cell;
+  // Simple greedy lane assignment to avoid vertical overlap
+  const laneEnds = [];
+  rawBars
+    .sort((a, b) => a.startIndex - b.startIndex)
+    .forEach((bar) => {
+      let laneIndex = 0;
+      while (laneIndex < laneEnds.length && laneEnds[laneIndex] >= bar.startIndex) {
+        laneIndex += 1;
+      }
+      laneEnds[laneIndex] = bar.endIndex;
+      bars.push({ ...bar, laneIndex });
+    });
+
+  return bars;
 }
 
 function createCourseBlock(course) {
@@ -145,10 +231,6 @@ function createCourseBlock(course) {
       className: "lecturer_name",
       text: course.lecturer_name || course.lecturer_id,
     },
-    {
-      className: "programme_info",
-      text: `${course.programme_level} in ${course.programme_name} Year ${course.programme_year}`,
-    },
   ];
 
   elements.forEach(({ className, text }) => {
@@ -157,6 +239,22 @@ function createCourseBlock(course) {
     element.textContent = text;
     courseBlock.appendChild(element);
   });
+
+  // Programme info — two lines inside one pill
+  const progInfo = document.createElement("div");
+  progInfo.className = "programme_info";
+
+  const progLine1 = document.createElement("span");
+  progLine1.className = "programme_info_title";
+  progLine1.textContent = `${course.programme_level} in ${course.programme_name}`;
+
+  const progLine2 = document.createElement("span");
+  progLine2.className = "programme_info_year";
+  progLine2.textContent = `Year ${course.programme_year}`;
+
+  progInfo.appendChild(progLine1);
+  progInfo.appendChild(progLine2);
+  courseBlock.appendChild(progInfo);
 
   // Color-code the left border by programme
   const color = getProgrammeColor(
@@ -168,6 +266,7 @@ function createCourseBlock(course) {
 
   return courseBlock;
 }
+
 
 function addLegendAndStats(container, timetable) {
   const infoSection = document.createElement("div");

@@ -25,13 +25,29 @@ const coursesCol = db.collection("courses");
 // ==================== HELPERS ====================
 
 async function getNextId(collectionRef, idField, prefix) {
-  const snapshot = await collectionRef.orderBy(idField, "desc").limit(1).get();
+  // Note: Firestore orders strings lexicographically, so "C9" > "C10".
+  // To avoid reusing IDs like "C10" repeatedly, we scan all docs and
+  // compute the max numeric suffix ourselves.
+  const snapshot = await collectionRef.get();
+
   if (snapshot.empty) {
     return `${prefix}1`;
   }
-  const last = snapshot.docs[0].data()[idField];
-  const number = parseInt(String(last).substring(prefix.length)) + 1;
-  return `${prefix}${number}`;
+
+  let maxNumber = 0;
+
+  snapshot.forEach((doc) => {
+    const value = doc.data()[idField];
+    if (typeof value === "string" && value.startsWith(prefix)) {
+      const suffix = value.substring(prefix.length);
+      const n = parseInt(suffix, 10);
+      if (!Number.isNaN(n) && n > maxNumber) {
+        maxNumber = n;
+      }
+    }
+  });
+
+  return `${prefix}${maxNumber + 1}`;
 }
 
 // ==================== LECTURERS ====================
@@ -257,6 +273,7 @@ app.get("/api/courses", async (req, res) => {
         programme_name: programme ? programme.programme_name : null,
         programme_level: programme ? programme.programme_level : null,
         programme_year: programme ? programme.programme_year : null,
+        duration_hours: c.duration_hours || 2,
       };
     });
 
@@ -269,9 +286,9 @@ app.get("/api/courses", async (req, res) => {
 
 // POST -- Courses (Auto-generate ID)
 app.post("/api/courses", async (req, res) => {
-  const { courseName, lecturerId, programmeId } = req.body;
+  const { courseName, lecturerId, programmeId, durationHours } = req.body;
 
-  console.log("Received POST:", req.body);
+  console.log("Received POST /api/courses:", req.body);
 
   if (!courseName || !lecturerId || !programmeId) {
     return res.status(400).json({ error: "Missing fields" });
@@ -293,11 +310,17 @@ app.post("/api/courses", async (req, res) => {
     }
 
     const newCode = await getNextId(coursesCol, "course_code", "C");
+    const duration = Number(durationHours) || 2;
+    console.log("Creating course", {
+      course_code: newCode,
+      duration_hours: duration,
+    });
     await coursesCol.doc(newCode).set({
       course_code: newCode,
       course_name: courseName,
       lecturer_id: lecturerId,
       programme_id: programmeId,
+      duration_hours: duration,
     });
 
     res.json({ success: true, course_code: newCode });
@@ -310,9 +333,9 @@ app.post("/api/courses", async (req, res) => {
 // PUT -- Update Course
 app.put("/api/courses/:id", async (req, res) => {
   const oldCourseCode = req.params.id;
-  const { courseName, lecturerId, programmeId } = req.body;
+  const { courseName, lecturerId, programmeId, durationHours } = req.body;
 
-  console.log("Received PUT:", req.body);
+  console.log(`Received PUT /api/courses/${oldCourseCode}:`, req.body);
 
   if (!courseName || !lecturerId || !programmeId) {
     return res.status(400).json({ error: "Missing fields" });
@@ -339,10 +362,17 @@ app.put("/api/courses/:id", async (req, res) => {
       });
     }
 
+    const duration = Number(durationHours) || 2;
     await courseRef.update({
       course_name: courseName,
       lecturer_id: lecturerId,
       programme_id: programmeId,
+      duration_hours: duration,
+    });
+
+    console.log("Updated course duration_hours:", {
+      course_code: oldCourseCode,
+      duration_hours: duration,
     });
 
     res.json({ success: true });

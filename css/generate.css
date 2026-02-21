@@ -28,6 +28,8 @@
   border-width: 2px;
 
   box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.25);
+
+  overflow: visible;
 }
 
 .generate_title {
@@ -59,12 +61,12 @@
 
 .constraint_title,
 .filter_title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #000;
   margin-bottom: 15px;
   text-align: center;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
   padding-bottom: 8px;
 }
 
@@ -97,14 +99,14 @@
 
 .constraint_item label,
 .filter_item label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #000;
 }
 
 .constraint_item input,
 .filter_item select {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   padding: 10px 15px;
   border: 2px solid rgba(0, 0, 0, 0.2);
@@ -212,13 +214,16 @@
 /* Timetable Container */
 .timetable_wrapper {
   overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
+  max-width: 100vw;
 }
 
 .timetable_container {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   position: relative;
 }
 
@@ -255,31 +260,35 @@
 .timetable {
   width: 100%;
   border-collapse: collapse;
-  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
-  border-radius: 20px;
+  background: #ffffff;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.25);
+  outline: 2px solid rgba(0, 0, 0, 0.2);
   margin-bottom: 30px;
   position: relative;
   z-index: 1;
+  table-layout: fixed;
 }
 
 .timetable thead {
   background: linear-gradient(
     to bottom,
-    rgb(30, 30, 30) 0%,
-    rgb(60, 60, 60) 100%
+    rgb(20, 20, 20) 0%,
+    rgb(50, 50, 50) 100%
   );
   color: #fff;
 }
 
 .timetable th {
-  padding: 15px 10px;
-  font-size: 14px;
+  padding: 12px 6px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
-  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-right: 2px solid rgba(0, 0, 0, 0.2);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
   white-space: nowrap;
+  letter-spacing: 0.3px;
 }
 
 .day_header {
@@ -289,9 +298,10 @@
   z-index: 10;
   background: linear-gradient(
     to bottom,
-    rgb(30, 30, 30) 0%,
-    rgb(60, 60, 60) 100%
+    rgb(20, 20, 20) 0%,
+    rgb(50, 50, 50) 100%
   );
+  border-right: 2px solid rgba(0, 0, 0, 0.2) !important;
 }
 
 .time_header {
@@ -304,73 +314,75 @@
 }
 
 .day_cell {
-  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
+  background: linear-gradient(to right, #eef0f5, #f5f6fa);
   font-weight: 700;
-  color: #000;
-  font-size: 15px;
+  color: #111;
+  font-size: 14px;
   padding: 15px;
   position: sticky;
   left: 0;
   z-index: 5;
-  border-right: 2px solid rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(0, 0, 0, 0.2) !important;
+  letter-spacing: 0.3px;
 }
 
-.schedule_cell {
-  min-width: 100px;
-  min-height: 100px;
+/* Alternating row tint */
+.timetable tbody tr:nth-child(even) .schedule_lane_cell {
+  background: #f4f6fb;
+}
+.timetable tbody tr:nth-child(even) .day_cell {
+  background: linear-gradient(to right, #e8eaf2, #eef0f7);
+}
+
+/* Gantt-style lanes */
+.schedule_lane_cell {
+  padding: 0;
   position: relative;
-  transition: all 0.3s ease-in-out;
-  padding: 8px;
+  background: #fafafa;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
 }
 
-.schedule_cell.empty {
-  background: linear-gradient(to bottom, #ffffff 0%, #f9f9f99a 100%);
+.timetable_lane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  gap: 10px;
 }
 
-.schedule_cell.empty:hover {
-  background: linear-gradient(to bottom, #f0f0f0 0%, #e8e8e8 100%);
+.timetable_lane_row {
+  position: relative;
+  min-height: 200px;
+  flex-shrink: 0;
 }
 
-.schedule_cell.occupied {
-  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
-  padding: 10px;
-}
-
-/* Course Count Badge */
-.course_count_badge {
+.course_bar {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background: linear-gradient(
-    to bottom,
-    rgb(30, 30, 30) 0%,
-    rgb(60, 60, 60) 100%
-  );
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 10px;
-  z-index: 5;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  top: 0;
+  bottom: 0;
+  /* left and width set by JS; top/bottom stretch to fill the row naturally */
+  box-sizing: border-box;
 }
 
-/* Course Block */
+/* Course Block (used as bar content) */
 .course_block {
-  width: 200px;
-  height: 150px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
-  border-left: 4px solid #4caf50;
-  padding: 15px;
-  margin: 4px 0;
+  border-left: 5px solid #4caf50;
+  border-top: 2px solid rgba(0, 0, 0, 0.2);
+  border-right: 2px solid rgba(0, 0, 0, 0.2);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+  padding: 8px 10px;
+  margin: 6px;
   border-radius: 15px;
+  box-sizing: border-box;
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
+  transition: all 0.25s ease-in-out;
   text-align: left;
-  box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.25);
 }
 
 .course_block:hover {
@@ -380,16 +392,16 @@
     rgb(30, 30, 30) 0%,
     rgb(60, 60, 60) 100%
   );
-  color: #fff;
+
   border-radius: 10px;
-  box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.25);
 }
 
 .course_block:hover .course_code,
 .course_block:hover .course_name,
 .course_block:hover .time_range,
 .course_block:hover .lecturer_name,
-.course_block:hover .programme_info {
+.course_block:hover .programme_info_title,
+.course_block:hover .programme_info_year {
   color: #fff;
 }
 
@@ -401,13 +413,13 @@
 
 .course_code {
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   color: #000;
   margin-bottom: 4px;
 }
 
 .course_name {
-  font-size: 13px;
+  font-size: 12px;
   color: #000;
   margin-bottom: 4px;
   line-height: 1.3;
@@ -415,28 +427,42 @@
 }
 
 .time_range {
-  font-size: 12px;
+  font-size: 11px;
   color: #4caf50;
   margin-bottom: 4px;
   font-weight: 700;
 }
 
 .lecturer_name {
-  font-size: 12px;
+  font-size: 11px;
   color: #000;
   margin-bottom: 4px;
   font-weight: 500;
 }
 
 .programme_info {
-  font-size: 11px;
-  color: #000;
-  font-weight: 700;
   background: rgba(76, 175, 80, 0.2);
-  padding: 3px 8px;
+  padding: 5px 8px;
   border-radius: 8px;
-  display: inline-block;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
   margin-top: 4px;
+}
+
+.programme_info_title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #000;
+  line-height: 1.3;
+}
+
+.programme_info_year {
+  font-size: 10px;
+  font-weight: 500;
+  color: #2e7d32;
+  line-height: 1.3;
 }
 
 /* Timetable Info Section */
