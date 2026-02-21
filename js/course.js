@@ -221,12 +221,29 @@ export async function populateProgrammeDropdown() {
     const programmeList = document.querySelector(".programmeName_list");
     programmeList.innerHTML = "";
 
-    programmes.forEach((programme) => {
-      const li = document.createElement("li");
-      li.textContent = `${programme.programme_id} - ${programme.programme_level} in ${programme.programme_name} Year ${programme.programme_year}`;
-      li.dataset.value = programme.programme_id;
-      programmeList.appendChild(li);
-    });
+    // Sort to match legend/My Entities order:
+    // level -> programme name -> year
+    const levelOrder = ["Foundation", "Diploma", "Degree", "Master", "PhD"];
+
+    programmes
+      .slice()
+      .sort((a, b) => {
+        const levelDiff =
+          levelOrder.indexOf(a.programme_level) -
+          levelOrder.indexOf(b.programme_level);
+        if (levelDiff !== 0) return levelDiff;
+
+        const nameDiff = a.programme_name.localeCompare(b.programme_name);
+        if (nameDiff !== 0) return nameDiff;
+
+        return Number(a.programme_year) - Number(b.programme_year);
+      })
+      .forEach((programme) => {
+        const li = document.createElement("li");
+        li.textContent = `${programme.programme_id} - ${programme.programme_level} in ${programme.programme_name} Year ${programme.programme_year}`;
+        li.dataset.value = programme.programme_id;
+        programmeList.appendChild(li);
+      });
   } catch (err) {
     console.error("Error loading programmes:", err);
   }
