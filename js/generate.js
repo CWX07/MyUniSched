@@ -6,6 +6,7 @@ import {
 import { generateSchedule } from "./scheduler.js";
 import { filterTimetable, getUniqueCourses, getUniqueLecturers } from "./filters.js";
 import { displayTimetable } from "./generate_ui.js";
+import { addCourse, resetCourseForm, populateLecturerDropdown, populateProgrammeDropdown, onCourseUpdated } from "./course.js";
 
 // Store the original timetable for filtering
 let originalTimetable = null;
@@ -18,6 +19,30 @@ let currentConstraints = {
 document.addEventListener("DOMContentLoaded", () => {
   initializeEventListeners();
   initializeConstraints();
+  initCourseModal();
+
+  // Re-patch timetable with fresh data after any course edit
+  onCourseUpdated(async () => {
+    if (!originalTimetable) return;
+    try {
+      const res = await fetch("/api/courses");
+      const courses = await res.json();
+      const { DAYS, TIME_SLOTS } = await import("./config.js");
+      const courseMap = {};
+      courses.forEach(c => { courseMap[c.course_code] = c; });
+      DAYS.forEach(day => {
+        TIME_SLOTS.forEach(slot => {
+          originalTimetable[day][slot.id] = originalTimetable[day][slot.id].map(c => {
+            const fresh = courseMap[c.course_code];
+            return fresh ? { ...c, ...fresh } : c;
+          });
+        });
+      });
+      displayTimetable(originalTimetable);
+    } catch (err) {
+      console.error("Failed to refresh timetable:", err);
+    }
+  });
 });
 
 function initializeEventListeners() {
@@ -187,4 +212,104 @@ function resetTimetable() {
     maxCoursesPerSlot: DEFAULT_MAX_COURSES_PER_SLOT,
     maxSlotsPerCoursePerDay: DEFAULT_MAX_SLOTS_PER_COURSE_PER_DAY,
   };
+}
+
+function initCourseModal() {
+  addCourse();
+
+  const modal = document.querySelector(".addCourse_modal");
+  const closeBtn = document.querySelector(".addCourse_close");
+
+  closeBtn.addEventListener("click", () => {
+    modal.style.opacity = "0";
+    modal.style.zIndex = "-100";
+    resetCourseForm();
+  });
+
+  window.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.style.opacity = "0";
+      modal.style.zIndex = "-100";
+      resetCourseForm();
+    }
+  });
+
+  toggleLecturerDropdown();
+  toggleCourseProgrammeDropdown();
+  toggleCourseDurationDropdown();
+}
+
+function toggleLecturerDropdown() {
+  const container = document.querySelector(".lecturerId_container");
+  if (!container) return;
+  const selected = container.querySelector(".lecturerId_selected");
+  const list = container.querySelector(".lecturerId_list");
+  selected.addEventListener("click", () => {
+    const active = list.classList.toggle("active");
+    selected.style.borderColor = active ? "#000" : "rgba(0,0,0,0.2)";
+  });
+  list.addEventListener("click", (e) => {
+    if (e.target.tagName === "LI") {
+      selected.textContent = e.target.textContent;
+      selected.dataset.value = e.target.dataset.value;
+      list.classList.remove("active");
+      selected.style.borderColor = "rgba(0,0,0,0.2)";
+    }
+  });
+  document.addEventListener("click", (e) => {
+    if (!container.contains(e.target)) {
+      list.classList.remove("active");
+      selected.style.borderColor = "rgba(0,0,0,0.2)";
+    }
+  });
+}
+
+function toggleCourseProgrammeDropdown() {
+  const container = document.querySelector(".programmeName_container");
+  if (!container) return;
+  const selected = container.querySelector(".programmeName_selected");
+  const list = container.querySelector(".programmeName_list");
+  selected.addEventListener("click", () => {
+    const active = list.classList.toggle("active");
+    selected.style.borderColor = active ? "#000" : "rgba(0,0,0,0.2)";
+  });
+  list.addEventListener("click", (e) => {
+    if (e.target.tagName === "LI") {
+      selected.textContent = e.target.textContent;
+      selected.dataset.value = e.target.dataset.value;
+      list.classList.remove("active");
+      selected.style.borderColor = "rgba(0,0,0,0.2)";
+    }
+  });
+  document.addEventListener("click", (e) => {
+    if (!container.contains(e.target)) {
+      list.classList.remove("active");
+      selected.style.borderColor = "rgba(0,0,0,0.2)";
+    }
+  });
+}
+
+function toggleCourseDurationDropdown() {
+  const container = document.querySelector(".courseDuration_container");
+  if (!container) return;
+  const selected = container.querySelector(".courseDuration_selected");
+  const list = container.querySelector(".courseDuration_list");
+  selected.addEventListener("click", () => {
+    const active = list.classList.toggle("active");
+    selected.style.borderColor = active ? "#000" : "rgba(0,0,0,0.2)";
+  });
+  list.addEventListener("click", (e) => {
+    if (e.target.tagName === "LI") {
+      selected.textContent = e.target.textContent;
+      selected.dataset.value = e.target.dataset.value;
+      list.classList.remove("active");
+      selected.style.borderColor = "rgba(0,0,0,0.2)";
+    }
+  });
+  document.addEventListener("click", (e) => {
+    if (!container.contains(e.target)) {
+      list.classList.remove("active");
+      selected.style.borderColor = "rgba(0,0,0,0.2)";
+    }
+  });
 }

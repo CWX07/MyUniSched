@@ -17,6 +17,7 @@ export const TIME_SLOTS = [
   { id: 8, time: "15:00" },
   { id: 9, time: "16:00" },
   { id: 10, time: "17:00" },
+  { id: 11, time: "18:00" }
 ];
 
 export const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];

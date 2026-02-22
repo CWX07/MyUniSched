@@ -140,9 +140,10 @@ export function generateSchedule(courses, constraints = {}) {
   return timetable;
 }
 
-// Determine preferred global order of (day, start-slot) pairs so that the
-// generator fills central daytime blocks (10–12, 12–2, 2–4) on all days
-// before using outer blocks (8–10, 4–6) on any day.
+// Determine preferred global order of (day, start-slot) pairs.
+// Prioritises 10:00–16:00 on all days first, then outer slots (08–10, 16+).
+// Within each priority band, sort day-major then chronologically so
+// courses pack sequentially without gaps.
 function getPreferredDaySlotOrder() {
   const pairs = [];
 
@@ -150,35 +151,33 @@ function getPreferredDaySlotOrder() {
   const candidateSlots = TIME_SLOTS.slice(0, -1);
 
   DAYS.forEach((day, dayIndex) => {
-    candidateSlots.forEach((slot) => {
+    candidateSlots.forEach((slot, slotIndex) => {
       const hour = parseInt(slot.time.split(":")[0], 10);
       pairs.push({
         day,
         dayIndex,
         startSlotId: slot.id,
+        slotIndex,
         hour,
       });
     });
   });
 
   function rank(hour) {
-    // Central preferred hours
-    if (hour === 10 || hour === 12 || hour === 14) return 0;
-    // Outer hours (early/late) – least preferred
-    if (hour === 8 || hour === 16) return 2;
-    // Everything else in the middle
+    // Core window 10:00–15:00 (can start a course that ends by 16:00)
+    if (hour >= 10 && hour <= 15) return 0;
+    // Outer hours 08:00–09:00 and 16:00+
     return 1;
   }
 
   return pairs.sort((a, b) => {
-    const hourDiff = rank(a.hour) - rank(b.hour);
-    if (hourDiff !== 0) return hourDiff;
-
-    // Within same hour rank, keep earlier days first for stability
+    // 1. Core window before outer
+    const rankDiff = rank(a.hour) - rank(b.hour);
+    if (rankDiff !== 0) return rankDiff;
+    // 2. Day-major: fill each day before moving to the next
     if (a.dayIndex !== b.dayIndex) return a.dayIndex - b.dayIndex;
-
-    // Finally, sort by actual hour to prefer earlier times
-    return a.hour - b.hour;
+    // 3. Chronological within the day so slots pack with no gaps
+    return a.slotIndex - b.slotIndex;
   });
 }
 
@@ -204,11 +203,14 @@ function canAssignCourse(
 ) {
   const programmeYearKey = `${course.programme_name}_${course.course_year}`;
 
-  const endSlotId = startSlotId + durationSlots - 1;
+  const startIndex = TIME_SLOTS.findIndex((s) => s.id === startSlotId);
+  const endIndex = startIndex + durationSlots - 1;
+  const endSlotId = TIME_SLOTS[endIndex]?.id ?? startSlotId;
 
-  // Check lecturer availability for both slots
+  // Check lecturer availability using actual slot IDs from TIME_SLOTS
   if (lecturerSchedule[course.lecturer_id]) {
-    for (let slotId = startSlotId; slotId <= endSlotId; slotId += 1) {
+    for (let i = startIndex; i <= endIndex; i++) {
+      const slotId = TIME_SLOTS[i].id;
       if (lecturerSchedule[course.lecturer_id].has(`${day}_${slotId}`)) {
         return false;
       }
@@ -223,17 +225,18 @@ function canAssignCourse(
       lecturerBlocks,
       course.lecturer_id,
       day,
-      startSlotId,
-      endSlotId,
+      startIndex,
+      endIndex,
       MAX_CONTINUOUS_CLASSES_PER_LECTURER,
     )
   ) {
     return false;
   }
 
-  // Check programme-year conflict for both slots
+  // Check programme-year conflict using actual slot IDs from TIME_SLOTS
   if (programmeYearSchedule[programmeYearKey]) {
-    for (let slotId = startSlotId; slotId <= endSlotId; slotId += 1) {
+    for (let i = startIndex; i <= endIndex; i++) {
+      const slotId = TIME_SLOTS[i].id;
       if (programmeYearSchedule[programmeYearKey].has(`${day}_${slotId}`)) {
         return false;
       }
@@ -310,17 +313,18 @@ function updateSchedules(
 ) {
   const programmeYearKey = `${course.programme_name}_${course.course_year}`;
 
-  const endSlotId = startSlotId + durationSlots - 1;
+  const startIndex = TIME_SLOTS.findIndex((s) => s.id === startSlotId);
+  const endIndex = startIndex + durationSlots - 1;
 
-  // Update lecturer schedule
+  // Update lecturer schedule using actual slot IDs from TIME_SLOTS
   if (!lecturerSchedule[course.lecturer_id]) {
     lecturerSchedule[course.lecturer_id] = new Set();
   }
-  for (let slotId = startSlotId; slotId <= endSlotId; slotId += 1) {
-    lecturerSchedule[course.lecturer_id].add(`${day}_${slotId}`);
+  for (let i = startIndex; i <= endIndex; i++) {
+    lecturerSchedule[course.lecturer_id].add(`${day}_${TIME_SLOTS[i].id}`);
   }
 
-  // Update lecturer blocks (start/end) for gap rules
+  // Update lecturer blocks using indices (consistent with canAssignCourse)
   if (!lecturerBlocks[course.lecturer_id]) {
     lecturerBlocks[course.lecturer_id] = {};
   }
@@ -328,16 +332,16 @@ function updateSchedules(
     lecturerBlocks[course.lecturer_id][day] = [];
   }
   lecturerBlocks[course.lecturer_id][day].push({
-    start: startSlotId,
-    end: endSlotId,
+    start: startIndex,
+    end: endIndex,
   });
 
-  // Update programme-year schedule
+  // Update programme-year schedule using actual slot IDs from TIME_SLOTS
   if (!programmeYearSchedule[programmeYearKey]) {
     programmeYearSchedule[programmeYearKey] = new Set();
   }
-  for (let slotId = startSlotId; slotId <= endSlotId; slotId += 1) {
-    programmeYearSchedule[programmeYearKey].add(`${day}_${slotId}`);
+  for (let i = startIndex; i <= endIndex; i++) {
+    programmeYearSchedule[programmeYearKey].add(`${day}_${TIME_SLOTS[i].id}`);
   }
 
   // Update per-programme-per-day usage (count slots used)

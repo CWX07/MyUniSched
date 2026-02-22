@@ -376,11 +376,11 @@
   border-right: 2px solid rgba(0, 0, 0, 0.2);
   border-bottom: 2px solid rgba(0, 0, 0, 0.2);
   padding: 8px 10px;
-  margin: 6px;
+  margin: 0;
   border-radius: 15px;
   box-sizing: border-box;
   cursor: pointer;
-  transition: all 0.25s ease-in-out;
+  transition: all 0.2s ease-in-out;
   text-align: left;
   box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.25);
 }
@@ -541,4 +541,44 @@
   color: #000;
   font-weight: 700;
   margin-right: 8px;
+}
+/* ── Drag & Drop ─────────────────────────────────────── */
+
+/* Dragging state on the bar itself */
+.course_bar.dragging {
+  opacity: 0.35;
+  cursor: grabbing;
+}
+
+.course_block {
+  cursor: grab;
+}
+
+/* Drop-zone highlight that appears inside a lane when dragging over it */
+.drop_indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  border-radius: 12px;
+  border: 2px dashed rgba(76, 175, 80, 0.8);
+  background: rgba(76, 175, 80, 0.1);
+  box-sizing: border-box;
+  transition: left 0.08s ease, width 0.08s ease;
+  z-index: 20;
+}
+
+/* Lane glows green while a drag is hovering over it */
+.timetable_lane.drag_over {
+  background: rgba(76, 175, 80, 0.04);
+}
+
+/* Slot snap ghost — the snapped slot columns light up in the header */
+.time_header.snap_highlight {
+  background: rgba(76, 175, 80, 0.25);
+  color: #1b5e20;
+}
+/* ── Course Edit Modal positioning fix ── */
+.addCourse_modal_content {
+  position: relative;
 }

@@ -3,6 +3,16 @@ import { API_BASE, getProgrammeColor } from "./config.js";
 let isEditMode = false;
 let currentEditCourseCode = null;
 
+// Callback registry — other modules (e.g. generate.js) can register
+// a function to be called after a course is successfully updated.
+const courseUpdatedCallbacks = [];
+export function onCourseUpdated(fn) {
+  courseUpdatedCallbacks.push(fn);
+}
+function fireCourseUpdated(courseCode) {
+  courseUpdatedCallbacks.forEach(fn => fn(courseCode));
+}
+
 export async function addCourse() {
   // Add course details through modal form
   const form = document.querySelector(".addCourse_modal_content_form");
@@ -100,10 +110,16 @@ export async function addCourse() {
           alert("Course updated successfully");
           resetCourseForm();
           const modal = document.querySelector(".addCourse_modal");
-          const { closeModal } = await import("./addEntities.js");
-          closeModal(modal);
-          await loadCourses();
-          await displayCourseDetails(editedCourseCode);
+          modal.style.opacity = "0";
+          modal.style.zIndex = "-100";
+          // Only refresh the course list if we're on the My Entities page
+          const courseList = document.querySelector(".myCourse_list");
+          if (courseList) {
+            await loadCourses();
+            await displayCourseDetails(editedCourseCode);
+          }
+          // Notify any registered listeners (e.g. generate page timetable refresh)
+          fireCourseUpdated(editedCourseCode);
         }
       } else {
         // CREATE new course

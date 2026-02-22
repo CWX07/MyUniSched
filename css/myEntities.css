@@ -510,6 +510,7 @@
 .myEntities_noDetails_title,
 .myEntities_noDetails_desc {
   align-self: center;
+  text-align: center;
 }
 
 .myEntities_noDetails_title {
