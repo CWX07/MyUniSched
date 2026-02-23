@@ -15,11 +15,13 @@ MyUniSched is a web app for generating conflict‑free university timetables. Yo
     - Lecturer continuity rules (max consecutive classes with gaps)
     - Per‑programme/day constraints (max classes per day)
     - Per‑slot constraints (min/max courses per time slot)
+    - Per‑course constraints (max slots per course per day)
   - Prioritises filling central daytime blocks (10–4) before 8–10 and 4–6
   - Displays a **Programme Legend** and **Timetable Statistics**
+  - Includes drag‑and‑drop timetable editing (visual rescheduling within the current generated timetable)
 
 - **Filtering**
-  - Filter timetable by **Programme** or **Lecturer**
+  - Filter timetable by **Course** or **Lecturer**
   - Programme options and legend are sorted consistently (level → name → year)
 
 - **Backend**
@@ -112,11 +114,13 @@ When served from Render, the frontend uses the same API base (`API_BASE` in `js/
     - Slot capacity (min/max courses per slot)
 
 - `js/generate.js`
-  - Wires constraints UI to `generateSchedule`
-  - Manages filter type/value and applies `filterTimetable`
+  - Wires constraints UI to `generateSchedule` (min/max courses per slot, max slots per course per day)
+  - Manages filter type/value and applies `filterTimetable` (by course or lecturer)
+  - Listens for course edits and re‑patches the in‑memory timetable with the latest course data from `/api/courses`
 
 - `js/generate_ui.js`
   - Renders the timetable table
+  - Enables drag‑and‑drop movement of course blocks within a day’s lane (visual only; does not persist back to the API)
   - Programme legend + statistics
 
 - `js/course.js`, `js/lecturer.js`, `js/programme.js`
