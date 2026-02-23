@@ -4,14 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="../css/mySchedule.css">
     <link rel="stylesheet" href="../css/myEntities.css" />
     <link rel="stylesheet" href="../css/animation.css" />
+    <link rel="stylesheet" href="../css/auth.css" />
     <link rel="icon" type="image/png" href="../img/logo_whitebg.png" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <title>My Entities | MyUniSched</title>
   </head>
   <body>
@@ -21,17 +19,14 @@
       <a class="nav_logo" href="../index.html">
         <img src="../img/logo.png" alt="" class="nav_logo_img" />
       </a>
-
       <ul>
         <li><a href="../index.html">Home</a></li>
         <li><a href="./generate.html">Generate</a></li>
         <li><a href="./myEntities.html">My Entities</a></li>
         <li><a href="./mySchedule.html">My Schedule</a></li>
       </ul>
-
       <div class="profile_menu">
         <img src="../img/pfp_icon.png" class="profile_img" alt="" />
-
         <div class="dropdown">
           <a href="#" id="openLogIn">Log In</a>
           <a href="#" id="openSignUp">Sign up</a>
@@ -65,25 +60,13 @@
         <div class="modal_content addLecturer_modal_content">
           <span class="close addLecturer_close">&times;</span>
           <h2>Add Lecturer</h2>
-
           <form class="modal_content_form addLecturer_modal_content_form">
             <div class="lecturerName">
-              <label for="lecturerName" class="lecturerName_label"
-                >Lecturer Name</label
-              >
-              <input
-                id="lecturerName"
-                type="text"
-                placeholder="Enter lecturer name (e.g. John Tan)"
-                class="input_field"
-                required
-              />
+              <label for="lecturerName" class="lecturerName_label">Lecturer Name</label>
+              <input id="lecturerName" type="text" placeholder="Enter lecturer name (e.g. John Tan)" class="input_field" required />
             </div>
-
             <div class="modal_actions">
-              <button type="submit" class="submit_btn addLecturer_submit_btn">
-                Add Lecturer
-              </button>
+              <button type="submit" class="submit_btn addLecturer_submit_btn">Add Lecturer</button>
               <button type="button" class="submit_btn delete_btn deleteLecturer_btn">
                 <i class="fa-solid fa-trash"></i>
               </button>
@@ -97,31 +80,16 @@
         <div class="modal_content addProgramme_modal_content">
           <span class="close addProgramme_close">&times;</span>
           <h2>Add Programme</h2>
-
           <form class="modal_content_form addProgramme_modal_content_form">
             <div class="programmeName">
-              <label for="programmeName_input" class="programmeName_label">
-                Programme Name
-              </label>
-              <input
-                id="programmeName_input"
-                type="text"
-                placeholder="Enter programme name (e.g. Software Engineering)"
-                class="input_field"
-                required
-              />
+              <label for="programmeName_input" class="programmeName_label">Programme Name</label>
+              <input id="programmeName_input" type="text" placeholder="Enter programme name (e.g. Software Engineering)" class="input_field" required />
             </div>
-
             <div class="programmeInfo">
               <div class="programmeLevel">
-                <label for="programmeLevel" class="programmeLevel_label"
-                  >Programme Level</label
-                >
+                <label for="programmeLevel" class="programmeLevel_label">Programme Level</label>
                 <div class="programmeLevel_container">
-                  <div id="programmeLevel" class="programmeLevel_selected">
-                    Select level
-                  </div>
-
+                  <div id="programmeLevel" class="programmeLevel_selected">Select level</div>
                   <ul class="programmeLevel_list">
                     <li data-value="Foundation">Foundation</li>
                     <li data-value="Diploma">Diploma</li>
@@ -131,27 +99,13 @@
                   </ul>
                 </div>
               </div>
-
               <div class="programmeYear">
-                <label for="programmeYear" class="programmeYear_label"
-                  >Programme Year</label
-                >
-                <input
-                  id="programmeYear"
-                  type="number"
-                  min="1"
-                  max="10"
-                  placeholder="Enter years"
-                  class="input_field"
-                  required
-                />
+                <label for="programmeYear" class="programmeYear_label">Programme Year</label>
+                <input id="programmeYear" type="number" min="1" max="10" placeholder="Enter years" class="input_field" required />
               </div>
             </div>
-
             <div class="modal_actions">
-              <button type="submit" class="submit_btn addProgramme_submit_btn">
-                Add Programme
-              </button>
+              <button type="submit" class="submit_btn addProgramme_submit_btn">Add Programme</button>
               <button type="button" class="submit_btn delete_btn deleteProgramme_btn">
                 <i class="fa-solid fa-trash"></i>
               </button>
@@ -165,30 +119,15 @@
         <div class="modal_content addCourse_modal_content">
           <span class="close addCourse_close">&times;</span>
           <h2>Add Course</h2>
-
           <form class="modal_content_form addCourse_modal_content_form">
             <div class="courseName">
-              <label for="courseName" class="courseName_label"
-                >Course Name</label
-              >
-              <input
-                id="courseName"
-                type="text"
-                placeholder="Enter course name"
-                class="input_field"
-                required
-              />
+              <label for="courseName" class="courseName_label">Course Name</label>
+              <input id="courseName" type="text" placeholder="Enter course name" class="input_field" required />
             </div>
-
             <div class="courseDuration">
-              <label for="courseDuration" class="courseDuration_label"
-                >Course Duration</label
-              >
+              <label for="courseDuration" class="courseDuration_label">Course Duration</label>
               <div class="courseDuration_container">
-                <div id="courseDuration" class="courseDuration_selected" data-value="2">
-                  2 hours
-                </div>
-
+                <div id="courseDuration" class="courseDuration_selected" data-value="2">2 hours</div>
                 <ul class="courseDuration_list">
                   <li data-value="1">1 hour</li>
                   <li data-value="2">2 hours</li>
@@ -196,41 +135,22 @@
                 </ul>
               </div>
             </div>
-
             <div class="lecturerId">
-              <label for="lecturerId_course" class="lecturer_label"
-                >Lecturer</label
-              >
+              <label for="lecturerId_course" class="lecturer_label">Lecturer</label>
               <div class="lecturerId_container">
-                <div id="lecturerId_course" class="lecturerId_selected">
-                  Select lecturer
-                </div>
-
-                <ul class="lecturerId_list">
-                  <!-- Populated dynamically -->
-                </ul>
+                <div id="lecturerId_course" class="lecturerId_selected">Select lecturer</div>
+                <ul class="lecturerId_list"></ul>
               </div>
             </div>
-
             <div class="programmeName">
-              <label for="programmeName" class="programmeName_label"
-                >Course Programme</label
-              >
+              <label for="programmeName" class="programmeName_label">Course Programme</label>
               <div class="programmeName_container">
-                <div id="programmeName" class="programmeName_selected">
-                  Select programme
-                </div>
-
-                <ul class="programmeName_list">
-                  <!-- Populated dynamically -->
-                </ul>
+                <div id="programmeName" class="programmeName_selected">Select programme</div>
+                <ul class="programmeName_list"></ul>
               </div>
             </div>
-
             <div class="modal_actions">
-              <button type="submit" class="submit_btn addCourse_submit_btn">
-                Add Course
-              </button>
+              <button type="submit" class="submit_btn addCourse_submit_btn">Add Course</button>
               <button type="button" class="submit_btn delete_btn deleteCourse_btn">
                 <i class="fa-solid fa-trash"></i>
               </button>
@@ -241,17 +161,11 @@
 
       <div class="myEntities_container">
         <div class="myCourse_list"></div>
-
         <div class="myLecturer_list"></div>
-
         <div class="myProgramme_list"></div>
-
         <div class="myEntities_details">
           <h1 class="myEntities_noDetails_title">MyUniSched</h1>
-          <p class="myEntities_noDetails_desc">
-            "Click on any course/lecturer/programme<br>
-            to view details"
-          </p>
+          <p class="myEntities_noDetails_desc">"Click on any course/lecturer/programme<br>to view details"</p>
         </div>
       </div>
     </section>

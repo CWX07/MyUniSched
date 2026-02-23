@@ -7,23 +7,52 @@ import {
 } from "./course.js";
 
 import { addLecturer, loadLecturers } from "./lecturer.js";
-
 import { addProgramme, loadProgrammes } from "./programme.js";
+import { initAuth, getCurrentUser, showNotification } from "./auth.js";
+
+
+
+function showLoginPrompt(activeList) {
+  // Default to lecturer list if no list specified
+  const target = activeList || document.querySelector(".myLecturer_list");
+
+  if (!target) return;
+
+  // Replace only the active list's content with the login prompt
+  target.style.display = "flex";
+  target.innerHTML = `
+    <div class="schedule_empty entities_login_prompt">
+      <i class="fa-solid fa-lock"></i>
+      <p>Please <a href="#" class="loginPromptLink">log in</a> to view and manage your entities.</p>
+    </div>`;
+  target.querySelector(".loginPromptLink").addEventListener("click", (e) => {
+    e.preventDefault();
+    document.querySelector(".authModal.login")?.classList.add("active");
+  });
+}
 
 document.addEventListener("DOMContentLoaded", () => {
+  initAuth();
+
+  const user = getCurrentUser();
+
+  // Always set up modal toggles and form handlers (they check auth internally)
   toggleAddEntitiesModal();
   addCourse();
   addLecturer();
   addProgramme();
-
-  loadLecturers(); // Load lecturers first
   toggleEntity();
-
-  // Initialize dropdowns
   toggleProgrammeLevelDropdown();
   toggleLecturerDropdown();
   toggleCourseProgrammeDropdown();
   toggleCourseDurationDropdown();
+
+  if (!user) {
+    // Show login prompt inside the default (lecturer) list panel only
+    showLoginPrompt(document.querySelector(".myLecturer_list"));
+  } else {
+    loadLecturers();
+  }
 });
 
 function toggleAddEntitiesModal() {
@@ -39,35 +68,42 @@ function toggleAddEntitiesModal() {
   const addLecturerCloseBtn = document.querySelector(".addLecturer_close");
   const addProgrammeCloseBtn = document.querySelector(".addProgramme_close");
 
-  addCourseBtn.addEventListener("click", async () => {
-    // Reset course form to "add" mode before opening
+  addCourseBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    if (!getCurrentUser()) {
+      showNotification("Please log in to add entities.", "info");
+      return;
+    }
     resetCourseForm();
-
-    // Populate dropdowns when opening course modal
     await populateLecturerDropdown();
     await populateProgrammeDropdown();
     openModal(addCourseModal);
   });
 
-  addLecturerBtn.addEventListener("click", () => {
+  addLecturerBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (!getCurrentUser()) {
+      showNotification("Please log in to add entities.", "info");
+      return;
+    }
     openModal(addLecturerModal);
   });
-
-  addProgrammeBtn.addEventListener("click", () => {
+  addProgrammeBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (!getCurrentUser()) {
+      showNotification("Please log in to add entities.", "info");
+      return;
+    }
     openModal(addProgrammeModal);
   });
 
-  addCourseCloseBtn.addEventListener("click", () => {
-    closeModal(addCourseModal);
-  });
-
-  addLecturerCloseBtn.addEventListener("click", () => {
-    closeModal(addLecturerModal);
-  });
-
-  addProgrammeCloseBtn.addEventListener("click", () => {
-    closeModal(addProgrammeModal);
-  });
+  addCourseCloseBtn.addEventListener("click", () => closeModal(addCourseModal));
+  addLecturerCloseBtn.addEventListener("click", () =>
+    closeModal(addLecturerModal),
+  );
+  addProgrammeCloseBtn.addEventListener("click", () =>
+    closeModal(addProgrammeModal),
+  );
 
   window.addEventListener("click", (e) => {
     if (e.target === addCourseModal) closeModal(addCourseModal);
@@ -95,48 +131,48 @@ function toggleEntity() {
   const myLecturer_list = document.querySelector(".myLecturer_list");
   const myProgramme_list = document.querySelector(".myProgramme_list");
 
-  let currentView = "lecturer"; // track current view - starts with lecturer
+  let currentView = "lecturer";
 
   courseBtn.addEventListener("click", () => {
-    if (currentView !== "course") {
-      displayDetails_default();
-      myCourse_list.style.display = "flex";
-      myLecturer_list.style.display = "none";
-      myProgramme_list.style.display = "none";
-      loadCourses();
-
-      currentView = "course"; // Fixed: was incorrectly set to "lecturer"
+    if (currentView === "course") return;
+    currentView = "course";
+    myCourse_list.style.display = "flex";
+    myLecturer_list.style.display = "none";
+    myProgramme_list.style.display = "none";
+    if (!getCurrentUser()) {
+      showLoginPrompt(myCourse_list);
+      return;
     }
-
-    console.log("Course button clicked");
+    displayDetails_default();
+    loadCourses();
   });
 
   lecturerBtn.addEventListener("click", () => {
-    if (currentView !== "lecturer") {
-      displayDetails_default();
-      myCourse_list.style.display = "none";
-      myLecturer_list.style.display = "flex";
-      myProgramme_list.style.display = "none";
-      loadLecturers();
-
-      currentView = "lecturer";
+    if (currentView === "lecturer") return;
+    currentView = "lecturer";
+    myCourse_list.style.display = "none";
+    myLecturer_list.style.display = "flex";
+    myProgramme_list.style.display = "none";
+    if (!getCurrentUser()) {
+      showLoginPrompt(myLecturer_list);
+      return;
     }
-
-    console.log("Lecturer button clicked");
+    displayDetails_default();
+    loadLecturers();
   });
 
   programmeBtn.addEventListener("click", () => {
-    if (currentView !== "programme") {
-      displayDetails_default();
-      myCourse_list.style.display = "none";
-      myLecturer_list.style.display = "none";
-      myProgramme_list.style.display = "flex";
-      loadProgrammes();
-
-      currentView = "programme";
+    if (currentView === "programme") return;
+    currentView = "programme";
+    myCourse_list.style.display = "none";
+    myLecturer_list.style.display = "none";
+    myProgramme_list.style.display = "flex";
+    if (!getCurrentUser()) {
+      showLoginPrompt(myProgramme_list);
+      return;
     }
-
-    console.log("Programme button clicked");
+    displayDetails_default();
+    loadProgrammes();
   });
 }
 
@@ -148,18 +184,15 @@ function displayDetails_default() {
   const myEntities_title = document.createElement("h1");
   myEntities_title.classList.add("myEntities_noDetails_title");
   myEntities_title.textContent = "MyUniSched";
-
   container.appendChild(myEntities_title);
 
   const myEntities_desc = document.createElement("p");
   myEntities_desc.classList.add("myEntities_noDetails_desc");
   myEntities_desc.innerHTML =
     '"Click on any course/lecturer/programme<br>to view details"';
-
   container.appendChild(myEntities_desc);
 }
 
-// Programme Level Dropdown (in addProgramme modal)
 function toggleProgrammeLevelDropdown() {
   const programmeLevelContainer = document.querySelector(
     ".programmeLevel_container",
@@ -172,7 +205,6 @@ function toggleProgrammeLevelDropdown() {
   const programmeLevelList = programmeLevelContainer.querySelector(
     ".programmeLevel_list",
   );
-  const programmeLevelOptions = programmeLevelList.querySelectorAll("li");
 
   programmeLevelSelected.addEventListener("click", () => {
     const isActive = programmeLevelList.classList.toggle("active");
@@ -182,7 +214,7 @@ function toggleProgrammeLevelDropdown() {
     programmeLevelSelected.style.outline = "none";
   });
 
-  programmeLevelOptions.forEach((option) => {
+  programmeLevelList.querySelectorAll("li").forEach((option) => {
     option.addEventListener("click", () => {
       programmeLevelSelected.textContent = option.textContent;
       programmeLevelSelected.dataset.value = option.dataset.value;
@@ -199,7 +231,6 @@ function toggleProgrammeLevelDropdown() {
   });
 }
 
-// Lecturer Dropdown (in addCourse modal)
 function toggleLecturerDropdown() {
   const lecturerContainer = document.querySelector(".lecturerId_container");
   if (!lecturerContainer) return;
@@ -215,7 +246,6 @@ function toggleLecturerDropdown() {
     lecturerSelected.style.outline = "none";
   });
 
-  // Event delegation for dynamically added options
   lecturerList.addEventListener("click", (e) => {
     if (e.target.tagName === "LI") {
       lecturerSelected.textContent = e.target.textContent;
@@ -233,7 +263,6 @@ function toggleLecturerDropdown() {
   });
 }
 
-// Course Programme Dropdown (in addCourse modal)
 function toggleCourseProgrammeDropdown() {
   const programmeNameContainer = document.querySelector(
     ".programmeName_container",
@@ -255,7 +284,6 @@ function toggleCourseProgrammeDropdown() {
     programmeNameSelected.style.outline = "none";
   });
 
-  // Event delegation for dynamically added options
   programmeNameList.addEventListener("click", (e) => {
     if (e.target.tagName === "LI") {
       programmeNameSelected.textContent = e.target.textContent;
@@ -273,7 +301,6 @@ function toggleCourseProgrammeDropdown() {
   });
 }
 
-// Course Duration Dropdown (in addCourse modal)
 function toggleCourseDurationDropdown() {
   const durationContainer = document.querySelector(".courseDuration_container");
   if (!durationContainer) return;
@@ -285,9 +312,7 @@ function toggleCourseDurationDropdown() {
 
   durationSelected.addEventListener("click", () => {
     const isActive = durationList.classList.toggle("active");
-    durationSelected.style.borderColor = isActive
-      ? "#000"
-      : "rgba(0,0,0,0.2)";
+    durationSelected.style.borderColor = isActive ? "#000" : "rgba(0,0,0,0.2)";
     durationSelected.style.outline = "none";
   });
 

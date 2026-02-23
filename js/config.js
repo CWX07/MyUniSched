@@ -2,8 +2,14 @@
 
 // Backend API base URL.
 // For local dev, use "" to hit the same origin (http://localhost:3000).
-// When deploying, switch this back to your Render URL or use MYUNISCHED_API_BASE.
-export const API_BASE = "";
+// When deploying, either:
+// - set window.MYUNISCHED_API_BASE in the hosting HTML, or
+// - hard-code your Render URL below.
+const runtimeBase =
+  (typeof window !== "undefined" && window.MYUNISCHED_API_BASE) || "";
+
+export const API_BASE =
+  runtimeBase || "https://myunisched.onrender.com";
 
 // Time slots configuration (1-hour slots, but courses take 2 hours)
 export const TIME_SLOTS = [

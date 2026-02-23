@@ -1,4 +1,10 @@
 import { API_BASE, getProgrammeColor } from "./config.js";
+import { getCurrentUser, showNotification, showConfirm } from "./auth.js";
+
+function getUid() {
+  const user = getCurrentUser();
+  return user ? user.uid : null;
+}
 
 let isEditMode = false;
 let currentEditCourseCode = null;
@@ -10,7 +16,7 @@ export function onCourseUpdated(fn) {
   courseUpdatedCallbacks.push(fn);
 }
 function fireCourseUpdated(courseCode) {
-  courseUpdatedCallbacks.forEach(fn => fn(courseCode));
+  courseUpdatedCallbacks.forEach((fn) => fn(courseCode));
 }
 
 export async function addCourse() {
@@ -24,31 +30,32 @@ export async function addCourse() {
     deleteBtn.addEventListener("click", async () => {
       if (!isEditMode || !currentEditCourseCode) return;
 
-      const confirmed = window.confirm(
+      const confirmed = await showConfirm(
         "Are you sure you want to delete this course?",
+        "Delete Course",
       );
       if (!confirmed) return;
 
       try {
         const res = await fetch(
-          `${API_BASE}/api/courses/${currentEditCourseCode}`,
+          `${API_BASE}/api/courses/${currentEditCourseCode}?uid=${getUid()}`,
           { method: "DELETE" },
         );
         const result = await res.json();
 
         if (!res.ok) {
-          alert(result.error || "Failed to delete course");
+          showNotification(result.error || "Failed to delete course", "error");
           return;
         }
 
-        alert("Course deleted successfully");
+        showNotification("Course deleted successfully", "success");
         resetCourseForm();
         const modal = document.querySelector(".addCourse_modal");
         const { closeModal } = await import("./addEntities.js");
         closeModal(modal);
         await loadCourses();
       } catch (err) {
-        alert("Error deleting course");
+        showNotification("Error deleting course", "error");
       }
     });
   }
@@ -67,12 +74,12 @@ export async function addCourse() {
     const programmeId = programmeElement.dataset.value;
 
     if (!lecturerId) {
-      alert("Please select a lecturer");
+      showNotification("Please select a lecturer", "error");
       return;
     }
 
     if (!programmeId) {
-      alert("Please select a programme");
+      showNotification("Please select a programme", "error");
       return;
     }
 
@@ -91,23 +98,26 @@ export async function addCourse() {
       if (isEditMode && currentEditCourseCode) {
         // UPDATE existing course
         const editedCourseCode = currentEditCourseCode;
-        res = await fetch(`${API_BASE}/api/courses/${currentEditCourseCode}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            courseName,
-            lecturerId,
-            programmeId,
-            durationHours,
-          }),
-        });
+        res = await fetch(
+          `${API_BASE}/api/courses/${currentEditCourseCode}?uid=${getUid()}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              courseName,
+              lecturerId,
+              programmeId,
+              durationHours,
+            }),
+          },
+        );
 
         result = await res.json();
 
         if (!res.ok) {
-          alert(result.error);
+          showNotification(result.error, "error");
         } else {
-          alert("Course updated successfully");
+          showNotification("Course updated successfully", "success");
           resetCourseForm();
           const modal = document.querySelector(".addCourse_modal");
           modal.style.opacity = "0";
@@ -131,21 +141,25 @@ export async function addCourse() {
             lecturerId,
             programmeId,
             durationHours,
+            uid: getUid(),
           }),
         });
 
         result = await res.json();
 
         if (!res.ok) {
-          alert(result.error);
+          showNotification(result.error, "error");
         } else {
-          alert(`Course added successfully with code: ${result.course_code}`);
+          showNotification(
+            `Course added successfully with code: ${result.course_code}`,
+            "success",
+          );
           resetCourseForm();
         }
         await loadCourses();
       }
     } catch (err) {
-      alert("Network error");
+      showNotification("Network error", "error");
     }
   });
 }
@@ -191,7 +205,7 @@ export async function editCourse(courseCode) {
 
   // Fetch course details and populate form
   try {
-    const res = await fetch(`${API_BASE}/api/courses`);
+    const res = await fetch(`${API_BASE}/api/courses?uid=${getUid()}`);
     const data = await res.json();
     const course = data.find((c) => c.course_code === courseCode);
 
@@ -215,8 +229,7 @@ export async function editCourse(courseCode) {
       if (durationElement) {
         const dur = String(course.duration_hours || 2);
         durationElement.dataset.value = dur;
-        durationElement.textContent =
-          dur === "1" ? "1 hour" : `${dur} hours`;
+        durationElement.textContent = dur === "1" ? "1 hour" : `${dur} hours`;
       }
 
       // Set lecturer dropdown
@@ -239,14 +252,14 @@ export async function editCourse(courseCode) {
       openModal(modal);
     }
   } catch (err) {
-    alert("Error loading course details");
+    showNotification("Error loading course details", "error");
   }
 }
 
 // Populate lecturer dropdown
 export async function populateLecturerDropdown() {
   try {
-    const res = await fetch(`${API_BASE}/api/lecturers`);
+    const res = await fetch(`${API_BASE}/api/lecturers?uid=${getUid()}`);
     const lecturers = await res.json();
 
     const lecturerList = document.querySelector(".lecturerId_list");
@@ -266,7 +279,7 @@ export async function populateLecturerDropdown() {
 // Populate programme dropdown
 export async function populateProgrammeDropdown() {
   try {
-    const res = await fetch(`${API_BASE}/api/programmes`);
+    const res = await fetch(`${API_BASE}/api/programmes?uid=${getUid()}`);
     const programmes = await res.json();
 
     const programmeList = document.querySelector(".programmeName_list");
@@ -302,8 +315,14 @@ export async function populateProgrammeDropdown() {
 
 // Load and display courses
 export async function loadCourses() {
-  const res = await fetch(`${API_BASE}/api/courses`);
+  const res = await fetch(`${API_BASE}/api/courses?uid=${getUid()}`);
   const data = await res.json();
+
+  if (!res.ok) {
+    console.error("Failed to load lecturers:", data.error || res.status);
+    // show an error state in the UI
+    return;
+  }
 
   const list = document.querySelector(".myCourse_list");
   list.innerHTML = "";
@@ -322,64 +341,63 @@ export async function loadCourses() {
       const progNameDiff = a.programme_name.localeCompare(b.programme_name);
       if (progNameDiff !== 0) return progNameDiff;
 
-      const yearDiff =
-        Number(a.programme_year) - Number(b.programme_year);
+      const yearDiff = Number(a.programme_year) - Number(b.programme_year);
       if (yearDiff !== 0) return yearDiff;
 
       return a.course_name.localeCompare(b.course_name);
     })
     .forEach((c) => {
-    // Create card
-    const card = document.createElement("div");
-    card.className = "myCourse_card";
+      // Create card
+      const card = document.createElement("div");
+      card.className = "myCourse_card";
 
-    // Apply color-coded left border based on programme
-    const color = getProgrammeColor(
-      c.programme_level,
-      c.programme_name,
-      c.programme_year
-    );
-    card.style.borderLeft = `4px solid ${color}`;
+      // Apply color-coded left border based on programme
+      const color = getProgrammeColor(
+        c.programme_level,
+        c.programme_name,
+        c.programme_year,
+      );
+      card.style.borderLeft = `4px solid ${color}`;
 
-    // displayItem1 <-- Course Code
-    const displayId = document.createElement("div");
-    displayId.className = "displayItem1";
-    displayId.textContent = c.course_code;
+      // displayItem1 <-- Course Code
+      const displayId = document.createElement("div");
+      displayId.className = "displayItem1";
+      displayId.textContent = c.course_code;
 
-    // displayItem2 <-- Course Name
-    const displayName = document.createElement("div");
-    displayName.className = "displayItem2";
-    displayName.textContent = c.course_name;
+      // displayItem2 <-- Course Name
+      const displayName = document.createElement("div");
+      displayName.className = "displayItem2";
+      displayName.textContent = c.course_name;
 
-    // viewEntity_btn
-    const btn = document.createElement("button");
-    btn.className = "viewEntity_btn";
-    btn.innerHTML = "&#9881;";
+      // viewEntity_btn
+      const btn = document.createElement("button");
+      btn.className = "viewEntity_btn";
+      btn.innerHTML = "&#9881;";
 
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation(); // Prevent card click from firing
-      editCourse(c.course_code);
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent card click from firing
+        editCourse(c.course_code);
+      });
+
+      // Store course code for later use
+      card.dataset.courseId = c.course_code;
+
+      // Add click event to show details
+      card.addEventListener("click", () => {
+        const courseId = card.dataset.courseId;
+        displayCourseDetails(courseId);
+      });
+
+      card.appendChild(displayId);
+      card.appendChild(displayName);
+      card.appendChild(btn);
+
+      list.appendChild(card);
     });
-
-    // Store course code for later use
-    card.dataset.courseId = c.course_code;
-
-    // Add click event to show details
-    card.addEventListener("click", () => {
-      const courseId = card.dataset.courseId;
-      displayCourseDetails(courseId);
-    });
-
-    card.appendChild(displayId);
-    card.appendChild(displayName);
-    card.appendChild(btn);
-
-    list.appendChild(card);
-  });
 }
 
 async function displayCourseDetails(courseId) {
-  const res = await fetch(`${API_BASE}/api/courses`);
+  const res = await fetch(`${API_BASE}/api/courses?uid=${getUid()}`);
   const data = await res.json();
 
   const course = data.find((c) => c.course_code === courseId);
@@ -393,9 +411,15 @@ async function displayCourseDetails(courseId) {
   container.classList.add("course_details");
   container.innerHTML = "";
 
+  // Title: course name + code, then separator line
   const title = document.createElement("h1");
-  title.textContent = "Course Details";
+  const namePart = course.course_name || "Course";
+  const codePart = course.course_code ? ` (${course.course_code})` : "";
+  title.textContent = `${namePart}${codePart}`;
   container.appendChild(title);
+
+  const separator = document.createElement("hr");
+  container.appendChild(separator);
 
   function createDetail(label, value) {
     const wrapper = document.createElement("div");
@@ -423,12 +447,12 @@ async function displayCourseDetails(courseId) {
     return wrapper;
   }
 
-  // Display only the key details
-  container.appendChild(createDetail("Course Code", course.course_code));
+  // Display only the key details (code is already in title)
   container.appendChild(createDetail("Course Name", course.course_name));
 
   const durationHours = course.duration_hours || 2;
-  const durationLabel = durationHours === 1 ? "1 hour" : `${durationHours} hours`;
+  const durationLabel =
+    durationHours === 1 ? "1 hour" : `${durationHours} hours`;
   container.appendChild(createDetail("Duration", durationLabel));
 
   const lecturerLabel =

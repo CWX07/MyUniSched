@@ -1,86 +1,45 @@
+/* =============================================================
+   myEntities.css  —  My Entities page
+   ============================================================= */
+
 .myEntities {
   width: 90vw;
-  height: 100vh;
-
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 20px;
-
-  padding-top: 160px;
+  padding-top: 210px;
   margin: 0 auto;
 }
 
+/* ── Menu bar ───────────────────────────────────────────── */
 .myEntities_menu {
+  position: relative;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-
-  padding: 0px 15px;
+  padding: 0 15px;
   z-index: 100;
 }
 
 .myEntities_menu_items {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: flex-start;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
 }
 
+/* Tab buttons inherit global button; just tighten padding */
 .myEntities_menu_items button {
   font-size: 14px;
-  font-weight: 600;
-
-  border-radius: 20px;
-  box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.3);
-
-  transition:
-    all 0.4s ease-in-out,
-    border-radius 0.2s ease-in-out,
-    color 0.1s ease-in-out;
-}
-
-.myEntities_menu_items button:hover {
-  transform: scale(1.1);
-  background: linear-gradient(
-    to bottom,
-    rgb(30, 30, 30) 0%,
-    rgb(60, 60, 60) 100%
-  );
-  color: #fff;
-  border-radius: 10px;
-}
-
-.addEntity {
-  position: relative;
-  display: inline-block;
+  font-weight: var(--fw-semi);
+  padding: 9px 20px;
 }
 
 .addEntity_btn {
   font-size: 14px;
-
-  position: relative;
-  z-index: 10;
-
-  border-radius: 20px;
-  padding: 10px 15px;
-
-  transition:
-    all 0.4s ease-in-out,
-    border-radius 0.2s ease-in-out,
-    color 0.1s ease-in-out;
-}
-
-.addEntity_btn:hover {
-  transform: scale(1.1);
-  background: linear-gradient(
-    to bottom,
-    rgb(30, 30, 30) 0%,
-    rgb(60, 60, 60) 100%
-  );
-  color: #fff;
-  border-radius: 10px;
+  font-weight: var(--fw-semi);
+  padding: 10px 16px;
 }
 
 .addEntity:hover .dropdown,
@@ -90,371 +49,95 @@
   pointer-events: auto;
 }
 
+/* Override dropdown positioning for addEntity */
 .dropdown.addEntity {
-  position: absolute;
-  top: 105%;
-  right: 0px;
-  height: 150px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  top: 50px;
+  right: 10px;
+  min-width: 130px;
   z-index: 200;
 }
 
-.dropdown.addEntity a:hover {
-  transform: scale(1.1);
-  background: linear-gradient(
-    to bottom,
-    rgb(30, 30, 30) 0%,
-    rgb(60, 60, 60) 100%
-  );
-  color: #fff;
-  border-radius: 10px;
-}
-
-.courseCode,
-.courseName,
-.courseDuration,
-.lecturerId,
-.programmeName,
-.lecturerName,
-.programmeLevel,
-.programmeYear {
-  width: 100%;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 15px;
-}
-
-.courseDuration_label {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.courseDuration_container {
-  position: relative;
-  width: 100%;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.courseDuration_selected {
-  width: 100%;
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1.5px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-  background: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  user-select: none;
-}
-
-.courseDuration_container::after {
-  content: "▾";
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
-  color: #000000;
-  pointer-events: none;
-}
-
-.courseDuration_list {
-  list-style: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  max-height: 0;
-
-  background: #fff;
-
-  border-radius: 8px;
-  border: 1.5px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-
-  margin: 5px 0 0 0;
-  padding: 0;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-  opacity: 0;
-  z-index: 100;
-
-  transition:
-    max-height 0.3s ease,
-    opacity 0.3s ease;
-}
-
-.courseDuration_list.active {
-  max-height: 200px;
-  opacity: 1;
-}
-
-.courseDuration_list li {
-  font-weight: 550;
-  padding: 10px 15px;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-}
-
-.courseDuration_list li:hover {
-  background-color: #f5f6fa;
-  color: #2d3436;
-  border-radius: 4px;
-}
-
-.programmeInfo {
-  width: 100%;
-
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-}
-
-/* Generic dropdown container styles */
-.programmeName_container,
-.programmeLevel_container,
-.lecturerId_container {
-  position: relative;
-  width: 100%;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-/* Generic dropdown selected styles */
-.programmeName_selected,
-.programmeLevel_selected,
-.lecturerId_selected {
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1.5px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-  background: #fff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  user-select: none;
-}
-
-.programmeName_selected::after,
-.programmeLevel_selected::after,
-.lecturerId_selected::after {
-  content: "▾";
-  font-size: 14px;
-  color: #000000;
-}
-
-/* Generic dropdown list styles */
-.programmeName_list,
-.programmeLevel_list,
-.lecturerId_list {
-  list-style: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  max-height: 0;
-
-  background: #fff;
-
-  border-radius: 8px;
-  border: 1.5px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-
-  margin: 5px 0 0 0;
-  padding: 0;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-  opacity: 0;
-  z-index: 100;
-
-  transition:
-    max-height 0.3s ease,
-    opacity 0.3s ease;
-}
-
-.programmeName_list.active,
-.programmeLevel_list.active,
-.lecturerId_list.active {
-  max-height: 200px;
-  opacity: 1;
-}
-
-.programmeName_list li,
-.programmeLevel_list li,
-.lecturerId_list li {
-  font-weight: 550;
-  padding: 10px 15px;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-}
-
-.programmeName_list li:hover,
-.programmeLevel_list li:hover,
-.lecturerId_list li:hover {
-  background-color: #f5f6fa;
-  color: #2d3436;
-  border-radius: 4px;
-}
-
-.addLecturer_modal_content {
-  min-height: 350px;
-}
-
-.addProgramme_modal_content {
-  min-height: 450px;
-}
-
-.modal_actions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  margin-top: 20px;
-}
-
-.delete_btn {
-  background: #e84118 !important;
-  color: #ffffff;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0;
-}
-
-.delete_btn:hover {
-  background: #e84118 !important;
-  transform: none;
-  filter: drop-shadow(0 0 4px rgb(255, 0, 0));
-}
-
+/* ── Entities container ─────────────────────────────────── */
 .myEntities_container {
   width: 100%;
-  min-height: 60vh;
-
+  height: 55vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
   gap: 15px;
-
-  padding: 0px 15px;
+  padding: 0 15px;
 }
 
-.myCourse_list,
-.myLecturer_list,
-.myProgramme_list,
-.myEntities_details {
-  height: 100%;
-
-  display: flex;
-  flex-direction: column;
-
-  background: linear-gradient(to bottom right, #ffffffd8 0%, #e6f5eadd 100%);
-
-  padding: 10px 20px;
-
-  border-radius: 20px;
-  border-style: solid;
-  border-color: rgba(0, 0, 0, 0.2);
-  border-width: 2px;
-  border-radius: 20px;
-
-  box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.25);
-}
-
+/* ── List panels ────────────────────────────────────────── */
 .myCourse_list,
 .myLecturer_list,
 .myProgramme_list {
   position: relative;
-  width: 65%;
-  max-height: 60vh;
-
+  width: 55%;
+  max-height: 65vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--grad-card);
   padding: 20px;
-  overflow: auto;
+  border-radius: var(--radius-xl);
+  border: var(--border);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.myCourse_list,
-.myProgramme_list {
-  display: none;
-}
-
+/* Watermark logo */
 .myCourse_list::before,
 .myLecturer_list::before,
 .myProgramme_list::before {
   content: "";
   position: absolute;
-  width: 50%;
-  height: 50%;
-  top: 50%;
-  left: 50%;
-
-  background: url("../img/logo.png");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-
-  opacity: 0.2;
-
+  width: 50%; height: 50%;
+  top: 50%; left: 50%;
+  background: url("../img/logo.png") center / contain no-repeat;
+  opacity: 0.15;
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 0;
 }
 
+/* Hidden by default — JS shows correct one */
+.myCourse_list,
+.myProgramme_list { display: none; }
+
+.schedule_empty.entities_login_prompt {
+  background: none;
+  border: none;
+  box-shadow: unset;
+}
+
+/* ── Entity cards ───────────────────────────────────────── */
 .myCourse_card,
 .myLecturer_card,
 .myProgramme_card {
   position: relative;
+  z-index: 1;
   width: 100%;
-  padding: 15px 25px;
-  margin-bottom: 10px;
-
+  padding: 14px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
-
-  border-radius: 20px;
-  border-style: solid;
-  border-color: rgba(0, 0, 0, 0.2);
-  border-width: 2px;
-  border-radius: 20px;
-
-  box-shadow: 6px 6px 6px rgba(0, 0, 0, 0.2);
-
+  background: var(--grad-panel);
+  border-radius: var(--radius-xl);
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
-
-  transition: all 0.3s ease-in-out;
+  transition: var(--t-med);
 }
 
 .myCourse_card:hover,
 .myLecturer_card:hover,
 .myProgramme_card:hover {
   transform: scale(1.02);
-  background: linear-gradient(
-    to bottom,
-    rgb(30, 30, 30) 0%,
-    rgb(60, 60, 60) 100%
-  );
-
+  background: var(--grad-hover);
   color: #fff;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .myCourse_card:hover .viewEntity_btn,
@@ -466,83 +149,276 @@
 .displayItem1,
 .displayItem2 {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: var(--fw-semi);
 }
 
 .viewEntity_btn {
-  font-size: 30px;
-
+  font-size: 26px;
   background: none;
   border: none;
-
-  padding: 0 10px;
-
   box-shadow: none;
-
+  padding: 0 8px;
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
+  color: #000;
+  transition: var(--t-med);
 }
 
+.viewEntity_btn:hover {
+  transform: none;
+  background: none;
+  color: inherit;
+  border-radius: 0;
+}
+
+/* ── Details panel ──────────────────────────────────────── */
 .myEntities_details {
-  max-height: 60vh;
-
-  display: flex;
   flex: 1;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 10px;
-
-  font-size: 14px;
-
-  padding: 20px 30px;
+  max-height: 65vh;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--grad-card);
+  border-radius: var(--radius-xl);
+  border: var(--border);
+  box-shadow: var(--shadow-card);
+  padding: 20px 28px;
+  font-size: 14px;
 }
 
 .myEntities_details h1 {
-  font-size: 30px;
-  border-bottom: 3px solid #000000;
-
-  margin: 20px;
-  margin-top: 10px;
-  padding: 5px 15px;
+  font-size: 26px;
+  font-weight: var(--fw-black);
+  border-bottom: 3px solid #000;
+  margin: 10px 16px 10px;
+  padding: 5px 10px;
+  align-self: stretch;
 }
 
 .myEntities_noDetails_title,
 .myEntities_noDetails_desc {
   align-self: center;
   text-align: center;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .myEntities_noDetails_title {
   border-bottom: none !important;
   margin: 0 !important;
+  font-size: 22px;
+  color: rgba(0,0,0,0.8);
 }
 
+.myEntities_noDetails_desc {
+  font-size: 14px;
+  color: rgba(0,0,0,0.4);
+  font-weight: var(--fw-regular);
+}
+
+/* ── Detail rows ────────────────────────────────────────── */
 .courseDetails,
 .lecturerDetails,
 .programmeDetails {
   width: 100%;
-
   display: flex;
   flex-direction: row;
-  justify-items: center;
   align-items: center;
+  font-size: 14px;
+  font-weight: var(--fw-regular);
+  border-bottom: 2px dotted rgba(0,0,0,0.2);
+  padding: 10px 6px;
+  gap: 10px;
+}
 
-  font-size: 15px;
-  font-weight: 500;
-
-  border-bottom: 2px dotted #000000;
-
-  padding: 10px;
+.courseDetails:last-child,
+.lecturerDetails:last-child,
+.programmeDetails:last-child {
+  border-bottom: none;
 }
 
 .courseDetails_title,
 .lecturerDetails_title,
 .programmeDetails_title {
-  min-width: 50%;
-
+  min-width: 45%;
+  font-weight: var(--fw-bold);
   display: flex;
   justify-content: space-between;
+  margin-right: 16px;
+}
 
-  margin-right: 20px;
+/* ── Modal specifics ────────────────────────────────────── */
+.addLecturer_modal_content { min-height: 320px; }
+.addProgramme_modal_content { min-height: 420px; }
+
+/* ── Custom dropdowns (duration, programme, lecturer) ────── */
+.courseDuration_label,
+.programmeName_label,
+.programmeLevel_label,
+.programmeYear_label,
+.lecturer_label {
+  font-size: 16px;
+  font-weight: var(--fw-bold);
+  color: #000;
+}
+
+.courseDuration_container,
+.programmeName_container,
+.programmeLevel_container,
+.lecturerId_container {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+}
+
+.courseDuration_selected,
+.programmeName_selected,
+.programmeLevel_selected,
+.lecturerId_selected {
+  width: 100%;
+  padding: 10px 36px 10px 15px;
+  border-radius: var(--radius-sm);
+  border: var(--border);
+  background: #fff;
+  font-size: 13px;
+  font-weight: var(--fw-semi);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s;
+}
+
+.courseDuration_container::after,
+.programmeName_container::after,
+.programmeLevel_container::after,
+.lecturerId_container::after {
+  content: "▾";
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: #555;
+  pointer-events: none;
+}
+
+.courseDuration_list,
+.programmeName_list,
+.programmeLevel_list,
+.lecturerId_list {
+  list-style: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  max-height: 0;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow-y: auto;
+  overflow-x: hidden;
+  opacity: 0;
+  z-index: 200;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  padding: 0;
+  margin: 0;
+}
+
+.courseDuration_list.active,
+.programmeName_list.active,
+.programmeLevel_list.active,
+.lecturerId_list.active {
+  max-height: 200px;
+  opacity: 1;
+}
+
+.courseDuration_list li,
+.programmeName_list li,
+.programmeLevel_list li,
+.lecturerId_list li {
+  font-size: 13px;
+  font-weight: var(--fw-semi);
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: var(--t-fast);
+}
+
+.courseDuration_list li:hover,
+.programmeName_list li:hover,
+.programmeLevel_list li:hover,
+.lecturerId_list li:hover {
+  background: #f5f6fa;
+  color: #000;
+  border-radius: 4px;
+}
+
+/* ── Programme info row inside modal ────────────────────── */
+.programmeInfo {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+/* Form field wrappers */
+.courseCode, .courseName, .courseDuration,
+.lecturerId, .programmeName, .lecturerName,
+.programmeLevel, .programmeYear {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* ── Card wrapper + inline dropdown panel ───────────────── */
+.schedule_card_wrapper {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  border: var(--border);
+  background: var(--grad-card);
+  transition: var(--t-med);
+}
+
+.schedule_card {
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  background: var(--grad-card);
+}
+
+.schedule_card.card_expanded {
+  border-bottom: var(--border);
+  border-radius: 0;
+}
+
+/* Chevron transition */
+.view_chevron {
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+/* Collapsible panel */
+.schedule_card_panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+  background: #fff;
+}
+
+.schedule_card_panel.open {
+  max-height: 2000px;
+}
+
+.schedule_card_panel_inner {
+  padding: 16px;
+  overflow-x: auto;
 }

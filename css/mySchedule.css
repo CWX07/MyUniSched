@@ -1,92 +1,342 @@
+/* =============================================================
+   mySchedule.css  —  My Schedule page
+   ============================================================= */
+
+/* ── Page layout ────────────────────────────────────────── */
 .mySchedule {
   width: 90vw;
-  height: 100vh;
-
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  flex: 1;
   gap: 20px;
-
   padding-top: 160px;
+  padding-bottom: 60px;
   margin: 0 auto;
 }
 
+/* ── Menu bar ───────────────────────────────────────────── */
 .mySchedule_menu {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-
-  padding: 0px 15px;
+  padding: 0 20px;
+  z-index: 100;
 }
 
-.mySchedule_menu_items {
-  display: flex;
-  justify-content: space-evenly;
-  align-items: center;
-  gap: 15px;
+.mySchedule_menu_title h1 {
+  font-size: 28px;
+  font-weight: var(--fw-black);
+  color: #000;
 }
 
 .addSchedule {
-  text-decoration: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  background: var(--grad-panel);
   color: #000;
   font-size: 14px;
-  font-weight: 600;
-
-  background: linear-gradient(to bottom, #ffffff 0%, #f2f2f29a 100%);
-
-  padding: 10px 20px;
-
-  border-radius: 20px;
-  border-style: solid;
-  border-color: rgba(0, 0, 0, 0.2);
-  border-width: 2px;
-  border-radius: 20px;
-
-  cursor: pointer;
-
-  box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.25);
-
-  padding: 10px 15px;
-
-  transition:
-    all 0.4s ease-in-out,
-    border-radius 0.2s ease-in-out,
-    color 0.1s ease-in-out;
+  border-radius: var(--radius-md);
+  border: var(--border);
+  box-shadow: var(--shadow-btn);
+  text-decoration: none;
+  transition: var(--t-btn);
 }
 
 .addSchedule:hover {
   transform: scale(1.1);
-  background: linear-gradient(
-    to bottom,
-    rgb(30, 30, 30) 0%,
-    rgb(60, 60, 60) 100%
-  );
+  background: var(--grad-hover);
   color: #fff;
-  border-radius: 10px;
 }
 
+/* ── Schedule list container ────────────────────────────── */
 .mySchedule_container {
   width: 100%;
-  min-height: 60vh;
-
+  height: 100%;
   display: flex;
   flex-direction: column;
+  gap: 14px;
+  padding: 0 15px;
+}
+
+/* ── Empty / loading / error ─────────────────────────────── */
+.schedule_empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
-  gap: 15px;
+  gap: 14px;
+  padding: 60px 20px;
+  background: var(--grad-card);
+  border-radius: var(--radius-xl);
+  border: var(--border);
+  box-shadow: var(--shadow-card);
+  color: #555;
+  text-align: center;
+}
 
-  background: linear-gradient(to bottom right, #ffffffd8 0%, #e6f5eadd 100%);
+.schedule_empty i { font-size: 48px; color: #aaa; }
 
-  padding: 10px 20px;
+.schedule_empty p {
+  font-size: 15px;
+  font-weight: var(--fw-semi);
+}
 
-  border-radius: 20px;
-  border-style: solid;
-  border-color: rgba(0, 0, 0, 0.2);
-  border-width: 2px;
-  border-radius: 20px;
+.schedule_empty a { color: var(--green); font-weight: var(--fw-bold); text-decoration: none; }
+.schedule_empty a:hover { text-decoration: underline; }
 
-  box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.25);
+.loading_msg {
+  font-size: 15px;
+  font-weight: var(--fw-semi);
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+  animation: pulse 1.5s ease-in-out infinite;
+}
 
-  padding: 0px 15px;
+.error_msg {
+  font-size: 15px;
+  font-weight: var(--fw-semi);
+  color: var(--danger);
+  padding: 20px;
+  text-align: center;
+  background: var(--grad-card);
+  border-radius: var(--radius-xl);
+  border: var(--border);
+}
+
+/* ── Card wrapper ────────────────────────────────────────── */
+.schedule_card_wrapper {
+  display: flex;
+  flex-direction: column;
+  background: var(--grad-card);
+  border-radius: var(--radius-xl);
+  border: var(--border);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.schedule_card_wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-modal);
+}
+
+/* ── Card bar ────────────────────────────────────────────── */
+.schedule_card {
+  width: 100%;
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  transition: background 0.2s ease;
+}
+
+.schedule_card.card_expanded {
+  background: rgba(0,0,0,0.02);
+}
+
+.schedule_card_info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule_card_name {
+  font-size: 17px;
+  font-weight: var(--fw-bold);
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.schedule_card_date {
+  font-size: 13px;
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.schedule_card_actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Buttons ────────────────────────────────────────────── */
+.action_bar_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  border-radius: var(--radius-xl);
+  border: var(--border);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: var(--t-btn);
+  white-space: nowrap;
+  background: var(--grad-panel);
+  color: #000;
+}
+
+.action_bar_btn:hover {
+  background: var(--grad-hover);
+  color: #fff;
+  transform: scale(1.05);
+  border-radius: var(--radius-md);
+}
+
+/* View button — neutral, download buttons override colors */
+.view_btn {
+  background: var(--grad-panel);
+  color: #000;
+  border-color: transparent;
+}
+
+.view_btn:hover {
+  background: var(--grad-hover);
+  color: #fff;
+}
+
+.view_btn.active {
+  background: var(--grad-panel);
+  color: #000;
+  border-color: var(--border);
+}
+
+.view_btn.active:hover {
+  background: var(--grad-hover);
+  color: #fff;
+}
+
+/* PDF button (red) */
+.download_btn.dl_pdf_btn,
+.download_btn.pdf {
+  background: var(--danger-dark) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+.download_btn.dl_pdf_btn:hover,
+.download_btn.pdf:hover {
+  background: var(--danger) !important;
+  color: #fff !important;
+}
+
+/* Excel button (green) */
+.download_btn.dl_excel_btn,
+.download_btn.excel {
+  background: var(--green-deep) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+.download_btn.dl_excel_btn:hover,
+.download_btn.excel:hover {
+  background: var(--green-dark) !important;
+  color: #fff !important;
+}
+
+/* Delete button */
+.delete_tt_btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--danger-dark);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: var(--t-fast);
+  font-size: 14px;
+}
+
+.delete_tt_btn:hover {
+  background: var(--danger);
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 6px var(--danger));
+}
+
+/* Chevron — rotates when open */
+.view_chevron {
+  display: inline-block;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.view_chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* ── Collapsible panel ───────────────────────────────────── */
+.schedule_card_panel {
+  max-height: 0;
+  overflow: hidden;
+  /* cubic-bezier gives a snappy open and smooth close */
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #fafafa;
+}
+
+.schedule_card_panel.open {
+  max-height: 3000px;
+  transition: max-height 1.5s cubic-bezier(0.0, 0, 0.2, 1);
+}
+
+.schedule_card_panel_inner {
+  padding: 24px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+/* Panel loading state */
+.panel_loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px;
+  font-size: 14px;
+  font-weight: var(--fw-semi);
+  color: #888;
+}
+
+.panel_loading i { font-size: 18px; color: #5b5bd6; }
+
+/* Panel empty state */
+.panel_empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.panel_empty i { font-size: 22px; }
+
+/* ── Timetable wrapper ───────────────────────────────────── */
+/* Styles for the timetable table, cells, course bars, etc.  */
+/* are intentionally inherited from generate.css             */
+.timetable_wrapper {
+  width: 100%;
+  overflow-x: auto;
 }

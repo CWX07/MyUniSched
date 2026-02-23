@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="../css/style.css" />
     <link rel="stylesheet" href="../css/mySchedule.css" />
+    <link rel="stylesheet" href="../css/generate.css">
     <link rel="stylesheet" href="../css/animation.css" />
+    <link rel="stylesheet" href="../css/auth.css" />
     <link rel="icon" type="image/png" href="../img/logo_whitebg.png" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <title>My Schedule | MyUniSched</title>
   </head>
   <body>
@@ -21,17 +19,14 @@
       <a class="nav_logo" href="../index.html">
         <img src="../img/logo.png" alt="" class="nav_logo_img" />
       </a>
-
       <ul>
         <li><a href="../index.html">Home</a></li>
         <li><a href="./generate.html">Generate</a></li>
         <li><a href="./myEntities.html">My Entities</a></li>
         <li><a href="./mySchedule.html">My Schedule</a></li>
       </ul>
-
       <div class="profile_menu">
         <img src="../img/pfp_icon.png" class="profile_img" alt="" />
-
         <div class="dropdown">
           <a href="#" id="openLogIn">Log In</a>
           <a href="#" id="openSignUp">Sign up</a>
@@ -44,14 +39,32 @@
         <div class="mySchedule_menu_title">
           <h1>My Schedule</h1>
         </div>
-
-        <a href="./generate.html" class="addSchedule"
-          ><i class="fa-solid fa-plus"></i
-        ></a>
+        <a href="./generate.html" class="addSchedule"><i class="fa-solid fa-plus"></i></a>
       </div>
 
-      <div class="mySchedule_container">
-        <!-- Schedule content goes here -->
+      <div class="mySchedule_container" id="myScheduleContainer">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Timetable viewer panel -->
+      <div class="schedule_viewer" id="scheduleViewer" style="display:none;">
+        <div class="schedule_viewer_header">
+          <h2 id="viewerTitle">Timetable</h2>
+          <div class="viewer_actions">
+            <button class="action_bar_btn download_btn pdf" id="viewerDownloadPdf">
+              <i class="fa-solid fa-file-pdf"></i> PDF
+            </button>
+            <button class="action_bar_btn download_btn excel" id="viewerDownloadExcel">
+              <i class="fa-solid fa-file-excel"></i> Excel
+            </button>
+            <button class="schedule_viewer_close" id="viewerClose">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+        <div class="timetable_wrapper">
+          <div class="timetable_container" id="viewerTimetableContainer"></div>
+        </div>
       </div>
     </section>
 
@@ -66,6 +79,6 @@
       </div>
     </footer>
 
-    <script src="../js/animation.js"></script>
+    <script type="module" src="../js/mySchedule.js"></script>
   </body>
 </html>

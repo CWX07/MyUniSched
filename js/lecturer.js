@@ -1,4 +1,10 @@
 import { API_BASE } from "./config.js";
+import { getCurrentUser, showNotification, showConfirm } from "./auth.js";
+
+function getUid() {
+  const user = getCurrentUser();
+  return user ? user.uid : null;
+}
 
 let isEditMode = false;
 let currentEditLecturerId = null;
@@ -15,31 +21,35 @@ export async function addLecturer() {
     deleteBtn.addEventListener("click", async () => {
       if (!isEditMode || !currentEditLecturerId) return;
 
-      const confirmed = window.confirm(
+      const confirmed = await showConfirm(
         "Are you sure you want to delete this lecturer?",
+        "Delete Lecturer",
       );
       if (!confirmed) return;
 
       try {
         const res = await fetch(
-          `${API_BASE}/api/lecturers/${currentEditLecturerId}`,
+          `${API_BASE}/api/lecturers/${currentEditLecturerId}?uid=${getUid()}`,
           { method: "DELETE" },
         );
         const result = await res.json();
 
         if (!res.ok) {
-          alert(result.error || "Failed to delete lecturer");
+          showNotification(
+            result.error || "Failed to delete lecturer",
+            "error",
+          );
           return;
         }
 
-        alert("Lecturer deleted successfully");
+        showNotification("Lecturer deleted successfully", "success");
         resetLecturerForm();
         const modal = document.querySelector(".addLecturer_modal");
         const { closeModal } = await import("./addEntities.js");
         closeModal(modal);
         await loadLecturers();
       } catch (err) {
-        alert("Error deleting lecturer");
+        showNotification("Error deleting lecturer", "error");
       }
     });
   }
@@ -55,20 +65,23 @@ export async function addLecturer() {
       if (isEditMode && currentEditLecturerId) {
         // UPDATE existing lecturer
         const editedLecturerId = currentEditLecturerId;
-        res = await fetch(`${API_BASE}/api/lecturers/${currentEditLecturerId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ lecturerName }),
-        });
+        res = await fetch(
+          `${API_BASE}/api/lecturers/${currentEditLecturerId}?uid=${getUid()}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lecturerName }),
+          },
+        );
 
         result = await res.json();
 
         if (!res.ok) {
-          alert(result.error);
+          showNotification(result.error, "error");
           return;
         }
 
-        alert("Lecturer updated successfully");
+        showNotification("Lecturer updated successfully", "success");
         resetLecturerForm();
         const modal = document.querySelector(".addLecturer_modal");
         const { closeModal } = await import("./addEntities.js");
@@ -80,24 +93,27 @@ export async function addLecturer() {
         res = await fetch(`${API_BASE}/api/lecturers`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ lecturerName }),
+          body: JSON.stringify({ lecturerName, uid: getUid() }),
         });
 
         result = await res.json();
 
         if (!res.ok) {
-          alert(result.error);
+          showNotification(result.error, "error");
           return;
         }
 
-        alert(`Lecturer added successfully with ID: ${result.lecturer_id}`);
+        showNotification(
+          `Lecturer added successfully with ID: ${result.lecturer_id}`,
+          "success",
+        );
         resetLecturerForm();
       }
 
       // Refresh list
       await loadLecturers();
     } catch (err) {
-      alert("Network error");
+      showNotification("Network error", "error");
     }
   });
 }
@@ -128,7 +144,7 @@ export function editLecturer(lecturerId) {
   currentEditLecturerId = lecturerId;
 
   // Fetch lecturer details and populate form
-  fetch(`${API_BASE}/api/lecturers`)
+  fetch(`${API_BASE}/api/lecturers?uid=${getUid()}`)
     .then((res) => res.json())
     .then((data) => {
       const lecturer = data.find((l) => l.lecturer_id === lecturerId);
@@ -159,14 +175,20 @@ export function editLecturer(lecturerId) {
       }
     })
     .catch((err) => {
-      alert("Error loading lecturer details");
+      showNotification("Error loading lecturer details", "error");
     });
 }
 
 // Load and display lecturers
 export async function loadLecturers() {
-  const res = await fetch(`${API_BASE}/api/lecturers`);
+  const res = await fetch(`${API_BASE}/api/lecturers?uid=${getUid()}`);
   const data = await res.json();
+
+  if (!res.ok) {
+    console.error("Failed to load lecturers:", data.error || res.status);
+    // show an error state in the UI
+    return;
+  }
 
   const list = document.querySelector(".myLecturer_list");
   list.innerHTML = "";
@@ -213,10 +235,8 @@ export async function loadLecturers() {
 }
 
 async function displayLecturerDetails(lecturerId) {
-  const res = await fetch(`${API_BASE}/api/lecturers`);
+  const res = await fetch(`${API_BASE}/api/lecturers?uid=${getUid()}`);
   const data = await res.json();
-
-  // Find lecturer using snake_case property name
   const lecturer = data.find((l) => l.lecturer_id === lecturerId);
 
   if (!lecturer) {
@@ -228,9 +248,15 @@ async function displayLecturerDetails(lecturerId) {
   container.classList.remove("course_details");
   container.innerHTML = "";
 
+  // Title: lecturer name + ID, then separator line
   const title = document.createElement("h1");
-  title.textContent = "Lecturer Details";
+  const namePart = lecturer.lecturer_name || "Lecturer";
+  const idPart = lecturer.lecturer_id ? ` (${lecturer.lecturer_id})` : "";
+  title.textContent = `${namePart}${idPart}`;
   container.appendChild(title);
+
+  const separator = document.createElement("hr");
+  container.appendChild(separator);
 
   function createDetail(label, value) {
     const wrapper = document.createElement("div");
@@ -258,6 +284,5 @@ async function displayLecturerDetails(lecturerId) {
     return wrapper;
   }
 
-  container.appendChild(createDetail("Lecturer ID", lecturer.lecturer_id));
   container.appendChild(createDetail("Lecturer Name", lecturer.lecturer_name));
 }

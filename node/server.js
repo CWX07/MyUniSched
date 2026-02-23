@@ -3,6 +3,7 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { db } from "./db.js";
+import fetch from "node-fetch";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,65 +19,253 @@ app.use("/js", express.static(path.join(__dirname, "../js")));
 app.use("/img", express.static(path.join(__dirname, "../img")));
 app.use("/html", express.static(path.join(__dirname, "../html")));
 
-const lecturersCol = db.collection("lecturers");
-const programmesCol = db.collection("programmes");
-const coursesCol = db.collection("courses");
+// Global timetables collection stays as-is (already uid-scoped by field)
+const timetablesCol = db.collection("timetables");
+const usersCol = db.collection("users");
 
 // ==================== HELPERS ====================
 
-async function getNextId(collectionRef, idField, prefix) {
-  // Note: Firestore orders strings lexicographically, so "C9" > "C10".
-  // To avoid reusing IDs like "C10" repeatedly, we scan all docs and
-  // compute the max numeric suffix ourselves.
-  const snapshot = await collectionRef.get();
+/**
+ * Returns per-user subcollection references.
+ * Structure: users/{uid}/lecturers, users/{uid}/programmes, users/{uid}/courses
+ */
+function userCols(uid) {
+  const userRef = usersCol.doc(uid);
+  return {
+    lecturers: userRef.collection("lecturers"),
+    programmes: userRef.collection("programmes"),
+    courses: userRef.collection("courses"),
+    counters: userRef.collection("counters"),
+  };
+}
 
-  if (snapshot.empty) {
-    return `${prefix}1`;
-  }
+/**
+ * Atomically increments a per-user counter and returns the next ID string.
+ * Counter doc lives at: users/{uid}/counters/{type}
+ * e.g. type="lecturers", prefix="L"  →  "L1", "L2", ...
+ */
+async function getNextId(uid, type, prefix) {
+  const { counters } = userCols(uid);
+  const counterRef = counters.doc(type);
 
-  let maxNumber = 0;
-
-  snapshot.forEach((doc) => {
-    const value = doc.data()[idField];
-    if (typeof value === "string" && value.startsWith(prefix)) {
-      const suffix = value.substring(prefix.length);
-      const n = parseInt(suffix, 10);
-      if (!Number.isNaN(n) && n > maxNumber) {
-        maxNumber = n;
-      }
-    }
+  const newCount = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(counterRef);
+    const current = snap.exists ? snap.data().count : 0;
+    const next = current + 1;
+    tx.set(counterRef, { count: next }, { merge: true });
+    return next;
   });
 
-  return `${prefix}${maxNumber + 1}`;
+  return `${prefix}${newCount}`;
 }
+
+// ==================== AUTH ====================
+
+const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
+
+async function firebaseAuthRequest(endpoint, payload) {
+  const url = `https://identitytoolkit.googleapis.com/v1/accounts:${endpoint}?key=${FIREBASE_API_KEY}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+// POST /api/auth/signup
+app.post("/api/auth/signup", async (req, res) => {
+  const { email, password, displayName } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ error: "Email and password are required" });
+
+  try {
+    const data = await firebaseAuthRequest("signUp", {
+      email,
+      password,
+      returnSecureToken: true,
+    });
+
+    if (data.error) {
+      return res
+        .status(400)
+        .json({
+          error: friendlyAuthError(data.error.message || "Sign-up failed"),
+        });
+    }
+
+    const uid = data.localId;
+    const name = displayName || email.split("@")[0];
+
+    await firebaseAuthRequest("update", {
+      idToken: data.idToken,
+      displayName: name,
+      returnSecureToken: false,
+    });
+
+    await usersCol.doc(uid).set({
+      uid,
+      email,
+      displayName: name,
+      createdAt: new Date().toISOString(),
+    });
+
+    return res.json({
+      user: { uid, email, displayName: name, idToken: data.idToken },
+    });
+  } catch (err) {
+    console.error("Signup error:", err);
+    return res.status(500).json({ error: "Server error during sign-up" });
+  }
+});
+
+// POST /api/auth/login
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ error: "Email and password are required" });
+
+  try {
+    const data = await firebaseAuthRequest("signInWithPassword", {
+      email,
+      password,
+      returnSecureToken: true,
+    });
+
+    if (data.error) {
+      return res
+        .status(401)
+        .json({
+          error: friendlyAuthError(data.error.message || "Login failed"),
+        });
+    }
+
+    const uid = data.localId;
+    const userDoc = await usersCol.doc(uid).get();
+    const displayName = userDoc.exists
+      ? userDoc.data().displayName
+      : data.displayName || email.split("@")[0];
+
+    if (!userDoc.exists) {
+      await usersCol
+        .doc(uid)
+        .set({ uid, email, displayName, createdAt: new Date().toISOString() });
+    }
+
+    return res.json({
+      user: { uid, email, displayName, idToken: data.idToken },
+    });
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({ error: "Server error during login" });
+  }
+});
+
+function friendlyAuthError(msg) {
+  if (msg.includes("EMAIL_EXISTS"))
+    return "An account with this email already exists.";
+  if (msg.includes("INVALID_EMAIL")) return "Invalid email address.";
+  if (msg.includes("WEAK_PASSWORD"))
+    return "Password must be at least 6 characters.";
+  if (msg.includes("EMAIL_NOT_FOUND"))
+    return "No account found with this email.";
+  if (
+    msg.includes("INVALID_PASSWORD") ||
+    msg.includes("INVALID_LOGIN_CREDENTIALS")
+  )
+    return "Incorrect password.";
+  if (msg.includes("TOO_MANY_ATTEMPTS"))
+    return "Too many attempts. Please try again later.";
+  return msg;
+}
+
+// ==================== TIMETABLES ====================
+// Timetables stay in a global collection — they're already uid-scoped by field.
+
+app.get("/api/timetables", async (req, res) => {
+  const { uid } = req.query;
+  if (!uid) return res.status(400).json({ error: "uid required" });
+  try {
+    const snap = await timetablesCol
+      .where("uid", "==", uid)
+      .orderBy("savedAt", "desc")
+      .get();
+    const rows = snap.docs.map((d) => {
+      const data = d.data();
+      return { id: d.id, name: data.name, savedAt: data.savedAt };
+    });
+    return res.json(rows);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/timetables/:id", async (req, res) => {
+  try {
+    const doc = await timetablesCol.doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).json({ error: "Not found" });
+    return res.json(doc.data());
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/timetables", async (req, res) => {
+  const { uid, name, timetable, constraints } = req.body;
+  if (!uid || !timetable)
+    return res.status(400).json({ error: "uid and timetable are required" });
+  try {
+    const docRef = timetablesCol.doc();
+    const savedAt = new Date().toISOString();
+    await docRef.set({
+      uid,
+      name: name || `Timetable ${savedAt.slice(0, 10)}`,
+      timetable,
+      constraints: constraints || {},
+      savedAt,
+    });
+    return res.json({ success: true, id: docRef.id });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete("/api/timetables/:id", async (req, res) => {
+  try {
+    const doc = await timetablesCol.doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).json({ error: "Not found" });
+    await timetablesCol.doc(req.params.id).delete();
+    return res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Database error" });
+  }
+});
 
 // ==================== LECTURERS ====================
 
-// GET -- Lecturers
 app.get("/api/lecturers", async (req, res) => {
+  const { uid } = req.query;
+  if (!uid) return res.status(401).json({ error: "Unauthorized" });
   try {
-    const snapshot = await lecturersCol.orderBy("lecturer_id").get();
-    const rows = snapshot.docs.map((doc) => doc.data());
-    res.json(rows);
+    const snapshot = await userCols(uid).lecturers.orderBy("lecturer_id").get();
+    res.json(snapshot.docs.map((doc) => doc.data()));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database error" });
   }
 });
 
-// POST -- Lecturers (Auto-generate ID)
 app.post("/api/lecturers", async (req, res) => {
-  const { lecturerName } = req.body;
-
-  console.log("Received POST:", req.body);
-
-  if (!lecturerName) {
+  const { lecturerName, uid } = req.body;
+  if (!lecturerName || !uid)
     return res.status(400).json({ error: "Missing fields" });
-  }
-
   try {
-    const newId = await getNextId(lecturersCol, "lecturer_id", "L");
-    await lecturersCol.doc(newId).set({
+    const newId = await getNextId(uid, "lecturers", "L");
+    await userCols(uid).lecturers.doc(newId).set({
       lecturer_id: newId,
       lecturer_name: lecturerName,
     });
@@ -87,28 +276,17 @@ app.post("/api/lecturers", async (req, res) => {
   }
 });
 
-// PUT -- Update Lecturer
 app.put("/api/lecturers/:id", async (req, res) => {
-  const oldLecturerId = req.params.id;
-  const { lecturerName } = req.body;
-
-  console.log("Received PUT:", req.body);
-
-  if (!lecturerName) {
+  const { lecturerName, uid: bodyUid } = req.body;
+  const uid = bodyUid || req.query.uid;
+  if (!lecturerName || !uid)
     return res.status(400).json({ error: "Missing fields" });
-  }
-
   try {
-    const docRef = lecturersCol.doc(oldLecturerId);
-    const docSnap = await docRef.get();
-    if (!docSnap.exists) {
+    const docRef = userCols(uid).lecturers.doc(req.params.id);
+    const snap = await docRef.get();
+    if (!snap.exists)
       return res.status(404).json({ error: "Lecturer not found" });
-    }
-
-    await docRef.update({
-      lecturer_name: lecturerName,
-    });
-
+    await docRef.update({ lecturer_name: lecturerName });
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -116,18 +294,14 @@ app.put("/api/lecturers/:id", async (req, res) => {
   }
 });
 
-// DELETE -- Remove Lecturer
 app.delete("/api/lecturers/:id", async (req, res) => {
-  const lecturerId = req.params.id;
-
+  const { uid } = req.query;
+  if (!uid) return res.status(401).json({ error: "Unauthorized" });
   try {
-    const docRef = lecturersCol.doc(lecturerId);
-    const docSnap = await docRef.get();
-
-    if (!docSnap.exists) {
+    const docRef = userCols(uid).lecturers.doc(req.params.id);
+    const snap = await docRef.get();
+    if (!snap.exists)
       return res.status(404).json({ error: "Lecturer not found" });
-    }
-
     await docRef.delete();
     res.json({ success: true });
   } catch (err) {
@@ -138,31 +312,27 @@ app.delete("/api/lecturers/:id", async (req, res) => {
 
 // ==================== PROGRAMMES ====================
 
-// GET -- Programmes
 app.get("/api/programmes", async (req, res) => {
+  const { uid } = req.query;
+  if (!uid) return res.status(401).json({ error: "Unauthorized" });
   try {
-    const snapshot = await programmesCol.orderBy("programme_id").get();
-    const rows = snapshot.docs.map((doc) => doc.data());
-    res.json(rows);
+    const snapshot = await userCols(uid)
+      .programmes.orderBy("programme_id")
+      .get();
+    res.json(snapshot.docs.map((d) => d.data()));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database error" });
   }
 });
 
-// POST -- Programmes (Auto-generate ID)
 app.post("/api/programmes", async (req, res) => {
-  const { programmeName, programmeLevel, programmeYear } = req.body;
-
-  console.log("Received POST:", req.body);
-
-  if (!programmeName || !programmeLevel || !programmeYear) {
+  const { programmeName, programmeLevel, programmeYear, uid } = req.body;
+  if (!programmeName || !programmeLevel || !programmeYear || !uid)
     return res.status(400).json({ error: "Missing fields" });
-  }
-
   try {
-    const newId = await getNextId(programmesCol, "programme_id", "P");
-    await programmesCol.doc(newId).set({
+    const newId = await getNextId(uid, "programmes", "P");
+    await userCols(uid).programmes.doc(newId).set({
       programme_id: newId,
       programme_name: programmeName,
       programme_level: programmeLevel,
@@ -175,30 +345,21 @@ app.post("/api/programmes", async (req, res) => {
   }
 });
 
-// PUT -- Update Programme
 app.put("/api/programmes/:id", async (req, res) => {
-  const oldProgrammeId = req.params.id;
-  const { programmeName, programmeLevel, programmeYear } = req.body;
-
-  console.log("Received PUT:", req.body);
-
-  if (!programmeName || !programmeLevel || !programmeYear) {
+  const { programmeName, programmeLevel, programmeYear, uid: bodyUid } = req.body;
+  const uid = bodyUid || req.query.uid;
+  if (!programmeName || !programmeLevel || !programmeYear || !uid)
     return res.status(400).json({ error: "Missing fields" });
-  }
-
   try {
-    const docRef = programmesCol.doc(oldProgrammeId);
-    const docSnap = await docRef.get();
-    if (!docSnap.exists) {
+    const docRef = userCols(uid).programmes.doc(req.params.id);
+    const snap = await docRef.get();
+    if (!snap.exists)
       return res.status(404).json({ error: "Programme not found" });
-    }
-
     await docRef.update({
       programme_name: programmeName,
       programme_level: programmeLevel,
       programme_year: programmeYear,
     });
-
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -206,18 +367,14 @@ app.put("/api/programmes/:id", async (req, res) => {
   }
 });
 
-// DELETE -- Remove Programme
 app.delete("/api/programmes/:id", async (req, res) => {
-  const programmeId = req.params.id;
-
+  const { uid } = req.query;
+  if (!uid) return res.status(401).json({ error: "Unauthorized" });
   try {
-    const docRef = programmesCol.doc(programmeId);
-    const docSnap = await docRef.get();
-
-    if (!docSnap.exists) {
+    const docRef = userCols(uid).programmes.doc(req.params.id);
+    const snap = await docRef.get();
+    if (!snap.exists)
       return res.status(404).json({ error: "Programme not found" });
-    }
-
     await docRef.delete();
     res.json({ success: true });
   } catch (err) {
@@ -228,40 +385,32 @@ app.delete("/api/programmes/:id", async (req, res) => {
 
 // ==================== COURSES ====================
 
-// GET -- Courses
 app.get("/api/courses", async (req, res) => {
+  const { uid } = req.query;
+  if (!uid) return res.status(401).json({ error: "Unauthorized" });
   try {
-    const coursesSnap = await coursesCol.orderBy("course_code").get();
-    const courses = coursesSnap.docs.map((doc) => doc.data());
+    const { courses, lecturers, programmes } = userCols(uid);
 
-    const lecturerIds = [...new Set(courses.map((c) => c.lecturer_id).filter(Boolean))];
-    const programmeIds = [...new Set(courses.map((c) => c.programme_id).filter(Boolean))];
+    const coursesSnap = await courses.orderBy("course_code").get();
+    const courseData = coursesSnap.docs.map((doc) => doc.data());
+
+    // Fetch all lecturers and programmes for this user in two reads
+    const [lecturersSnap, programmesSnap] = await Promise.all([
+      lecturers.get(),
+      programmes.get(),
+    ]);
 
     const lecturersMap = {};
-    if (lecturerIds.length > 0) {
-      const lecturerSnapshots = await Promise.all(
-        lecturerIds.map((id) => lecturersCol.doc(id).get()),
-      );
-      lecturerSnapshots.forEach((snap) => {
-        if (snap.exists) {
-          lecturersMap[snap.id] = snap.data();
-        }
-      });
-    }
+    lecturersSnap.forEach((d) => {
+      lecturersMap[d.id] = d.data();
+    });
 
     const programmesMap = {};
-    if (programmeIds.length > 0) {
-      const programmeSnapshots = await Promise.all(
-        programmeIds.map((id) => programmesCol.doc(id).get()),
-      );
-      programmeSnapshots.forEach((snap) => {
-        if (snap.exists) {
-          programmesMap[snap.id] = snap.data();
-        }
-      });
-    }
+    programmesSnap.forEach((d) => {
+      programmesMap[d.id] = d.data();
+    });
 
-    const rows = courses.map((c) => {
+    const rows = courseData.map((c) => {
       const lecturer = c.lecturer_id ? lecturersMap[c.lecturer_id] : null;
       const programme = c.programme_id ? programmesMap[c.programme_id] : null;
       return {
@@ -269,10 +418,10 @@ app.get("/api/courses", async (req, res) => {
         course_name: c.course_name,
         lecturer_id: c.lecturer_id,
         programme_id: c.programme_id,
-        lecturer_name: lecturer ? lecturer.lecturer_name : null,
-        programme_name: programme ? programme.programme_name : null,
-        programme_level: programme ? programme.programme_level : null,
-        programme_year: programme ? programme.programme_year : null,
+        lecturer_name: lecturer?.lecturer_name ?? null,
+        programme_name: programme?.programme_name ?? null,
+        programme_level: programme?.programme_level ?? null,
+        programme_year: programme?.programme_year ?? null,
         duration_hours: c.duration_hours || 2,
       };
     });
@@ -284,45 +433,37 @@ app.get("/api/courses", async (req, res) => {
   }
 });
 
-// POST -- Courses (Auto-generate ID)
 app.post("/api/courses", async (req, res) => {
-  const { courseName, lecturerId, programmeId, durationHours } = req.body;
-
-  console.log("Received POST /api/courses:", req.body);
-
-  if (!courseName || !lecturerId || !programmeId) {
+  const { courseName, lecturerId, programmeId, durationHours, uid } = req.body;
+  if (!courseName || !lecturerId || !programmeId || !uid)
     return res.status(400).json({ error: "Missing fields" });
-  }
 
   try {
-    const lecturerSnap = await lecturersCol.doc(lecturerId).get();
-    if (!lecturerSnap.exists) {
-      return res.status(400).json({
-        error: `Lecturer ID '${lecturerId}' does not exist. Please add the lecturer first.`,
-      });
-    }
+    const { lecturers, programmes, courses } = userCols(uid);
 
-    const programmeSnap = await programmesCol.doc(programmeId).get();
-    if (!programmeSnap.exists) {
-      return res.status(400).json({
-        error: `Programme ID '${programmeId}' does not exist. Please add the programme first.`,
-      });
-    }
+    // Validate that the lecturer and programme belong to this user
+    const [lecturerSnap, programmeSnap] = await Promise.all([
+      lecturers.doc(lecturerId).get(),
+      programmes.doc(programmeId).get(),
+    ]);
 
-    const newCode = await getNextId(coursesCol, "course_code", "C");
-    const duration = Number(durationHours) || 2;
-    console.log("Creating course", {
-      course_code: newCode,
-      duration_hours: duration,
-    });
-    await coursesCol.doc(newCode).set({
+    if (!lecturerSnap.exists)
+      return res
+        .status(400)
+        .json({ error: `Lecturer ID '${lecturerId}' does not exist.` });
+    if (!programmeSnap.exists)
+      return res
+        .status(400)
+        .json({ error: `Programme ID '${programmeId}' does not exist.` });
+
+    const newCode = await getNextId(uid, "courses", "C");
+    await courses.doc(newCode).set({
       course_code: newCode,
       course_name: courseName,
       lecturer_id: lecturerId,
       programme_id: programmeId,
-      duration_hours: duration,
+      duration_hours: Number(durationHours) || 2,
     });
-
     res.json({ success: true, course_code: newCode });
   } catch (err) {
     console.error(err);
@@ -330,51 +471,38 @@ app.post("/api/courses", async (req, res) => {
   }
 });
 
-// PUT -- Update Course
 app.put("/api/courses/:id", async (req, res) => {
-  const oldCourseCode = req.params.id;
-  const { courseName, lecturerId, programmeId, durationHours } = req.body;
-
-  console.log(`Received PUT /api/courses/${oldCourseCode}:`, req.body);
-
-  if (!courseName || !lecturerId || !programmeId) {
+  const { courseName, lecturerId, programmeId, durationHours, uid: bodyUid } = req.body;
+  const uid = bodyUid || req.query.uid;
+  if (!courseName || !lecturerId || !programmeId || !uid)
     return res.status(400).json({ error: "Missing fields" });
-  }
 
   try {
-    const courseRef = coursesCol.doc(oldCourseCode);
-    const courseSnap = await courseRef.get();
-    if (!courseSnap.exists) {
+    const { lecturers, programmes, courses } = userCols(uid);
+
+    const [courseSnap, lecturerSnap, programmeSnap] = await Promise.all([
+      courses.doc(req.params.id).get(),
+      lecturers.doc(lecturerId).get(),
+      programmes.doc(programmeId).get(),
+    ]);
+
+    if (!courseSnap.exists)
       return res.status(404).json({ error: "Course not found" });
-    }
+    if (!lecturerSnap.exists)
+      return res
+        .status(400)
+        .json({ error: `Lecturer ID '${lecturerId}' does not exist.` });
+    if (!programmeSnap.exists)
+      return res
+        .status(400)
+        .json({ error: `Programme ID '${programmeId}' does not exist.` });
 
-    const lecturerSnap = await lecturersCol.doc(lecturerId).get();
-    if (!lecturerSnap.exists) {
-      return res.status(400).json({
-        error: `Lecturer ID '${lecturerId}' does not exist. Please add the lecturer first.`,
-      });
-    }
-
-    const programmeSnap = await programmesCol.doc(programmeId).get();
-    if (!programmeSnap.exists) {
-      return res.status(400).json({
-        error: `Programme ID '${programmeId}' does not exist. Please add the programme first.`,
-      });
-    }
-
-    const duration = Number(durationHours) || 2;
-    await courseRef.update({
+    await courses.doc(req.params.id).update({
       course_name: courseName,
       lecturer_id: lecturerId,
       programme_id: programmeId,
-      duration_hours: duration,
+      duration_hours: Number(durationHours) || 2,
     });
-
-    console.log("Updated course duration_hours:", {
-      course_code: oldCourseCode,
-      duration_hours: duration,
-    });
-
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -382,18 +510,14 @@ app.put("/api/courses/:id", async (req, res) => {
   }
 });
 
-// DELETE -- Remove Course
 app.delete("/api/courses/:id", async (req, res) => {
-  const courseCode = req.params.id;
-
+  const { uid } = req.query;
+  if (!uid) return res.status(401).json({ error: "Unauthorized" });
   try {
-    const docRef = coursesCol.doc(courseCode);
-    const docSnap = await docRef.get();
-
-    if (!docSnap.exists) {
+    const docRef = userCols(uid).courses.doc(req.params.id);
+    const snap = await docRef.get();
+    if (!snap.exists)
       return res.status(404).json({ error: "Course not found" });
-    }
-
     await docRef.delete();
     res.json({ success: true });
   } catch (err) {
@@ -402,21 +526,13 @@ app.delete("/api/courses/:id", async (req, res) => {
   }
 });
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../index.html"));
-});
+// ==================== STATIC / ROOT ====================
 
-app.get("/index.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "../index.html"));
-});
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "../index.html")));
+app.get("/index.html", (req, res) =>
+  res.sendFile(path.join(__dirname, "../index.html")),
+);
+app.get("/health", (req, res) => res.status(200).send("OK"));
 
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-// UptimeRobot Check
-app.get("/health", (req, res) => {
-  res.status(200).send("OK");
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

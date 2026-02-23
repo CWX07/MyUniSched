@@ -6,8 +6,10 @@
     <link rel="stylesheet" href="../css/style.css" />
     <link rel="stylesheet" href="../css/generate.css" />
     <link rel="stylesheet" href="../css/animation.css" />
-    <link rel="icon" type="image/png" href="../img/logo_whitebg.png" />
     <link rel="stylesheet" href="../css/myEntities.css" />
+    <link rel="stylesheet" href="../css/auth.css" />
+    <link rel="stylesheet" href="../css/mySchedule.css" />
+    <link rel="icon" type="image/png" href="../img/logo_whitebg.png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <title>Generate | MyUniSched</title>
   </head>
@@ -28,7 +30,6 @@
 
       <div class="profile_menu">
         <img src="../img/pfp_icon.png" class="profile_img" alt="" />
-
         <div class="dropdown">
           <a href="#" id="openLogIn">Log In</a>
           <a href="#" id="openSignUp">Sign up</a>
@@ -48,35 +49,15 @@
             <div class="constraint_controls">
               <div class="constraint_item">
                 <label for="minCoursesPerSlot">Min Courses/Time Slot:</label>
-                <input
-                  type="number"
-                  id="minCoursesPerSlot"
-                  min="0"
-                  max="10"
-                  value="0"
-                />
+                <input type="number" id="minCoursesPerSlot" min="0" max="10" value="0" />
               </div>
               <div class="constraint_item">
                 <label for="maxCoursesPerSlot">Max Courses/Time Slot:</label>
-                <input
-                  type="number"
-                  id="maxCoursesPerSlot"
-                  min="1"
-                  max="10"
-                  value="3"
-                />
+                <input type="number" id="maxCoursesPerSlot" min="1" max="10" value="3" />
               </div>
               <div class="constraint_item">
-                <label for="maxSlotsPerCoursePerDay">
-                  Max Slots Course/Day:
-                </label>
-                <input
-                  type="number"
-                  id="maxSlotsPerCoursePerDay"
-                  min="1"
-                  max="10"
-                  value="2"
-                />
+                <label for="maxSlotsPerCoursePerDay">Max Slots Course/Day:</label>
+                <input type="number" id="maxSlotsPerCoursePerDay" min="1" max="10" value="2" />
               </div>
             </div>
           </div>
@@ -115,6 +96,19 @@
 
         <div class="timetable_status" id="timetableStatus"></div>
 
+        <!-- Save / Download action bar (hidden until timetable is generated) -->
+        <div class="timetable_action_bar" id="timetableActionBar" style="display:none;">
+          <button class="action_bar_btn save_btn" id="saveTimetableBtn">
+            <i class="fa-solid fa-floppy-disk"></i> Save Timetable
+          </button>
+          <button class="action_bar_btn download_btn dl_pdf_btn" id="downloadPdfBtn">
+            <i class="fa-solid fa-file-pdf"></i> Download PDF
+          </button>
+          <button class="action_bar_btn download_btn dl_excel_btn" id="downloadExcelBtn">
+            <i class="fa-solid fa-file-excel"></i> Download Excel
+          </button>
+        </div>
+
         <div class="timetable_wrapper">
           <div class="timetable_container" id="timetableContainer">
             <p class="no_timetable">
@@ -140,52 +134,52 @@
 
     <!-- Add course modal (shared with My Entities) -->
     <div class="modal addCourse_modal">
-        <div class="modal_content addCourse_modal_content">
-          <span class="close addCourse_close">&times;</span>
-          <h2>Add Course</h2>
+      <div class="modal_content addCourse_modal_content">
+        <span class="close addCourse_close">&times;</span>
+        <h2>Add Course</h2>
 
-          <form class="modal_content_form addCourse_modal_content_form">
-            <div class="courseName">
-              <label for="courseName" class="courseName_label">Course Name</label>
-              <input id="courseName" type="text" placeholder="Enter course name" class="input_field" required />
-            </div>
+        <form class="modal_content_form addCourse_modal_content_form">
+          <div class="courseName">
+            <label for="courseName" class="courseName_label">Course Name</label>
+            <input id="courseName" type="text" placeholder="Enter course name" class="input_field" required />
+          </div>
 
-            <div class="courseDuration">
-              <label for="courseDuration" class="courseDuration_label">Course Duration</label>
-              <div class="courseDuration_container">
-                <div id="courseDuration" class="courseDuration_selected" data-value="2">2 hours</div>
-                <ul class="courseDuration_list">
-                  <li data-value="1">1 hour</li>
-                  <li data-value="2">2 hours</li>
-                  <li data-value="3">3 hours</li>
-                </ul>
-              </div>
+          <div class="courseDuration">
+            <label for="courseDuration" class="courseDuration_label">Course Duration</label>
+            <div class="courseDuration_container">
+              <div id="courseDuration" class="courseDuration_selected" data-value="2">2 hours</div>
+              <ul class="courseDuration_list">
+                <li data-value="1">1 hour</li>
+                <li data-value="2">2 hours</li>
+                <li data-value="3">3 hours</li>
+              </ul>
             </div>
+          </div>
 
-            <div class="lecturerId">
-              <label for="lecturerId_course" class="lecturer_label">Lecturer</label>
-              <div class="lecturerId_container">
-                <div id="lecturerId_course" class="lecturerId_selected">Select lecturer</div>
-                <ul class="lecturerId_list"></ul>
-              </div>
+          <div class="lecturerId">
+            <label for="lecturerId_course" class="lecturer_label">Lecturer</label>
+            <div class="lecturerId_container">
+              <div id="lecturerId_course" class="lecturerId_selected">Select lecturer</div>
+              <ul class="lecturerId_list"></ul>
             </div>
+          </div>
 
-            <div class="programmeName">
-              <label for="programmeName" class="programmeName_label">Course Programme</label>
-              <div class="programmeName_container">
-                <div id="programmeName" class="programmeName_selected">Select programme</div>
-                <ul class="programmeName_list"></ul>
-              </div>
+          <div class="programmeName">
+            <label for="programmeName" class="programmeName_label">Course Programme</label>
+            <div class="programmeName_container">
+              <div id="programmeName" class="programmeName_selected">Select programme</div>
+              <ul class="programmeName_list"></ul>
             </div>
+          </div>
 
-            <div class="modal_actions">
-              <button type="submit" class="submit_btn addCourse_submit_btn">Add Course</button>
-              <button type="button" class="submit_btn delete_btn deleteCourse_btn">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </div>
-          </form>
-        </div>
+          <div class="modal_actions">
+            <button type="submit" class="submit_btn addCourse_submit_btn">Add Course</button>
+            <button type="button" class="submit_btn delete_btn deleteCourse_btn">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </form>
       </div>
+    </div>
   </body>
 </html>

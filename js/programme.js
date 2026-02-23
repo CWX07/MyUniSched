@@ -1,4 +1,10 @@
-import { getProgrammeColor } from "./config.js";
+import { API_BASE, getProgrammeColor } from "./config.js";
+import { getCurrentUser, showNotification, showConfirm } from "./auth.js";
+
+function getUid() {
+  const user = getCurrentUser();
+  return user ? user.uid : null;
+}
 
 let isEditMode = false;
 let currentEditProgrammeId = null;
@@ -14,30 +20,37 @@ export async function addProgramme() {
     deleteBtn.addEventListener("click", async () => {
       if (!isEditMode || !currentEditProgrammeId) return;
 
-      const confirmed = window.confirm(
+      const confirmed = await showConfirm(
         "Are you sure you want to delete this programme?",
+        "Delete Programme",
       );
       if (!confirmed) return;
 
       try {
-        const res = await fetch(`/api/programmes/${currentEditProgrammeId}`, {
-          method: "DELETE",
-        });
+        const res = await fetch(
+          `/api/programmes/${currentEditProgrammeId}?uid=${getUid()}`,
+          {
+            method: "DELETE",
+          },
+        );
         const result = await res.json();
 
         if (!res.ok) {
-          alert(result.error || "Failed to delete programme");
+          showNotification(
+            result.error || "Failed to delete programme",
+            "error",
+          );
           return;
         }
 
-        alert("Programme deleted successfully");
+        showNotification("Programme deleted successfully", "success");
         resetProgrammeForm();
         const modal = document.querySelector(".addProgramme_modal");
         const { closeModal } = await import("./addEntities.js");
         closeModal(modal);
         await loadProgrammes();
       } catch (err) {
-        alert("Error deleting programme");
+        showNotification("Error deleting programme", "error");
       }
     });
   }
@@ -52,7 +65,7 @@ export async function addProgramme() {
     const programmeLevel = programmeLevelElement.dataset.value;
 
     if (!programmeLevel) {
-      alert("Please select a programme level");
+      showNotification("Please select a programme level", "error");
       return;
     }
 
@@ -62,24 +75,27 @@ export async function addProgramme() {
       if (isEditMode && currentEditProgrammeId) {
         // UPDATE existing programme
         const editedProgrammeId = currentEditProgrammeId;
-        res = await fetch(`/api/programmes/${currentEditProgrammeId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            programmeName,
-            programmeLevel,
-            programmeYear,
-          }),
-        });
+        res = await fetch(
+          `/api/programmes/${currentEditProgrammeId}?uid=${getUid()}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              programmeName,
+              programmeLevel,
+              programmeYear,
+            }),
+          },
+        );
 
         result = await res.json();
 
         if (!res.ok) {
-          alert(result.error);
+          showNotification(result.error, "error");
           return;
         }
 
-        alert("Programme updated successfully");
+        showNotification("Programme updated successfully", "success");
         resetProgrammeForm();
         const modal = document.querySelector(".addProgramme_modal");
         const { closeModal } = await import("./addEntities.js");
@@ -88,31 +104,35 @@ export async function addProgramme() {
         await displayProgrammeDetails(editedProgrammeId);
       } else {
         // CREATE new programme
-        res = await fetch("/api/programmes", {
+        res = await fetch(`${API_BASE}/api/programmes`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             programmeName,
             programmeLevel,
             programmeYear,
+            uid: getUid(),
           }),
         });
 
         result = await res.json();
 
         if (!res.ok) {
-          alert(result.error);
+          showNotification(result.error, "error");
           return;
         }
 
-        alert(`Programme added successfully with ID: ${result.programme_id}`);
+        showNotification(
+          `Programme added successfully with ID: ${result.programme_id}`,
+          "success",
+        );
         resetProgrammeForm();
       }
 
       // Refresh list
       await loadProgrammes();
     } catch (err) {
-      alert("Network error");
+      showNotification("Network error", "error");
     }
   });
 }
@@ -147,7 +167,7 @@ export function editProgramme(programmeId) {
   currentEditProgrammeId = programmeId;
 
   // Fetch programme details and populate form
-  fetch("/api/programmes")
+      fetch(`${API_BASE}/api/programmes?uid=${getUid()}`)
     .then((res) => res.json())
     .then((data) => {
       const programme = data.find((p) => p.programme_id === programmeId);
@@ -186,14 +206,20 @@ export function editProgramme(programmeId) {
       }
     })
     .catch((err) => {
-      alert("Error loading programme details");
+      showNotification("Error loading programme details", "error");
     });
 }
 
 // Load and display programmes
 export async function loadProgrammes() {
-  const res = await fetch("/api/programmes");
+  const res = await fetch(`${API_BASE}/api/programmes?uid=${getUid()}`);
   const data = await res.json();
+
+  if (!res.ok) {
+    console.error("Failed to load lecturers:", data.error || res.status);
+    // show an error state in the UI
+    return;
+  }
 
   const list = document.querySelector(".myProgramme_list");
   if (!list) return; // If programme list doesn't exist yet
@@ -216,56 +242,56 @@ export async function loadProgrammes() {
       return Number(a.programme_year) - Number(b.programme_year);
     })
     .forEach((p) => {
-    // Create card
-    const card = document.createElement("div");
-    card.className = "myProgramme_card";
+      // Create card
+      const card = document.createElement("div");
+      card.className = "myProgramme_card";
 
-    // Apply color-coded left border based on programme
-    const color = getProgrammeColor(
-      p.programme_level,
-      p.programme_name,
-      p.programme_year
-    );
-    card.style.borderLeft = `4px solid ${color}`;
+      // Apply color-coded left border based on programme
+      const color = getProgrammeColor(
+        p.programme_level,
+        p.programme_name,
+        p.programme_year,
+      );
+      card.style.borderLeft = `4px solid ${color}`;
 
-    // displayItem1 <-- Programme ID
-    const displayId = document.createElement("div");
-    displayId.className = "displayItem1";
-    displayId.textContent = p.programme_id;
+      // displayItem1 <-- Programme ID
+      const displayId = document.createElement("div");
+      displayId.className = "displayItem1";
+      displayId.textContent = p.programme_id;
 
-    // displayItem2 <-- Programme Name
-    const displayName = document.createElement("div");
-    displayName.className = "displayItem2";
-    displayName.textContent = `${p.programme_level} in ${p.programme_name} Year ${p.programme_year}`;
+      // displayItem2 <-- Programme Name
+      const displayName = document.createElement("div");
+      displayName.className = "displayItem2";
+      displayName.textContent = `${p.programme_level} in ${p.programme_name} Year ${p.programme_year}`;
 
-    // viewEntity_btn
-    const btn = document.createElement("button");
-    btn.className = "viewEntity_btn";
-    btn.innerHTML = "&#9881;"; // gear icon
+      // viewEntity_btn
+      const btn = document.createElement("button");
+      btn.className = "viewEntity_btn";
+      btn.innerHTML = "&#9881;"; // gear icon
 
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation(); // Prevent card click from firing
-      editProgramme(p.programme_id);
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent card click from firing
+        editProgramme(p.programme_id);
+      });
+
+      card.dataset.programmeId = p.programme_id;
+
+      // Add click event to show details
+      card.addEventListener("click", () => {
+        const programmeId = card.dataset.programmeId;
+        displayProgrammeDetails(programmeId);
+      });
+
+      card.appendChild(displayId);
+      card.appendChild(displayName);
+      card.appendChild(btn);
+
+      list.appendChild(card);
     });
-
-    card.dataset.programmeId = p.programme_id;
-
-    // Add click event to show details
-    card.addEventListener("click", () => {
-      const programmeId = card.dataset.programmeId;
-      displayProgrammeDetails(programmeId);
-    });
-
-    card.appendChild(displayId);
-    card.appendChild(displayName);
-    card.appendChild(btn);
-
-    list.appendChild(card);
-  });
 }
 
 async function displayProgrammeDetails(programmeId) {
-  const res = await fetch("/api/programmes");
+  const res = await fetch(`${API_BASE}/api/programmes?uid=${getUid()}`);
   const data = await res.json();
 
   const programme = data.find((p) => p.programme_id === programmeId);
@@ -279,9 +305,15 @@ async function displayProgrammeDetails(programmeId) {
   container.classList.remove("course_details");
   container.innerHTML = "";
 
+  // Title: programme name + ID, then separator line
   const title = document.createElement("h1");
-  title.textContent = "Programme Details";
+  const namePart = programme.programme_name || "Programme";
+  const idPart = programme.programme_id ? ` (${programme.programme_id})` : "";
+  title.textContent = `${namePart}${idPart}`;
   container.appendChild(title);
+
+  const separator = document.createElement("hr");
+  container.appendChild(separator);
 
   function createDetail(label, value) {
     const wrapper = document.createElement("div");
@@ -308,7 +340,6 @@ async function displayProgrammeDetails(programmeId) {
     return wrapper;
   }
 
-  container.appendChild(createDetail("Programme ID", programme.programme_id));
   container.appendChild(
     createDetail("Programme Name", programme.programme_name),
   );
