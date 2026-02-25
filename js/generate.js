@@ -1,9 +1,11 @@
 import {
+  API_BASE,
   DEFAULT_MIN_COURSES_PER_SLOT,
   DEFAULT_MAX_COURSES_PER_SLOT,
   DEFAULT_MAX_SLOTS_PER_COURSE_PER_DAY,
   TIME_SLOTS,
   DAYS,
+  getProgrammeColor,
 } from "./config.js";
 import { generateSchedule } from "./scheduler.js";
 import {
@@ -231,6 +233,72 @@ function resetTimetable() {
   };
 }
 
+// ── Shared helper: build lane layout for a day ──────────────────────────────
+
+function buildBarsForDayFromTimetable(timetable, day) {
+  const slots = timetable[day];
+  if (!slots) return [];
+
+  // Deduplicate courses by course_code for this day
+  const courseMap = new Map();
+  TIME_SLOTS.forEach((slot) => {
+    const courses = slots[slot.id] || [];
+    courses.forEach((course) => {
+      if (!courseMap.has(course.course_code)) {
+        courseMap.set(course.course_code, course);
+      }
+    });
+  });
+
+  const courses = Array.from(courseMap.values());
+  const rawBars = courses
+    .map((course) => {
+      const startId = course.startSlot;
+      const endId = course.endSlot;
+      const startIndex = TIME_SLOTS.findIndex((s) => s.id === startId);
+      let durationSlots = 2;
+
+      if (course.duration_hours) {
+        durationSlots = Number(course.duration_hours) || 2;
+      } else if (
+        typeof startId === "number" &&
+        typeof endId === "number" &&
+        startIndex !== -1
+      ) {
+        durationSlots = endId - startId + 1;
+      }
+
+      if (startIndex === -1) return null;
+
+      return {
+        course,
+        startIndex,
+        endIndex: startIndex + durationSlots - 1,
+        durationSlots,
+      };
+    })
+    .filter(Boolean);
+
+  // Greedy lane assignment — overlapping bars go to a new row
+  const bars = [];
+  const laneEnds = [];
+  rawBars
+    .sort((a, b) => a.startIndex - b.startIndex)
+    .forEach((bar) => {
+      let laneIndex = 0;
+      while (
+        laneIndex < laneEnds.length &&
+        laneEnds[laneIndex] >= bar.startIndex
+      ) {
+        laneIndex += 1;
+      }
+      laneEnds[laneIndex] = bar.endIndex;
+      bars.push({ ...bar, laneIndex });
+    });
+
+  return bars;
+}
+
 // ── Save Timetable ────────────────────────────────────────────────────────────
 
 async function saveTimetable() {
@@ -277,9 +345,175 @@ async function saveTimetable() {
   }
 }
 
+// ── Shared export table builder ───────────────────────────────────────────────
+// Builds an HTML <table> string using the row-per-lane layout:
+//   - One column per hour (08:00–18:00)
+//   - One row per simultaneous-course "lane" per day
+//   - Day cell uses rowspan across all its lanes
+//   - Course cell uses colspan across its duration hours
+//   - Empty slots are blank <td>s
+//
+// `styleMode` is either "pdf" or "excel" to switch minor style differences.
+
+function buildExportTableHTML(timetable, styleMode = "pdf") {
+  const isPdf = styleMode === "pdf";
+
+  const thStyle = isPdf
+    ? `background:#1a1a2e;color:#fff;padding:6px 4px;border:1px solid #555;text-align:center;vertical-align:middle;min-width:55px;font-size:9px;`
+    : `background:#1a1a2e;color:#fff;font-weight:600;min-width:60px;padding:6px 4px;border:1px solid #555;text-align:center;`;
+
+  const dayThStyle = isPdf
+    ? `background:#1a1a2e;color:#fff;padding:6px 8px;border:1px solid #555;min-width:72px;font-size:10px;text-align:center;vertical-align:middle;`
+    : `background:#1a1a2e;color:#fff;font-weight:700;min-width:80px;padding:6px 8px;border:1px solid #555;`;
+
+  // Equal-width time columns: day col is fixed, remaining width split evenly across all time slots.
+  // table-layout:fixed + % widths ensures every slot column is the same width,
+  // regardless of whether it has a course (colspan) or is empty.
+  const dayColPct = 6;
+  const timeColPct = ((100 - dayColPct) / TIME_SLOTS.length).toFixed(4);
+
+  const colGroup = `<colgroup>
+    <col style="width:${dayColPct}%;">
+    ${TIME_SLOTS.map(() => `<col style="width:${timeColPct}%;">`).join("")}
+  </colgroup>`;
+
+  // Header row
+  let tableHTML = `<table style="table-layout:fixed;border-collapse:collapse;width:100%;">${colGroup}<thead><tr>
+    <th style="${dayThStyle}">Day / Time</th>
+    ${TIME_SLOTS.map((s) => `<th style="${thStyle}">${s.time}</th>`).join("")}
+  </tr></thead><tbody>`;
+
+  DAYS.forEach((day) => {
+    // ── Step 1: collect unique courses for this day ──
+    const courseMap = new Map();
+    TIME_SLOTS.forEach((slot) => {
+      (timetable[day]?.[slot.id] || []).forEach((c) => {
+        if (!courseMap.has(c.course_code)) courseMap.set(c.course_code, c);
+      });
+    });
+
+    // ── Step 2: compute start/end index for each course ──
+    const rawBars = Array.from(courseMap.values())
+      .map((c) => {
+        const startIndex = TIME_SLOTS.findIndex((s) => s.id === c.startSlot);
+        if (startIndex === -1) return null;
+        const durationSlots = Number(c.duration_hours) || 2;
+        return {
+          course: c,
+          startIndex,
+          endIndex: startIndex + durationSlots - 1,
+          durationSlots,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.startIndex - b.startIndex);
+
+    // ── Step 3: greedy lane assignment (same as Gantt renderer) ──
+    const laneEnds = [];
+    const lanes = []; // array of lanes, each lane = array of bar objects
+
+    rawBars.forEach((bar) => {
+      let laneIndex = 0;
+      while (
+        laneIndex < laneEnds.length &&
+        laneEnds[laneIndex] >= bar.startIndex
+      ) {
+        laneIndex++;
+      }
+      laneEnds[laneIndex] = bar.endIndex;
+      if (!lanes[laneIndex]) lanes[laneIndex] = [];
+      lanes[laneIndex].push(bar);
+    });
+
+    // If day has no courses, render a single empty row
+    const laneCount = lanes.length || 1;
+
+    // ── Step 4: render one <tr> per lane ──
+    lanes.forEach((laneBars, laneIdx) => {
+      tableHTML += `<tr>`;
+
+      // Day cell — only on the first lane row, with rowspan
+      if (laneIdx === 0) {
+        const dayCellStyle = isPdf
+          ? `font-weight:700;background:#f0f0f5;padding:6px;border:1px solid #ccc;vertical-align:middle;text-align:center;width:72px;font-size:10px;`
+          : `font-weight:700;background:#f0f0f5;padding:6px 8px;border:1px solid #ccc;vertical-align:middle;text-align:center;`;
+        tableHTML += `<td rowspan="${laneCount}" style="${dayCellStyle}">${day}</td>`;
+      }
+
+      // Build a lookup: startIndex -> bar for this lane
+      const barByStart = new Map();
+      laneBars.forEach((bar) => barByStart.set(bar.startIndex, bar));
+
+      // Walk through every slot and emit cells
+      let slotIdx = 0;
+      while (slotIdx < TIME_SLOTS.length) {
+        const bar = barByStart.get(slotIdx);
+
+        if (bar) {
+          // Course cell — spans its duration
+          const colspan = Math.min(
+            bar.durationSlots,
+            TIME_SLOTS.length - slotIdx,
+          );
+          const c = bar.course;
+          const color = getProgrammeColor(
+            c.programme_level,
+            c.programme_name,
+            c.programme_year,
+          );
+
+          const cellStyle = isPdf
+            ? `border:1px solid #ccc;padding:4px;vertical-align:middle;`
+            : `border:1px solid #ccc;padding:4px;vertical-align:middle;`;
+
+          const contentStyle = `padding:5px 7px;border-left:4px solid ${color};background:#f5f5ff;border-radius:3px;`;
+          const codeStyle = isPdf
+            ? `font-weight:700;font-size:10px;`
+            : `font-weight:700;font-size:11px;`;
+          const nameStyle = isPdf ? `font-size:10px;` : `font-size:11px;`;
+          const metaStyle = isPdf
+            ? `font-size:9px;color:#555;`
+            : `font-size:10px;color:#555;`;
+
+          tableHTML += `<td colspan="${colspan}" style="${cellStyle}">
+            <div style="${contentStyle}">
+              <div style="${codeStyle}">${c.course_code}
+                <span style="font-weight:400;color:#888;font-size:9px;">${c.timeRange || ""}</span>
+              </div>
+              <div style="${nameStyle}">${c.course_name}</div>
+              <div style="${metaStyle};font-style:italic;">${c.lecturer_name || ""}</div>
+              <div style="${metaStyle}">${c.programme_level || ""} ${c.programme_name || ""} Yr${c.programme_year || ""}</div>
+            </div>
+          </td>`;
+
+          slotIdx += bar.durationSlots;
+        } else {
+          // Empty cell
+          tableHTML += `<td style="border:1px solid #eee;"></td>`;
+          slotIdx++;
+        }
+      }
+
+      tableHTML += `</tr>`;
+    });
+
+    // If day had zero courses, render a single empty row
+    if (lanes.length === 0) {
+      const dayCellStyle = isPdf
+        ? `font-weight:700;background:#f0f0f5;padding:6px;border:1px solid #ccc;vertical-align:middle;text-align:center;width:72px;font-size:10px;`
+        : `font-weight:700;background:#f0f0f5;padding:6px 8px;border:1px solid #ccc;vertical-align:middle;text-align:center;`;
+      tableHTML += `<tr>
+        <td style="${dayCellStyle}">${day}</td>
+        ${TIME_SLOTS.map(() => `<td style="border:1px solid #eee;"></td>`).join("")}
+      </tr>`;
+    }
+  });
+
+  tableHTML += `</tbody></table>`;
+  return tableHTML;
+}
+
 // ── Download PDF ──────────────────────────────────────────────────────────────
-// Captures the exact rendered timetable (Gantt bars + all styling) from the DOM
-// and sends it to a print window — what you see is what you get.
 
 function downloadPDF() {
   if (!originalTimetable) {
@@ -287,19 +521,7 @@ function downloadPDF() {
     return;
   }
 
-  const container = document.getElementById("timetableContainer");
-  if (!container) {
-    showNotification("No timetable rendered.", "info");
-    return;
-  }
-
-  // Clone the rendered timetable so we can inline all computed styles
-  const clone = container.cloneNode(true);
-
-  // The Gantt bars use absolute pixel left/width set by positionGanttBars().
-  // Those inline styles are already on the elements so the clone carries them.
-  // We just need to make sure the lane wrapper has position:relative and a
-  // fixed height so bars render correctly on paper.
+  const tableHTML = buildExportTableHTML(originalTimetable, "pdf");
 
   const printWindow = window.open("", "_blank");
   printWindow.document.write(`<!DOCTYPE html>
@@ -311,51 +533,8 @@ function downloadPDF() {
     body { font-family: Arial, sans-serif; margin: 16px; font-size: 11px; background: #fff; }
     h1 { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
     p  { font-size: 11px; color: #555; margin-bottom: 10px; }
-
-    /* ── Timetable table ── */
-    .timetable { border-collapse: collapse; width: 100%; table-layout: fixed; }
-    .timetable th, .timetable td { border: 1px solid #ccc; padding: 0; vertical-align: top; }
-    .day_header  { background: #e8e8e8; font-size: 10px; font-weight: 700; padding: 5px 6px; width: 72px; }
-    .time_header { background: #f0f0f0; font-size: 9px;  font-weight: 600; padding: 5px 4px; text-align: center; }
-    .day_cell    { font-weight: 700; background: #f8f8f8; font-size: 10px; padding: 6px; width: 72px; vertical-align: middle; }
-
-    /* ── Gantt lane ── */
-    .schedule_lane_cell { padding: 0; position: relative; }
-    .timetable_lane     { position: relative; width: 100%; min-height: 56px; }
-    .timetable_lane_row { position: relative; height: 56px; width: 100%; }
-
-    /* ── Course bars (carry inline left/width from the live page) ── */
-    .course_bar, .course_block {
-      position: absolute;
-      top: 4px; bottom: 4px;
-      border-radius: 5px;
-      border-left: 4px solid #5b5bd6;
-      background: #f0f0ff;
-      padding: 3px 5px;
-      overflow: hidden;
-      font-size: 9px;
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-    .course_code   { font-weight: 700; font-size: 9px; }
-    .course_name   { font-size: 8px; }
-    .time_range    { font-size: 8px; color: #555; }
-    .lecturer_name { font-size: 8px; color: #666; font-style: italic; }
-    .programme_info { display: none; } /* hide programme label to save space */
-
-    /* ── Legend & stats ── */
-    .timetable_info   { display: flex; gap: 20px; margin-top: 10px; font-size: 10px; }
-    .timetable_legend { flex: 1; }
-    .timetable_stats  { flex: 1; }
-    .timetable_legend h3, .timetable_stats h3 { font-size: 11px; margin-bottom: 4px; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
-    .legend_item  { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-    .legend_color { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
-    .stat_item    { margin-bottom: 3px; }
-
-    /* ── Drop indicator / drag UI — hide in print ── */
-    .drop_indicator, [draggable] { cursor: default; }
-
+    table { border-collapse: collapse; width: 100%; }
+    td, th { word-break: break-word; overflow: hidden; }
     @media print {
       @page { size: landscape; margin: 8mm; }
       body  { margin: 0; }
@@ -365,7 +544,7 @@ function downloadPDF() {
 <body>
   <h1>MyUniSched — Timetable</h1>
   <p>Generated on ${new Date().toLocaleString()}</p>
-  ${clone.outerHTML}
+  ${tableHTML}
 </body>
 </html>`);
   printWindow.document.close();
@@ -374,8 +553,6 @@ function downloadPDF() {
 }
 
 // ── Download Excel ────────────────────────────────────────────────────────────
-// Exports an HTML table (one column per 1-hour slot, colspan for multi-hour
-// courses) saved as .xls — Excel opens it natively with full formatting.
 
 function downloadExcel() {
   if (!originalTimetable) {
@@ -383,72 +560,7 @@ function downloadExcel() {
     return;
   }
 
-  // One column per TIME_SLOT (each = 1 hour)
-  const allSlots = TIME_SLOTS;
-
-  // ── Header row ──
-  let rows = `<tr>
-    <th style="background:#e8e8e8;font-weight:700;min-width:80px;padding:6px 8px;border:1px solid #ccc;">Day / Time</th>
-    ${allSlots.map((s) => `<th style="background:#f0f0f0;font-weight:600;min-width:60px;padding:6px 4px;border:1px solid #ccc;text-align:center;">${s.time}</th>`).join("")}
-  </tr>`;
-
-  DAYS.forEach((day) => {
-    // Gather unique courses by start slot for this day
-    const coursesByStart = new Map(); // startSlotId -> course[]
-    allSlots.forEach((slot) => {
-      const courses = originalTimetable[day][slot.id] || [];
-      if (courses.length > 0) coursesByStart.set(slot.id, courses);
-    });
-
-    // Track which slot ids are "consumed" by a previous course's colspan
-    const consumed = new Set();
-    coursesByStart.forEach((courses, startSlotId) => {
-      const dur = Math.max(
-        ...courses.map((c) => Number(c.duration_hours) || 2),
-      );
-      const startIdx = allSlots.findIndex((s) => s.id === startSlotId);
-      for (let i = 1; i < dur; i++) {
-        const s = allSlots[startIdx + i];
-        if (s) consumed.add(s.id);
-      }
-    });
-
-    rows += `<tr>`;
-    rows += `<td style="font-weight:700;background:#f8f8f8;padding:6px 8px;border:1px solid #ccc;vertical-align:middle;">${day}</td>`;
-
-    allSlots.forEach((slot) => {
-      if (consumed.has(slot.id)) return; // covered by colspan — skip cell
-
-      const courses = originalTimetable[day][slot.id] || [];
-
-      if (courses.length === 0) {
-        rows += `<td style="border:1px solid #eee;"></td>`;
-        return;
-      }
-
-      const maxDur = Math.max(
-        ...courses.map((c) => Number(c.duration_hours) || 2),
-      );
-      const startIdx = allSlots.findIndex((s) => s.id === slot.id);
-      const colspan = Math.min(maxDur, allSlots.length - startIdx);
-
-      const cellContent = courses
-        .map((c) => {
-          const color = c.borderLeftColor || "#5b5bd6";
-          return `<div style="margin-bottom:4px;padding:4px 6px;border-left:4px solid ${color};background:#f0f0ff;border-radius:3px;">
-          <div style="font-weight:700;font-size:11px;">${c.course_code} <span style="font-weight:400;color:#888;font-size:10px;">${c.timeRange || ""}</span></div>
-          <div style="font-size:11px;">${c.course_name}</div>
-          <div style="font-size:10px;color:#555;font-style:italic;">${c.lecturer_name || ""}</div>
-          <div style="font-size:10px;color:#777;">${c.programme_level || ""} ${c.programme_name || ""} Yr${c.programme_year || ""}</div>
-        </div>`;
-        })
-        .join("");
-
-      rows += `<td colspan="${colspan}" style="border:1px solid #ccc;padding:4px;vertical-align:top;">${cellContent}</td>`;
-    });
-
-    rows += `</tr>`;
-  });
+  const tableHTML = buildExportTableHTML(originalTimetable, "excel");
 
   const html = `
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -468,7 +580,7 @@ function downloadExcel() {
 <body>
   <h2 style="font-family:Arial;margin-bottom:4px;">MyUniSched — Timetable</h2>
   <p style="font-family:Arial;font-size:11px;color:#555;margin-bottom:10px;">Generated on ${new Date().toLocaleString()}</p>
-  <table>${rows}</table>
+  ${tableHTML}
 </body>
 </html>`;
 

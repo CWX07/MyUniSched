@@ -8,8 +8,7 @@
 const runtimeBase =
   (typeof window !== "undefined" && window.MYUNISCHED_API_BASE) || "";
 
-export const API_BASE =
-  runtimeBase || "https://myunisched.onrender.com";
+export const API_BASE = runtimeBase;
 
 // Time slots configuration (1-hour slots, but courses take 2 hours)
 export const TIME_SLOTS = [
@@ -23,7 +22,7 @@ export const TIME_SLOTS = [
   { id: 8, time: "15:00" },
   { id: 9, time: "16:00" },
   { id: 10, time: "17:00" },
-  { id: 11, time: "18:00" }
+  { id: 11, time: "18:00" },
 ];
 
 export const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -42,21 +41,16 @@ export const PROGRAMME_COLORS = {
 };
 
 export const DEFAULT_COLORS = [
-  "#3b82f6", // Bright Blue
-  "#ff0000", // Bright Red
-  "#10b981", // Emerald Green
-  "#f59e0b", // Amber/Orange
-  "#8b5cf6", // Violet Purple
-  "#ffabd5", // Pink
-  "#06b6d4", // Cyan
-  "#84cc16", // Lime Green
-  "#f97316", // Deep Orange
-  "#6366f1", // Indigo
-  "#14b8a6", // Teal
+  "#e11d48", // Red
+  "#003283", // Dark Blue
+  "#10b981", // Green
+  "#7c3aed", // Deep Purple
+  "#4e4e4e", // Grey
+  "#f97316", // Orange
   "#eab308", // Yellow
-  "#a855f7", // Purple
-  "#fb923c", // Light Orange
-  "#22d3ee", // Light Cyan
+  "#ff8dc6", // Light Pink
+  "#d946ef", // Magenta
+  "#06b6d4", // Cyan
 ];
 
 // Shared color mapping - single source of truth for consistent colors
@@ -70,7 +64,11 @@ const usedProgrammeColors = new Set();
  * @param {string|number} programme_year - Programme year
  * @returns {string} - Hex color code
  */
-export function getProgrammeColor(programme_level, programme_name, programme_year) {
+export function getProgrammeColor(
+  programme_level,
+  programme_name,
+  programme_year,
+) {
   const key = `${programme_level}_${programme_name}_${programme_year}`;
 
   if (!programmeColorMap.has(key)) {

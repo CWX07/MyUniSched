@@ -317,6 +317,7 @@ export async function populateProgrammeDropdown() {
 export async function loadCourses() {
   const res = await fetch(`${API_BASE}/api/courses?uid=${getUid()}`);
   const data = await res.json();
+  console.log("[loadCourses] data:", data); 
 
   if (!res.ok) {
     console.error("Failed to load lecturers:", data.error || res.status);

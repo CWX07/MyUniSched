@@ -90,11 +90,30 @@ In your browser:
 
 ## Live Deployment
 
-MyUniSched is also deployed on Render:
+MyUniSched is deployed on Render:
 
 - Live site: `https://myunisched.onrender.com`
 
-When served from Render, the frontend uses the same API base (`API_BASE` in `js/config.js`) pointing at this URL.
+### Backend environment variables (Render)
+
+In your Render service for the Node backend (root directory `node`), configure:
+
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY` — paste the service account private key with line breaks escaped as `\n`
+- `FIREBASE_API_KEY` — your Firebase Web API key (used only for Auth REST API calls)
+
+Build / start commands:
+
+- **Build command:** `npm install`
+- **Start command:** `npm start`
+
+### Frontend API base (`API_BASE`)
+
+The frontend talks to the backend via `API_BASE` in `js/config.js`:
+
+- By default, `API_BASE` points at `https://myunisched.onrender.com`.
+- You can override this at runtime by setting `window.MYUNISCHED_API_BASE` in your HTML before loading the JS bundle, if you ever host the frontend and backend on different domains.
 
 ## Key Files
 

@@ -77,11 +77,33 @@ export function generateSchedule(courses, constraints = {}) {
       const startSlot = TIME_SLOTS.find((s) => s.id === startSlotId);
       const endSlot = TIME_SLOTS[endIndex];
 
-      // Check if adding this course would exceed max courses per slot
-      const currentSlotCourses = timetable[day][startSlot.id].length;
-      if (currentSlotCourses >= maxCoursesPerSlot) {
-        continue; // Skip this slot if max courses reached
-      }
+      // Check if adding this course would exceed max courses per ANY slot it occupies.
+      // A course spanning multiple slots must check all covered slots — including
+      // courses that started earlier and spill into those slots.
+      const wouldExceedMax = (() => {
+        for (let i = startIndex; i < startIndex + durationSlots; i++) {
+          const slotId = TIME_SLOTS[i]?.id;
+          if (slotId === undefined) continue;
+          // Count every course already in the timetable that overlaps this slot
+          let overlapping = 0;
+          TIME_SLOTS.forEach((s) => {
+            (timetable[day][s.id] || []).forEach((placed) => {
+              const placedStart = TIME_SLOTS.findIndex(
+                (x) => x.id === placed.startSlot,
+              );
+              const placedEnd =
+                placedStart + (Number(placed.duration_hours) || 2) - 1;
+              const thisIndex = TIME_SLOTS.findIndex((x) => x.id === slotId);
+              if (placedStart <= thisIndex && thisIndex <= placedEnd) {
+                overlapping++;
+              }
+            });
+          });
+          if (overlapping >= maxCoursesPerSlot) return true;
+        }
+        return false;
+      })();
+      if (wouldExceedMax) continue;
 
       if (
         !canAssignSlotsForProgrammeDay(

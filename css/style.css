@@ -747,7 +747,7 @@ footer {
 }
 
 .app_confirm_ok.danger:hover {
-  background: var(--grad-hover);
+  background: var(--danger-dark);
 }
 
 /* Avatar */
