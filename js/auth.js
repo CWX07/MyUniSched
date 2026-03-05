@@ -137,6 +137,11 @@ export function injectAuthModals() {
         <input type="email" id="loginEmail" class="input_field" placeholder="Enter email" required />
         <label>Password</label>
         <input type="password" id="loginPassword" class="input_field" placeholder="Enter password" autocomplete="new-password" required />
+        <div class="auth_demo_btns">
+          <span class="auth_demo_label">Demo accounts:</span>
+          <button type="button" class="auth_demo_btn" data-email="testuser1@gmail.com" data-password="testuser1">User 1</button>
+          <button type="button" class="auth_demo_btn" data-email="testuser2@gmail.com" data-password="testuser2">User 2</button>
+        </div>
         <button type="submit" class="auth_submit_btn">Log In</button>
       </form>
       <p class="authSwitch">Don't have an account? <a href="#" id="switchToSignUp">Sign Up</a></p>
@@ -166,6 +171,14 @@ export function injectAuthModals() {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   document.body.appendChild(wrapper);
+
+  // Demo autofill buttons
+  document.querySelectorAll(".auth_demo_btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.getElementById("loginEmail").value    = btn.dataset.email;
+      document.getElementById("loginPassword").value = btn.dataset.password;
+    });
+  });
 
   // Close buttons
   document.querySelectorAll(".authModal_close").forEach((btn) => {
@@ -285,6 +298,7 @@ export function showConfirm(
   message,
   confirmLabel = "Delete",
   cancelLabel = "Cancel",
+  variant = "danger",  // "danger" = red, "warn" = neutral dark
 ) {
   return new Promise((resolve) => {
     document.querySelector(".app_confirm")?.remove();
@@ -295,7 +309,7 @@ export function showConfirm(
         <p class="app_confirm_msg">${message}</p>
         <div class="app_confirm_actions">
           <button class="app_confirm_cancel">${cancelLabel}</button>
-          <button class="app_confirm_ok danger">${confirmLabel}</button>
+          <button class="app_confirm_ok ${variant}">${confirmLabel}</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);

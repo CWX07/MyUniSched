@@ -1,0 +1,628 @@
+/* =============================================================
+   sidebar.css  —  Collapsible Side Navigation for MyUniSched
+   Collapsed : 68px  wide (icons only)
+   Expanded  : 220px wide (icons + labels)
+   ============================================================= */
+
+/* ── Tokens ─────────────────────────────────────────────────── */
+:root {
+  --sb-w-collapsed: 68px;
+  --sb-w-expanded:  220px;
+  /* Deep indigo sidebar — matches new --primary */
+  --sb-bg:     linear-gradient(to bottom, #1e1b4b 0%, #0f172a 100%);
+  --sb-border: 1px solid rgba(255, 255, 255, 0.05);
+  --sb-hover:  rgba(99, 102, 241, 0.18);
+  --sb-active: rgba(99, 102, 241, 0.82);
+  --sb-ease:   cubic-bezier(0.4, 0, 0.2, 1);
+  --sb-dur:    0.34s;
+  --sb-fade:   opacity 0.2s ease 0.06s, transform 0.2s ease 0.06s;
+}
+
+/* ── Body: row layout ────────────────────────────────────────── */
+body {
+  flex-direction: row !important;
+  align-items: stretch !important;
+  min-height: 100vh;
+}
+
+/* ── Content wrapper ─────────────────────────────────────────── */
+.page_content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+  padding-left: var(--sb-w-collapsed);
+  transition: padding-left var(--sb-dur) var(--sb-ease);
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body.sidebar_open .page_content {
+  padding-left: var(--sb-w-expanded);
+}
+
+/* ── Sidebar shell ───────────────────────────────────────────── */
+.sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--sb-w-collapsed);
+  background: var(--sb-bg);
+  border-right: var(--sb-border);
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.3);
+  display: flex;
+  flex-direction: column;
+  z-index: 300;
+  overflow: hidden;
+  transition: width var(--sb-dur) var(--sb-ease);
+  animation: sbSlideIn 0.55s var(--sb-ease) forwards;
+}
+
+body.sidebar_open .sidebar {
+  width: var(--sb-w-expanded);
+}
+
+/* ── Toggle button ───────────────────────────────────────────── */
+.sidebar_toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 52px;
+  background: none !important;
+  border: none !important;
+  border-bottom: var(--sb-border) !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: color 0.2s, background 0.2s !important;
+}
+
+.sidebar_toggle:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  transform: none !important;
+  border-radius: 0 !important;
+}
+
+.sidebar_toggle i {
+  pointer-events: none;
+  transition: transform var(--sb-dur) var(--sb-ease);
+}
+
+body.sidebar_open .sidebar_toggle i {
+  transform: rotate(180deg);
+}
+
+/* ── Logo ────────────────────────────────────────────────────── */
+.sidebar_logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 12px 16px;
+  text-decoration: none;
+  border-bottom: var(--sb-border);
+  flex-shrink: 0;
+  overflow: hidden;
+  height: 56px;
+}
+
+.sidebar_logo_img {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.5));
+}
+
+.sidebar_logo_text {
+  font-size: 13px;
+  font-weight: var(--fw-black);
+  color: #fff;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: var(--sb-fade);
+  letter-spacing: 0.3px;
+}
+
+body.sidebar_open .sidebar_logo_text {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── Nav links ───────────────────────────────────────────────── */
+.sidebar_nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 6px;
+  overflow: hidden;
+}
+
+.sidebar_nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 42px;
+  padding: 0 11px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  font-weight: var(--fw-semi);
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+  opacity: 0;
+  animation: sbNavItem 0.45s var(--sb-ease) forwards;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebar_nav a:nth-child(1) { animation-delay: 0.09s; }
+.sidebar_nav a:nth-child(2) { animation-delay: 0.16s; }
+.sidebar_nav a:nth-child(3) { animation-delay: 0.23s; }
+.sidebar_nav a:nth-child(4) { animation-delay: 0.30s; }
+
+.sidebar_nav a:hover {
+  background: var(--sb-hover) !important;
+  color: #fff !important;
+  transform: none !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.sidebar_nav a.active {
+  background: var(--sb-active);
+  color: #e0e7ff;
+  border-left: 3px solid #a5b4fc;
+  padding-left: 8px;
+}
+
+.sidebar_nav a i {
+  font-size: 15px;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+  color: inherit;
+  transition: color 0.18s ease;
+}
+
+.sidebar_nav a:hover i,
+.sidebar_nav a.active i {
+  color: #e0e7ff;
+}
+
+.sidebar_nav_label {
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: var(--sb-fade);
+  pointer-events: none;
+}
+
+body.sidebar_open .sidebar_nav_label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── Tooltips (collapsed mode only) ─────────────────────────── */
+.sidebar_nav a::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(15, 23, 42, 0.96);
+  color: #fff;
+  font-size: 11px;
+  font-weight: var(--fw-semi);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+  z-index: 500;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar_nav a:hover::after { opacity: 1; }
+body.sidebar_open .sidebar_nav a::after { display: none; }
+
+/* ── Divider ─────────────────────────────────────────────────── */
+.sidebar_divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 4px 6px;
+  flex-shrink: 0;
+}
+
+/* ── Profile section ─────────────────────────────────────────── */
+.sidebar_profile {
+  flex-shrink: 0;
+  border-top: var(--sb-border);
+  padding: 7px 6px;
+  position: relative;
+}
+
+.sidebar_profile .profile_menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  height: 46px;
+  overflow: hidden;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.sidebar_profile .profile_menu:hover {
+  background: var(--sb-hover);
+}
+
+.sidebar_profile .profile_menu.sb_dd_open .dropdown {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.sidebar_profile .profile_img,
+.sidebar_profile .profile_avatar {
+  flex-shrink: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 13px !important;
+}
+
+.sidebar_profile_name {
+  font-size: 12px;
+  font-weight: var(--fw-semi);
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: var(--sb-fade);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.sidebar_open .sidebar_profile_name {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.sidebar_profile .dropdown {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  min-width: 0;
+  top: auto;
+  z-index: 400;
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.18s ease;
+}
+
+/* ── Auth panel ──────────────────────────────────────────────── */
+.sidebar_auth_panel {
+  flex-shrink: 0;
+  border-top: var(--sb-border);
+  padding: 8px 6px 10px;
+}
+
+/* Logged-out: two stacked buttons */
+.sb_auth_btns {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sb_login_btn,
+.sb_signup_btn {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  height: 40px;
+  padding: 0 11px;
+  border-radius: var(--radius-md) !important;
+  font-size: 13px !important;
+  font-weight: var(--fw-semi) !important;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  font-family: var(--font) !important;
+  transition: background 0.2s ease, color 0.2s ease !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Login = indigo primary */
+.sb_login_btn {
+  background: var(--primary) !important;
+  color: #fff !important;
+}
+
+.sb_login_btn:hover {
+  background: var(--primary-hover) !important;
+  color: #fff !important;
+  transform: none !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* Sign up = subtle ghost */
+.sb_signup_btn {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: rgba(255, 255, 255, 0.65) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.sb_signup_btn:hover {
+  background: var(--sb-hover) !important;
+  color: #fff !important;
+  transform: none !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.sb_login_btn i,
+.sb_signup_btn i {
+  font-size: 15px;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Hide button labels when collapsed */
+.sb_login_btn .sidebar_nav_label,
+.sb_signup_btn .sidebar_nav_label {
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: var(--sb-fade);
+  pointer-events: none;
+}
+
+body.sidebar_open .sb_login_btn .sidebar_nav_label,
+body.sidebar_open .sb_signup_btn .sidebar_nav_label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Logged-in: avatar row */
+.sb_auth_user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 44px;
+  padding: 0 5px;
+  overflow: hidden;
+}
+
+.sb_avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: var(--fw-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: default;
+  letter-spacing: 0;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.sb_user_name {
+  font-size: 12px;
+  font-weight: var(--fw-semi);
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: var(--sb-fade);
+}
+
+body.sidebar_open .sb_user_name {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.sb_logout_btn {
+  flex-shrink: 0;
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  font-size: 14px !important;
+  border-radius: var(--radius-sm) !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: color 0.2s ease, background 0.2s ease, opacity 0.2s ease !important;
+}
+
+body.sidebar_open .sb_logout_btn { opacity: 1; }
+
+.sb_logout_btn:hover {
+  color: #fca5a5 !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  transform: none !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* ── Z-index fixes ───────────────────────────────────────────── */
+.authModal      { z-index: 600 !important; }
+.app_confirm,
+.app_prompt     { z-index: 700 !important; }
+.app_notification { z-index: 800 !important; }
+
+/* ── Hide legacy top navbar ──────────────────────────────────── */
+.navbar { display: none !important; }
+
+/* ── Notification toast — centred in content area ────────────── */
+.app_notification {
+  left: 50%;
+  transform: translateX(-50%);
+  top: 14px;
+}
+
+/* =============================================================
+   LAYOUT FIXES — vw overrides + responsiveness
+   ============================================================= */
+
+section {
+  padding-top: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.generate {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-top: 50px !important;
+  padding-left: 28px !important;
+  padding-right: 28px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.mySchedule {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-top: 30px !important;
+  padding-left: 28px !important;
+  padding-right: 28px !important;
+  padding-bottom: 60px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.myEntities {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-top: 30px !important;
+  padding-left: 28px !important;
+  padding-right: 28px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.home {
+  flex: 1;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  padding: 20px !important;
+  box-sizing: border-box;
+}
+
+.home_container {
+  width: clamp(260px, 42%, 520px) !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.generate_container,
+.mySchedule_container,
+.myEntities_menu,
+.myEntities_container {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.myCourse_list,
+.myLecturer_list,
+.myProgramme_list,
+.myEntities_details {
+  min-width: 0 !important;
+  flex-shrink: 1 !important;
+  box-sizing: border-box !important;
+}
+
+.timetable_wrapper {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.page_content > footer { margin-top: auto; }
+
+/* ── Tablet (≤ 960px) ────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .modifier_container { flex-direction: column !important; }
+  .constraint_section,
+  .filter_section { min-width: 0 !important; width: 100% !important; }
+
+  .myEntities_container { flex-direction: column !important; height: auto !important; }
+  .myCourse_list,
+  .myLecturer_list,
+  .myProgramme_list { width: 100% !important; max-height: 40vh !important; }
+  .myEntities_details { width: 100% !important; max-height: 50vh !important; }
+  .timetable_info { grid-template-columns: 1fr !important; }
+  .home_container { width: clamp(260px, 70%, 480px) !important; }
+}
+
+/* ── Mobile (≤ 640px) ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  :root {
+    --sb-w-collapsed: 52px;
+    --sb-w-expanded:  190px;
+  }
+
+  .generate,
+  .myEntities,
+  .mySchedule {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    padding-top: 18px !important;
+  }
+
+  .generate_controls { flex-direction: column !important; align-items: stretch !important; }
+  .generate_btn, .reset_btn { width: 100% !important; justify-content: center; }
+  .timetable_action_bar { flex-direction: column !important; align-items: stretch !important; }
+  .action_bar_btn { justify-content: center !important; width: 100% !important; }
+  .mySchedule_menu { padding: 0 6px !important; }
+  .schedule_card { flex-wrap: wrap !important; }
+  .schedule_card_actions { flex-wrap: wrap !important; gap: 6px !important; }
+  .myEntities_menu { flex-wrap: wrap !important; gap: 8px !important; }
+  .myEntities_menu_items { flex-wrap: wrap !important; gap: 6px !important; }
+  .home_container { width: 100% !important; padding: 24px 18px !important; }
+  .home_container h1 { font-size: 26px !important; }
+  .home_container p { font-size: 14px !important; }
+  .constraint_controls, .filter_controls { flex-direction: column !important; }
+  .constraint_item, .filter_item { min-width: 0 !important; width: 100% !important; }
+}
+
+/* ── Animations ──────────────────────────────────────────────── */
+@keyframes sbSlideIn {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+@keyframes sbNavItem {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}

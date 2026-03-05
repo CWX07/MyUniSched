@@ -5,11 +5,6 @@ import {
   DEFAULT_MAX_SLOTS_PER_COURSE_PER_DAY,
 } from "./config.js";
 
-// Maximum number of continuous classes (blocks) a lecturer
-// can teach in a row on the same day, without any free slot
-// between them.
-// With 2-hour classes on 1-hour slots, this effectively limits
-// a lecturer to at most 2 back-to-back classes in a row.
 const MAX_CONTINUOUS_CLASSES_PER_LECTURER = 2;
 
 export function generateSchedule(courses, constraints = {}) {
@@ -19,84 +14,135 @@ export function generateSchedule(courses, constraints = {}) {
     maxSlotsPerCoursePerDay = DEFAULT_MAX_SLOTS_PER_COURSE_PER_DAY,
   } = constraints;
 
-  // Group courses by programme and year
+  // Group courses by programme+year
   const courseGroups = {};
-
   courses.forEach((course) => {
-    const key = `${course.programme_name}_${course.course_year}`;
-    if (!courseGroups[key]) {
-      courseGroups[key] = [];
-    }
+    const key = `${course.programme_name}_${course.programme_year}`;
+    if (!courseGroups[key]) courseGroups[key] = [];
     courseGroups[key].push(course);
   });
 
-  // Initialize timetable structure
   const timetable = initializeTimetable();
-
-  // Track lecturer availability at slot level
   const lecturerSchedule = {};
-
-  // Track lecturer blocks (start/end) per day for gap rules
-  // Shape: { [lecturerId]: { [day]: [{ start, end }, ...] } }
   const lecturerBlocks = {};
-
-  // Track programme-year occupancy
   const programmeYearSchedule = {};
-
-  // Track how many slots each programme+year uses per day
   const programmeDayUsage = {};
 
-  // Sort courses by constraints (most constrained first)
-  const allCourses = [...courses];
-  allCourses.sort((a, b) => {
-    const groupA = courseGroups[`${a.programme_name}_${a.course_year}`].length;
-    const groupB = courseGroups[`${b.programme_name}_${b.course_year}`].length;
-    return groupB - groupA;
+  // Live count of courses placed per day — the key balancing lever.
+  // Updated after every successful placement so the next course always
+  // sees the current load and prefers the lightest day.
+  const dayCourseCounts = {};
+  DAYS.forEach((d) => {
+    dayCourseCounts[d] = 0;
   });
 
-  // Precompute preferred (day, start-slot) order:
-  // 1. Central daytime blocks (10–12, 12–2, 2–4) across all days
-  // 2. Other blocks
-  // 3. Outer blocks (8–10, 4–6) across all days
-  const daySlotOrder = getPreferredDaySlotOrder();
+  // Sort most-constrained (largest programme group) first
+  const allCourses = [...courses].sort((a, b) => {
+    const ga = courseGroups[`${a.programme_name}_${a.programme_year}`].length;
+    const gb = courseGroups[`${b.programme_name}_${b.programme_year}`].length;
+    return gb - ga;
+  });
 
-  // Try to assign each course
+  const candidateSlots = TIME_SLOTS.slice(0, -1);
+
+  function hourRank(slot) {
+    const h = parseInt(slot.time, 10);
+    return h >= 10 && h <= 15 ? 0 : 1;
+  }
+
+  // Count courses that START at a given (day, slotId) — used to decide
+  // whether a slot already meets minCoursesPerSlot during consolidation.
+  function starterCount(day, slotId) {
+    return (timetable[day][slotId] || []).length;
+  }
+
+  // Build the sorted candidate list fresh before each placement.
+  //
+  // Priority order:
+  //
+  // Sort priority when minCoursesPerSlot = 0 (default / balance only):
+  //   1. Least-loaded day first
+  //   2. Core hours (10:00–15:00) before outer hours
+  //   3. Chronological
+  //
+  // Sort priority when minCoursesPerSlot > 0 (consolidation mode):
+  //   1. Slots that already have courses but are below the minimum come first
+  //      — fill them up to the minimum before opening new slots
+  //   2. Among slots at equal consolidation score: least-loaded day first
+  //   3. Core hours before outer hours
+  //   4. Chronological
+  //
+  // Consolidation MUST outrank day-balance when minCoursesPerSlot is set,
+  // otherwise the day-balancer always sends the 2nd course to a different
+  // day, leaving every slot with exactly 1 course and failing validation.
+  function buildPlacementOrder() {
+    const candidates = [];
+    DAYS.forEach((day) => {
+      candidateSlots.forEach((slot) => {
+        candidates.push({ day, slot });
+      });
+    });
+
+    candidates.sort((a, b) => {
+      if (minCoursesPerSlot > 0) {
+        const ca = starterCount(a.day, a.slot.id);
+        const cb = starterCount(b.day, b.slot.id);
+
+        // A slot that already has courses but is below the minimum is
+        // "needs topping up" — prioritise it over empty slots so we fill
+        // it to the minimum before creating any new singleton slots.
+        const aNeedsTop = ca > 0 && ca < minCoursesPerSlot ? 1 : 0;
+        const bNeedsTop = cb > 0 && cb < minCoursesPerSlot ? 1 : 0;
+        if (bNeedsTop !== aNeedsTop) return bNeedsTop - aNeedsTop;
+
+        // Both need topping up or both don't — prefer the one closer to
+        // the minimum (more courses already there = less work to do).
+        const aScore = Math.min(ca, minCoursesPerSlot);
+        const bScore = Math.min(cb, minCoursesPerSlot);
+        if (bScore !== aScore) return bScore - aScore;
+      }
+
+      // Day balance (always active, acts as tiebreaker in consolidation mode)
+      const loadDiff = dayCourseCounts[a.day] - dayCourseCounts[b.day];
+      if (loadDiff !== 0) return loadDiff;
+
+      // Core hours before outer hours
+      const rankDiff = hourRank(a.slot) - hourRank(b.slot);
+      if (rankDiff !== 0) return rankDiff;
+
+      // Chronological
+      return parseInt(a.slot.time, 10) - parseInt(b.slot.time, 10);
+    });
+
+    return candidates;
+  }
+
+  // Place each course
   for (const course of allCourses) {
     let assigned = false;
-
     const durationSlots = Number(course.duration_hours) || COURSE_DURATION;
 
-    // Try each possible (day, start-slot) in global preferred order
-    for (const { day, startSlotId } of daySlotOrder) {
-      const startIndex = TIME_SLOTS.findIndex((s) => s.id === startSlotId);
+    for (const { day, slot: startSlot } of buildPlacementOrder()) {
+      const startIndex = TIME_SLOTS.findIndex((s) => s.id === startSlot.id);
       if (startIndex === -1) continue;
 
       const endIndex = startIndex + durationSlots - 1;
       if (endIndex >= TIME_SLOTS.length) continue;
 
-      const startSlot = TIME_SLOTS.find((s) => s.id === startSlotId);
       const endSlot = TIME_SLOTS[endIndex];
 
-      // Check if adding this course would exceed max courses per ANY slot it occupies.
-      // A course spanning multiple slots must check all covered slots — including
-      // courses that started earlier and spill into those slots.
+      // Check maxCoursesPerSlot across all slots this course spans
       const wouldExceedMax = (() => {
         for (let i = startIndex; i < startIndex + durationSlots; i++) {
           const slotId = TIME_SLOTS[i]?.id;
-          if (slotId === undefined) continue;
-          // Count every course already in the timetable that overlaps this slot
+          if (!slotId) continue;
           let overlapping = 0;
           TIME_SLOTS.forEach((s) => {
             (timetable[day][s.id] || []).forEach((placed) => {
-              const placedStart = TIME_SLOTS.findIndex(
-                (x) => x.id === placed.startSlot,
-              );
-              const placedEnd =
-                placedStart + (Number(placed.duration_hours) || 2) - 1;
-              const thisIndex = TIME_SLOTS.findIndex((x) => x.id === slotId);
-              if (placedStart <= thisIndex && thisIndex <= placedEnd) {
-                overlapping++;
-              }
+              const ps = TIME_SLOTS.findIndex((x) => x.id === placed.startSlot);
+              const pe = ps + (Number(placed.duration_hours) || 2) - 1;
+              const ti = TIME_SLOTS.findIndex((x) => x.id === slotId);
+              if (ps <= ti && ti <= pe) overlapping++;
             });
           });
           if (overlapping >= maxCoursesPerSlot) return true;
@@ -113,9 +159,8 @@ export function generateSchedule(courses, constraints = {}) {
           maxSlotsPerCoursePerDay,
           programmeDayUsage,
         )
-      ) {
+      )
         continue;
-      }
 
       if (
         canAssignCourse(
@@ -128,7 +173,6 @@ export function generateSchedule(courses, constraints = {}) {
           programmeYearSchedule,
         )
       ) {
-        // Assign course
         timetable[day][startSlot.id].push({
           ...course,
           startSlot: startSlot.id,
@@ -136,7 +180,6 @@ export function generateSchedule(courses, constraints = {}) {
           timeRange: `${startSlot.time} - ${getEndTimeWithDuration(startSlot.id, durationSlots)}`,
         });
 
-        // Update schedules
         updateSchedules(
           course,
           day,
@@ -147,6 +190,9 @@ export function generateSchedule(courses, constraints = {}) {
           programmeYearSchedule,
           programmeDayUsage,
         );
+
+        // Keep day load counter current for the next placement
+        dayCourseCounts[day]++;
 
         assigned = true;
         break;
@@ -159,49 +205,38 @@ export function generateSchedule(courses, constraints = {}) {
     }
   }
 
+  // Post-generation safety check for minCoursesPerSlot
+  if (!validateMinCoursesPerSlot(timetable, minCoursesPerSlot)) {
+    return null;
+  }
+
   return timetable;
 }
 
-// Determine preferred global order of (day, start-slot) pairs.
-// Prioritises 10:00–16:00 on all days first, then outer slots (08–10, 16+).
-// Within each priority band, sort day-major then chronologically so
-// courses pack sequentially without gaps.
-function getPreferredDaySlotOrder() {
-  const pairs = [];
+// ── Validation ────────────────────────────────────────────────────────────────
 
-  // Only consider slots that can start a full class (need a following slot)
-  const candidateSlots = TIME_SLOTS.slice(0, -1);
-
-  DAYS.forEach((day, dayIndex) => {
-    candidateSlots.forEach((slot, slotIndex) => {
-      const hour = parseInt(slot.time.split(":")[0], 10);
-      pairs.push({
-        day,
-        dayIndex,
-        startSlotId: slot.id,
-        slotIndex,
-        hour,
-      });
-    });
-  });
-
-  function rank(hour) {
-    // Core window 10:00–15:00 (can start a course that ends by 16:00)
-    if (hour >= 10 && hour <= 15) return 0;
-    // Outer hours 08:00–09:00 and 16:00+
-    return 1;
+function validateMinCoursesPerSlot(timetable, minCoursesPerSlot) {
+  if (!minCoursesPerSlot || minCoursesPerSlot <= 0) return true;
+  // Only check slots where courses can START (all slots except the last,
+  // which can't accommodate a full-duration class). Checking every covered
+  // slot is impossible to satisfy because a 2-hour course always occupies
+  // a 2nd "intermediate" slot that no other course can start in.
+  const startableSlots = TIME_SLOTS.slice(0, -1);
+  for (const day of DAYS) {
+    for (const slot of startableSlots) {
+      const starters = (timetable[day][slot.id] || []).length;
+      if (starters > 0 && starters < minCoursesPerSlot) {
+        console.error(
+          `minCoursesPerSlot violation: ${day} ${slot.time} has ${starters} starting course(s), need >= ${minCoursesPerSlot}`,
+        );
+        return false;
+      }
+    }
   }
-
-  return pairs.sort((a, b) => {
-    // 1. Core window before outer
-    const rankDiff = rank(a.hour) - rank(b.hour);
-    if (rankDiff !== 0) return rankDiff;
-    // 2. Day-major: fill each day before moving to the next
-    if (a.dayIndex !== b.dayIndex) return a.dayIndex - b.dayIndex;
-    // 3. Chronological within the day so slots pack with no gaps
-    return a.slotIndex - b.slotIndex;
-  });
+  return true;
 }
+
+// ── Timetable init ────────────────────────────────────────────────────────────
 
 function initializeTimetable() {
   const timetable = {};
@@ -214,6 +249,8 @@ function initializeTimetable() {
   return timetable;
 }
 
+// ── Course assignment ─────────────────────────────────────────────────────────
+
 function canAssignCourse(
   course,
   day,
@@ -223,25 +260,19 @@ function canAssignCourse(
   lecturerBlocks,
   programmeYearSchedule,
 ) {
-  const programmeYearKey = `${course.programme_name}_${course.course_year}`;
-
+  const programmeYearKey = `${course.programme_name}_${course.programme_year}`;
   const startIndex = TIME_SLOTS.findIndex((s) => s.id === startSlotId);
   const endIndex = startIndex + durationSlots - 1;
-  const endSlotId = TIME_SLOTS[endIndex]?.id ?? startSlotId;
 
-  // Check lecturer availability using actual slot IDs from TIME_SLOTS
   if (lecturerSchedule[course.lecturer_id]) {
     for (let i = startIndex; i <= endIndex; i++) {
-      const slotId = TIME_SLOTS[i].id;
-      if (lecturerSchedule[course.lecturer_id].has(`${day}_${slotId}`)) {
+      if (
+        lecturerSchedule[course.lecturer_id].has(`${day}_${TIME_SLOTS[i].id}`)
+      )
         return false;
-      }
     }
   }
 
-  // Prevent a lecturer from having more than the allowed number
-  // of continuous classes (blocks) in a day, and enforce at least
-  // a 1-slot gap before any 3rd class.
   if (
     wouldBreakLecturerBlockRules(
       lecturerBlocks,
@@ -251,17 +282,17 @@ function canAssignCourse(
       endIndex,
       MAX_CONTINUOUS_CLASSES_PER_LECTURER,
     )
-  ) {
+  )
     return false;
-  }
 
-  // Check programme-year conflict using actual slot IDs from TIME_SLOTS
   if (programmeYearSchedule[programmeYearKey]) {
     for (let i = startIndex; i <= endIndex; i++) {
-      const slotId = TIME_SLOTS[i].id;
-      if (programmeYearSchedule[programmeYearKey].has(`${day}_${slotId}`)) {
+      if (
+        programmeYearSchedule[programmeYearKey].has(
+          `${day}_${TIME_SLOTS[i].id}`,
+        )
+      )
         return false;
-      }
     }
   }
 
@@ -276,48 +307,22 @@ function wouldBreakLecturerBlockRules(
   newEnd,
   maxContinuousClasses,
 ) {
-  const lecturerDayBlocks =
-    (lecturerBlocks[lecturerId] && lecturerBlocks[lecturerId][day]) || [];
+  const blocks = lecturerBlocks[lecturerId]?.[day] || [];
 
-  // First, ensure no overlap of blocks for the same lecturer on the same day.
-  // Overlap occurs if ranges [newStart, newEnd] and [start, end] intersect.
-  for (const block of lecturerDayBlocks) {
-    if (newStart <= block.end && newEnd >= block.start) {
-      return true;
-    }
+  for (const block of blocks) {
+    if (newStart <= block.end && newEnd >= block.start) return true;
   }
 
-  // Build a list including the new block and sort by start.
   const allBlocks = [
-    ...lecturerDayBlocks.map((b) => ({ start: b.start, end: b.end })),
+    ...blocks.map((b) => ({ start: b.start, end: b.end })),
     { start: newStart, end: newEnd },
-  ];
+  ].sort((a, b) => a.start - b.start);
 
-  allBlocks.sort((a, b) => a.start - b.start);
-
-  // Count consecutive classes where the next class starts immediately
-  // after the previous one ends with less than a full class-length
-  // gap (in slots). Only when there is a gap of at least one full
-  // class duration do we reset the continuity run.
-  let currentRun = 1;
+  let run = 1;
   for (let i = 1; i < allBlocks.length; i++) {
-    const prev = allBlocks[i - 1];
-    const curr = allBlocks[i];
-
-    // Gap in slots between the end of the previous block
-    // and the start of the current block.
-    const gapSlots = curr.start - prev.end - 1;
-
-    if (gapSlots < COURSE_DURATION) {
-      currentRun += 1;
-    } else {
-      // There is at least one full class-length gap between classes.
-      currentRun = 1;
-    }
-
-    if (currentRun > maxContinuousClasses) {
-      return true;
-    }
+    const gap = allBlocks[i].start - allBlocks[i - 1].end - 1;
+    run = gap < COURSE_DURATION ? run + 1 : 1;
+    if (run > maxContinuousClasses) return true;
   }
 
   return false;
@@ -333,46 +338,34 @@ function updateSchedules(
   programmeYearSchedule,
   programmeDayUsage,
 ) {
-  const programmeYearKey = `${course.programme_name}_${course.course_year}`;
-
+  const programmeYearKey = `${course.programme_name}_${course.programme_year}`;
   const startIndex = TIME_SLOTS.findIndex((s) => s.id === startSlotId);
   const endIndex = startIndex + durationSlots - 1;
 
-  // Update lecturer schedule using actual slot IDs from TIME_SLOTS
-  if (!lecturerSchedule[course.lecturer_id]) {
+  if (!lecturerSchedule[course.lecturer_id])
     lecturerSchedule[course.lecturer_id] = new Set();
-  }
   for (let i = startIndex; i <= endIndex; i++) {
     lecturerSchedule[course.lecturer_id].add(`${day}_${TIME_SLOTS[i].id}`);
   }
 
-  // Update lecturer blocks using indices (consistent with canAssignCourse)
-  if (!lecturerBlocks[course.lecturer_id]) {
+  if (!lecturerBlocks[course.lecturer_id])
     lecturerBlocks[course.lecturer_id] = {};
-  }
-  if (!lecturerBlocks[course.lecturer_id][day]) {
+  if (!lecturerBlocks[course.lecturer_id][day])
     lecturerBlocks[course.lecturer_id][day] = [];
-  }
   lecturerBlocks[course.lecturer_id][day].push({
     start: startIndex,
     end: endIndex,
   });
 
-  // Update programme-year schedule using actual slot IDs from TIME_SLOTS
-  if (!programmeYearSchedule[programmeYearKey]) {
+  if (!programmeYearSchedule[programmeYearKey])
     programmeYearSchedule[programmeYearKey] = new Set();
-  }
   for (let i = startIndex; i <= endIndex; i++) {
     programmeYearSchedule[programmeYearKey].add(`${day}_${TIME_SLOTS[i].id}`);
   }
 
-  // Update per-programme-per-day usage (count slots used)
   const programmeDayKey = `${course.programme_level}_${course.programme_name}_${course.programme_year}_${day}`;
-  if (!programmeDayUsage[programmeDayKey]) {
-    programmeDayUsage[programmeDayKey] = 0;
-  }
-  // Count classes, not individual slots
-  programmeDayUsage[programmeDayKey] += 1;
+  programmeDayUsage[programmeDayKey] =
+    (programmeDayUsage[programmeDayKey] || 0) + 1;
 }
 
 function canAssignSlotsForProgrammeDay(
@@ -383,24 +376,14 @@ function canAssignSlotsForProgrammeDay(
   programmeDayUsage,
 ) {
   const programmeDayKey = `${course.programme_level}_${course.programme_name}_${course.programme_year}_${day}`;
-  const usedClasses = programmeDayUsage[programmeDayKey] || 0;
-
-  // Treat constraint as "max classes per day"
-  return usedClasses + 1 <= maxSlotsPerCoursePerDay;
-}
-
-function getEndTime(slotId) {
-  return getEndTimeWithDuration(slotId, COURSE_DURATION);
+  return (
+    (programmeDayUsage[programmeDayKey] || 0) + 1 <= maxSlotsPerCoursePerDay
+  );
 }
 
 function getEndTimeWithDuration(slotId, durationSlots) {
   const startIndex = TIME_SLOTS.findIndex((slot) => slot.id === slotId);
-  if (startIndex === -1) {
-    return "18:00";
-  }
+  if (startIndex === -1) return "18:00";
   const endIndex = startIndex + durationSlots;
-  if (endIndex < TIME_SLOTS.length) {
-    return TIME_SLOTS[endIndex].time;
-  }
-  return "18:00";
+  return endIndex < TIME_SLOTS.length ? TIME_SLOTS[endIndex].time : "18:00";
 }

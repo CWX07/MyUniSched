@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -87,11 +88,9 @@ app.post("/api/auth/signup", async (req, res) => {
     });
 
     if (data.error) {
-      return res
-        .status(400)
-        .json({
-          error: friendlyAuthError(data.error.message || "Sign-up failed"),
-        });
+      return res.status(400).json({
+        error: friendlyAuthError(data.error.message || "Sign-up failed"),
+      });
     }
 
     const uid = data.localId;
@@ -133,11 +132,9 @@ app.post("/api/auth/login", async (req, res) => {
     });
 
     if (data.error) {
-      return res
-        .status(401)
-        .json({
-          error: friendlyAuthError(data.error.message || "Login failed"),
-        });
+      return res.status(401).json({
+        error: friendlyAuthError(data.error.message || "Login failed"),
+      });
     }
 
     const uid = data.localId;
@@ -233,10 +230,32 @@ app.post("/api/timetables", async (req, res) => {
   }
 });
 
-app.delete("/api/timetables/:id", async (req, res) => {
+app.patch("/api/timetables/:id", async (req, res) => {
+  const { name, uid } = req.body;
+  if (!uid) return res.status(401).json({ error: "Unauthorized" });
+  if (!name || !name.trim())
+    return res.status(400).json({ error: "Name is required" });
   try {
     const doc = await timetablesCol.doc(req.params.id).get();
     if (!doc.exists) return res.status(404).json({ error: "Not found" });
+    if (doc.data().uid !== uid)
+      return res.status(403).json({ error: "Forbidden" });
+    await timetablesCol.doc(req.params.id).update({ name: name.trim() });
+    return res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete("/api/timetables/:id", async (req, res) => {
+  const { uid } = req.query;
+  if (!uid) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const doc = await timetablesCol.doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).json({ error: "Not found" });
+    if (doc.data().uid !== uid)
+      return res.status(403).json({ error: "Forbidden" });
     await timetablesCol.doc(req.params.id).delete();
     return res.json({ success: true });
   } catch (err) {
@@ -346,7 +365,12 @@ app.post("/api/programmes", async (req, res) => {
 });
 
 app.put("/api/programmes/:id", async (req, res) => {
-  const { programmeName, programmeLevel, programmeYear, uid: bodyUid } = req.body;
+  const {
+    programmeName,
+    programmeLevel,
+    programmeYear,
+    uid: bodyUid,
+  } = req.body;
   const uid = bodyUid || req.query.uid;
   if (!programmeName || !programmeLevel || !programmeYear || !uid)
     return res.status(400).json({ error: "Missing fields" });
@@ -472,7 +496,13 @@ app.post("/api/courses", async (req, res) => {
 });
 
 app.put("/api/courses/:id", async (req, res) => {
-  const { courseName, lecturerId, programmeId, durationHours, uid: bodyUid } = req.body;
+  const {
+    courseName,
+    lecturerId,
+    programmeId,
+    durationHours,
+    uid: bodyUid,
+  } = req.body;
   const uid = bodyUid || req.query.uid;
   if (!courseName || !lecturerId || !programmeId || !uid)
     return res.status(400).json({ error: "Missing fields" });
@@ -534,5 +564,5 @@ app.get("/index.html", (req, res) =>
 );
 app.get("/health", (req, res) => res.status(200).send("OK"));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 6767;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

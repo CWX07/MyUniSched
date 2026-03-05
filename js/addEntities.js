@@ -1,3 +1,4 @@
+import { initDrawer, closeDrawer } from "./drawer.js";
 import {
   addCourse,
   loadCourses,
@@ -10,15 +11,17 @@ import { addLecturer, loadLecturers } from "./lecturer.js";
 import { addProgramme, loadProgrammes } from "./programme.js";
 import { initAuth, getCurrentUser, showNotification } from "./auth.js";
 
-
+// Entity type labels for contextual empty-state messages
+const ENTITY_LABELS = {
+  course: { singular: "course", addLabel: "+ Add Course" },
+  lecturer: { singular: "lecturer", addLabel: "+ Add Lecturer" },
+  programme: { singular: "programme", addLabel: "+ Add Programme" },
+};
 
 function showLoginPrompt(activeList) {
-  // Default to lecturer list if no list specified
   const target = activeList || document.querySelector(".myLecturer_list");
-
   if (!target) return;
 
-  // Replace only the active list's content with the login prompt
   target.style.display = "flex";
   target.innerHTML = `
     <div class="schedule_empty entities_login_prompt">
@@ -30,6 +33,18 @@ function showLoginPrompt(activeList) {
     document.querySelector(".authModal.login")?.classList.add("active");
   });
 }
+
+// #15 — Contextual empty state when a list has no entities yet
+function showEmptyState(listEl, entityType) {
+  const label = ENTITY_LABELS[entityType] || { singular: entityType, addLabel: `+ Add ${entityType}` };
+  listEl.innerHTML = `
+    <div class="schedule_empty entities_empty_state">
+      <i class="fa-solid fa-box-open"></i>
+      <p>No ${label.singular}s yet — click <strong>${label.addLabel}</strong> to get started.</p>
+    </div>`;
+}
+
+export { showEmptyState };
 
 document.addEventListener("DOMContentLoaded", () => {
   initAuth();
@@ -46,12 +61,20 @@ document.addEventListener("DOMContentLoaded", () => {
   toggleLecturerDropdown();
   toggleCourseProgrammeDropdown();
   toggleCourseDurationDropdown();
+  initDrawer();
+  initSearch();
 
   if (!user) {
     // Show login prompt inside the default (lecturer) list panel only
     showLoginPrompt(document.querySelector(".myLecturer_list"));
   } else {
-    loadLecturers();
+    Promise.all([
+      loadLecturers(),   // → lecturerCount
+      loadProgrammes(),  // → programmeCount
+      loadCourses(),     // → courseCount
+    ]).then(([lecturerCount, programmeCount, courseCount]) =>
+      updateEntityCards(lecturerCount, programmeCount, courseCount)
+    );
   }
 });
 
@@ -112,14 +135,12 @@ function toggleAddEntitiesModal() {
   });
 }
 
-export async function openModal(modal) {
-  modal.style.opacity = "1";
-  modal.style.zIndex = "300";
+export function openModal(modal) {
+  modal.classList.add("active");
 }
 
-export async function closeModal(modal) {
-  modal.style.opacity = "0";
-  modal.style.zIndex = "-100";
+export function closeModal(modal) {
+  modal.classList.remove("active");
 }
 
 function toggleEntity() {
@@ -133,9 +154,20 @@ function toggleEntity() {
 
   let currentView = "lecturer";
 
+  function setActiveTab(activeBtn) {
+    [courseBtn, lecturerBtn, programmeBtn].forEach((b) =>
+      b.classList.remove("active"),
+    );
+    activeBtn.classList.add("active");
+  }
+
+  // Mark the default tab (lecturer) as active on load
+  setActiveTab(lecturerBtn);
+
   courseBtn.addEventListener("click", () => {
     if (currentView === "course") return;
     currentView = "course";
+    setActiveTab(courseBtn);
     myCourse_list.style.display = "flex";
     myLecturer_list.style.display = "none";
     myProgramme_list.style.display = "none";
@@ -143,13 +175,13 @@ function toggleEntity() {
       showLoginPrompt(myCourse_list);
       return;
     }
-    displayDetails_default();
-    loadCourses();
+    loadCourses().then(c => { updateEntityCards(null, null, c); applySearch(); });
   });
 
   lecturerBtn.addEventListener("click", () => {
     if (currentView === "lecturer") return;
     currentView = "lecturer";
+    setActiveTab(lecturerBtn);
     myCourse_list.style.display = "none";
     myLecturer_list.style.display = "flex";
     myProgramme_list.style.display = "none";
@@ -157,13 +189,13 @@ function toggleEntity() {
       showLoginPrompt(myLecturer_list);
       return;
     }
-    displayDetails_default();
-    loadLecturers();
+    loadLecturers().then(l => { updateEntityCards(l, null, null); applySearch(); });
   });
 
   programmeBtn.addEventListener("click", () => {
     if (currentView === "programme") return;
     currentView = "programme";
+    setActiveTab(programmeBtn);
     myCourse_list.style.display = "none";
     myLecturer_list.style.display = "none";
     myProgramme_list.style.display = "flex";
@@ -171,8 +203,7 @@ function toggleEntity() {
       showLoginPrompt(myProgramme_list);
       return;
     }
-    displayDetails_default();
-    loadProgrammes();
+    loadProgrammes().then(p => { updateEntityCards(null, p, null); applySearch(); });
   });
 }
 
@@ -193,142 +224,114 @@ function displayDetails_default() {
   container.appendChild(myEntities_desc);
 }
 
-function toggleProgrammeLevelDropdown() {
-  const programmeLevelContainer = document.querySelector(
-    ".programmeLevel_container",
-  );
-  if (!programmeLevelContainer) return;
+// ── Shared dropdown initialiser (Bug #4 fix) ─────────────────────────────────
+// Guards against double-registration with a data attribute flag.
+function initDropdown(containerSelector) {
+  const container = document.querySelector(containerSelector);
+  if (!container || container.dataset.dropdownInit) return;
+  container.dataset.dropdownInit = "1";
 
-  const programmeLevelSelected = programmeLevelContainer.querySelector(
-    ".programmeLevel_selected",
-  );
-  const programmeLevelList = programmeLevelContainer.querySelector(
-    ".programmeLevel_list",
-  );
+  const selected = container.querySelector("[class$='_selected']");
+  const list     = container.querySelector("[class$='_list']");
+  if (!selected || !list) return;
 
-  programmeLevelSelected.addEventListener("click", () => {
-    const isActive = programmeLevelList.classList.toggle("active");
-    programmeLevelSelected.style.borderColor = isActive
-      ? "#000"
-      : "rgba(0,0,0,0.2)";
-    programmeLevelSelected.style.outline = "none";
+  selected.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = list.classList.toggle("active");
+    selected.style.borderColor = isOpen ? "#000" : "rgba(0,0,0,0.2)";
+    selected.style.outline = "none";
   });
 
-  programmeLevelList.querySelectorAll("li").forEach((option) => {
-    option.addEventListener("click", () => {
-      programmeLevelSelected.textContent = option.textContent;
-      programmeLevelSelected.dataset.value = option.dataset.value;
-      programmeLevelList.classList.remove("active");
-      programmeLevelSelected.style.borderColor = "rgba(0,0,0,0.2)";
-    });
+  list.addEventListener("click", (e) => {
+    const li = e.target.closest("li");
+    if (!li) return;
+    selected.textContent = li.textContent;
+    selected.dataset.value = li.dataset.value;
+    list.classList.remove("active");
+    selected.style.borderColor = "rgba(0,0,0,0.2)";
   });
 
-  document.addEventListener("click", (e) => {
-    if (!programmeLevelContainer.contains(e.target)) {
-      programmeLevelList.classList.remove("active");
-      programmeLevelSelected.style.borderColor = "rgba(0,0,0,0.2)";
+  const outsideHandler = (e) => {
+    if (!container.contains(e.target)) {
+      list.classList.remove("active");
+      selected.style.borderColor = "rgba(0,0,0,0.2)";
     }
-  });
+  };
+  container._dropdownOutsideHandler = outsideHandler;
+  document.addEventListener("click", outsideHandler);
 }
 
-function toggleLecturerDropdown() {
-  const lecturerContainer = document.querySelector(".lecturerId_container");
-  if (!lecturerContainer) return;
+function toggleProgrammeLevelDropdown() { initDropdown(".programmeLevel_container"); }
+function toggleLecturerDropdown()        { initDropdown(".lecturerId_container"); }
+function toggleCourseProgrammeDropdown() { initDropdown(".programmeName_container"); }
+function toggleCourseDurationDropdown()  { initDropdown(".courseDuration_container"); }
 
-  const lecturerSelected = lecturerContainer.querySelector(
-    ".lecturerId_selected",
-  );
-  const lecturerList = lecturerContainer.querySelector(".lecturerId_list");
-
-  lecturerSelected.addEventListener("click", () => {
-    const isActive = lecturerList.classList.toggle("active");
-    lecturerSelected.style.borderColor = isActive ? "#000" : "rgba(0,0,0,0.2)";
-    lecturerSelected.style.outline = "none";
-  });
-
-  lecturerList.addEventListener("click", (e) => {
-    if (e.target.tagName === "LI") {
-      lecturerSelected.textContent = e.target.textContent;
-      lecturerSelected.dataset.value = e.target.dataset.value;
-      lecturerList.classList.remove("active");
-      lecturerSelected.style.borderColor = "rgba(0,0,0,0.2)";
-    }
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!lecturerContainer.contains(e.target)) {
-      lecturerList.classList.remove("active");
-      lecturerSelected.style.borderColor = "rgba(0,0,0,0.2)";
-    }
-  });
+export function updateEntityCards(lecturerCount, programmeCount, courseCount) {
+  if (lecturerCount !== null && lecturerCount !== undefined) {
+    const el = document.getElementById("entityCountLecturers");
+    if (el) el.textContent = lecturerCount;
+  }
+  if (programmeCount !== null && programmeCount !== undefined) {
+    const el = document.getElementById("entityCountProgrammes");
+    if (el) el.textContent = programmeCount;
+  }
+  if (courseCount !== null && courseCount !== undefined) {
+    const el = document.getElementById("entityCountCourses");
+    if (el) el.textContent = courseCount;
+  }
 }
 
-function toggleCourseProgrammeDropdown() {
-  const programmeNameContainer = document.querySelector(
-    ".programmeName_container",
-  );
-  if (!programmeNameContainer) return;
-
-  const programmeNameSelected = programmeNameContainer.querySelector(
-    ".programmeName_selected",
-  );
-  const programmeNameList = programmeNameContainer.querySelector(
-    ".programmeName_list",
-  );
-
-  programmeNameSelected.addEventListener("click", () => {
-    const isActive = programmeNameList.classList.toggle("active");
-    programmeNameSelected.style.borderColor = isActive
-      ? "#000"
-      : "rgba(0,0,0,0.2)";
-    programmeNameSelected.style.outline = "none";
-  });
-
-  programmeNameList.addEventListener("click", (e) => {
-    if (e.target.tagName === "LI") {
-      programmeNameSelected.textContent = e.target.textContent;
-      programmeNameSelected.dataset.value = e.target.dataset.value;
-      programmeNameList.classList.remove("active");
-      programmeNameSelected.style.borderColor = "rgba(0,0,0,0.2)";
-    }
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!programmeNameContainer.contains(e.target)) {
-      programmeNameList.classList.remove("active");
-      programmeNameSelected.style.borderColor = "rgba(0,0,0,0.2)";
-    }
-  });
+// ── Entity search ─────────────────────────────────────────
+function getActiveList() {
+  return [
+    document.querySelector(".myLecturer_list"),
+    document.querySelector(".myProgramme_list"),
+    document.querySelector(".myCourse_list"),
+  ].find((l) => l && l.style.display !== "none");
 }
 
-function toggleCourseDurationDropdown() {
-  const durationContainer = document.querySelector(".courseDuration_container");
-  if (!durationContainer) return;
-
-  const durationSelected = durationContainer.querySelector(
-    ".courseDuration_selected",
-  );
-  const durationList = durationContainer.querySelector(".courseDuration_list");
-
-  durationSelected.addEventListener("click", () => {
-    const isActive = durationList.classList.toggle("active");
-    durationSelected.style.borderColor = isActive ? "#000" : "rgba(0,0,0,0.2)";
-    durationSelected.style.outline = "none";
-  });
-
-  durationList.addEventListener("click", (e) => {
-    if (e.target.tagName === "LI") {
-      durationSelected.textContent = e.target.textContent;
-      durationSelected.dataset.value = e.target.dataset.value;
-      durationList.classList.remove("active");
-      durationSelected.style.borderColor = "rgba(0,0,0,0.2)";
+function showNoResultsIfNeeded() {
+  const query = document.getElementById("entitySearchInput")?.value.trim() || "";
+  const list = getActiveList();
+  if (!list || !query) return;
+  const cards = list.querySelectorAll(".myLecturer_card, .myProgramme_card, .myCourse_card");
+  const visible = [...cards].filter(c => c.style.display !== "none").length;
+  let noResults = list.querySelector(".entity_search_no_results");
+  if (visible === 0 && cards.length > 0) {
+    if (!noResults) {
+      noResults = document.createElement("div");
+      noResults.className = "entity_search_no_results schedule_empty";
+      list.appendChild(noResults);
     }
-  });
+    noResults.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i><p>No results for "<strong>${query}</strong>"</p>`;
+    noResults.style.display = "";
+  } else if (noResults) {
+    noResults.style.display = "none";
+  }
+}
 
-  document.addEventListener("click", (e) => {
-    if (!durationContainer.contains(e.target)) {
-      durationList.classList.remove("active");
-      durationSelected.style.borderColor = "rgba(0,0,0,0.2)";
-    }
+function applySearch() {
+  const query = (document.getElementById("entitySearchInput")?.value || "").trim();
+  const list = getActiveList();
+  if (!list) return;
+  list.querySelectorAll(".myLecturer_card, .myProgramme_card, .myCourse_card").forEach((card) => {
+    card.style.display = (!query || card.textContent.toLowerCase().includes(query.toLowerCase())) ? "" : "none";
+  });
+  showNoResultsIfNeeded();
+}
+
+function initSearch() {
+  const input = document.getElementById("entitySearchInput");
+  const clearBtn = document.getElementById("entitySearchClear");
+  if (!input) return;
+  input.addEventListener("input", () => {
+    clearBtn.style.display = input.value ? "flex" : "none";
+    applySearch();
+  });
+  clearBtn.addEventListener("click", () => {
+    input.value = "";
+    clearBtn.style.display = "none";
+    applySearch();
+    input.focus();
   });
 }

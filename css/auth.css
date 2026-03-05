@@ -7,7 +7,7 @@
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.55);
+  background: rgba(15, 23, 42, 0.55);
   z-index: 500;
   align-items: center;
   justify-content: center;
@@ -35,14 +35,12 @@
 }
 
 .authModal_content h2 {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: var(--fw-black);
-  color: #000;
+  color: #0f172a;
   margin: 0 0 18px;
   padding-top: 8px;
 }
-
-/* close × inherits from .close in style.css — no override needed */
 
 /* ── Form ─────────────────────────────────────────────────── */
 .authForm {
@@ -52,9 +50,9 @@
 }
 
 .authForm label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: var(--fw-bold);
-  color: #000;
+  color: #0f172a;
   margin-bottom: -4px;
 }
 
@@ -63,18 +61,19 @@
   height: 40px;
   padding: 0 15px;
   border-radius: var(--radius-sm);
-  border: var(--border);
+  border: 1px solid rgba(148, 163, 184, 0.4);
   font-size: 13px;
   font-weight: var(--fw-semi);
   font-family: var(--font);
   background: #fff;
-  transition: border-color 0.2s;
+  color: #0f172a;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .authForm input.input_field:focus {
-  border-color: var(--green);
+  border-color: var(--primary);
   outline: none;
-  box-shadow: 0 0 6px rgba(76,175,80,0.25);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 .auth_submit_btn {
@@ -83,22 +82,24 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: var(--grad-green);
+  background: var(--primary);
   color: #fff;
   font-size: 14px;
   font-weight: var(--fw-bold);
   border: none;
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-pill);
   cursor: pointer;
   margin-top: 6px;
   box-shadow: var(--shadow-btn);
   transition: var(--t-btn);
+  font-family: var(--font);
 }
 
 .auth_submit_btn:hover {
-  transform: scale(1.05);
-  background: var(--grad-hover);
-  border-radius: var(--radius-md);
+  transform: translateY(-2px);
+  background: var(--primary-hover);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+  border-radius: var(--radius-pill);
 }
 
 /* ── Switch / error ──────────────────────────────────────── */
@@ -107,11 +108,11 @@
   margin-top: 14px;
   font-size: 14px;
   font-weight: var(--fw-regular);
-  color: #555;
+  color: #64748b;
 }
 
 .authSwitch a {
-  color: var(--green);
+  color: var(--primary);
   font-weight: var(--fw-bold);
   text-decoration: none;
 }
@@ -122,9 +123,42 @@
   background: #fee2e2;
   color: #b91c1c;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(185,28,28,0.2);
+  border: 1px solid rgba(185, 28, 28, 0.2);
   padding: 9px 14px;
   font-size: 13px;
   font-weight: var(--fw-semi);
   margin-bottom: 4px;
+}
+/* ── Demo autofill buttons ───────────────────────────────── */
+.auth_demo_btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.auth_demo_label {
+  font-size: 11px;
+  font-weight: var(--fw-semi);
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.auth_demo_btn {
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: var(--primary-soft);
+  color: var(--primary);
+  cursor: pointer;
+  transition: var(--t-fast);
+  font-family: var(--font);
+}
+
+.auth_demo_btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
 }

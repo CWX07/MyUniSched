@@ -5,80 +5,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="../css/style.css" />
     <link rel="stylesheet" href="../css/mySchedule.css" />
-    <link rel="stylesheet" href="../css/generate.css">
+    <link rel="stylesheet" href="../css/generate.css" />
     <link rel="stylesheet" href="../css/animation.css" />
     <link rel="stylesheet" href="../css/auth.css" />
+    <link rel="stylesheet" href="../css/sidebar.css" />
     <link rel="icon" type="image/png" href="../img/logo_whitebg.png" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <title>My Schedule | MyUniSched</title>
   </head>
   <body>
     <div class="main_bg"></div>
 
-    <nav class="navbar">
-      <a class="nav_logo" href="../index.html">
-        <img src="../img/logo.png" alt="" class="nav_logo_img" />
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar">
+      <button class="sidebar_toggle" aria-label="Toggle sidebar">
+        <i class="fa-solid fa-angles-right"></i>
+      </button>
+
+      <a class="sidebar_logo" href="../index.html">
+        <img
+          src="../img/logo_whitebg.png"
+          alt="MyUniSched logo"
+          class="sidebar_logo_img"
+        />
+        <span class="sidebar_logo_text">MyUniSched</span>
       </a>
-      <ul>
-        <li><a href="../index.html">Home</a></li>
-        <li><a href="./generate.html">Generate</a></li>
-        <li><a href="./myEntities.html">My Entities</a></li>
-        <li><a href="./mySchedule.html">My Schedule</a></li>
-      </ul>
-      <div class="profile_menu">
-        <img src="../img/pfp_icon.png" class="profile_img" alt="" />
-        <div class="dropdown">
-          <a href="#" id="openLogIn">Log In</a>
-          <a href="#" id="openSignUp">Sign up</a>
-        </div>
-      </div>
-    </nav>
 
-    <section class="mySchedule">
-      <div class="mySchedule_menu">
-        <div class="mySchedule_menu_title">
-          <h1>My Schedule</h1>
-        </div>
-        <a href="./generate.html" class="addSchedule"><i class="fa-solid fa-plus"></i></a>
-      </div>
+      <nav class="sidebar_nav">
+        <a href="../index.html" data-tooltip="Home">
+          <i class="fa-solid fa-house"></i>
+          <span class="sidebar_nav_label">Home</span>
+        </a>
+        <a href="./generate.html" data-tooltip="Generate">
+          <i class="fa-solid fa-calendar-plus"></i>
+          <span class="sidebar_nav_label">Generate</span>
+        </a>
+        <a href="./myEntities.html" data-tooltip="My Entities">
+          <i class="fa-solid fa-layer-group"></i>
+          <span class="sidebar_nav_label">My Entities</span>
+        </a>
+        <a href="./mySchedule.html" data-tooltip="My Schedule">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span class="sidebar_nav_label">My Schedule</span>
+        </a>
+      </nav>
 
-      <div class="mySchedule_container" id="myScheduleContainer">
-        <!-- Populated by JS -->
-      </div>
+      <div class="sidebar_divider"></div>
 
-      <!-- Timetable viewer panel -->
-      <div class="schedule_viewer" id="scheduleViewer" style="display:none;">
-        <div class="schedule_viewer_header">
-          <h2 id="viewerTitle">Timetable</h2>
-          <div class="viewer_actions">
-            <button class="action_bar_btn download_btn pdf" id="viewerDownloadPdf">
-              <i class="fa-solid fa-file-pdf"></i> PDF
-            </button>
-            <button class="action_bar_btn download_btn excel" id="viewerDownloadExcel">
-              <i class="fa-solid fa-file-excel"></i> Excel
-            </button>
-            <button class="schedule_viewer_close" id="viewerClose">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
+      <!-- Hidden anchor for auth.js (targets .profile_menu .dropdown) -->
+      <div class="sidebar_profile" style="display: none" aria-hidden="true">
+        <div class="profile_menu">
+          <img src="../img/pfp_icon.png" class="profile_img" alt="" />
+          <span class="sidebar_profile_name"></span>
+          <div class="dropdown">
+            <a href="#" id="openLogIn">Log In</a>
+            <a href="#" id="openSignUp">Sign up</a>
           </div>
         </div>
-        <div class="timetable_wrapper">
-          <div class="timetable_container" id="viewerTimetableContainer"></div>
-        </div>
       </div>
-    </section>
 
-    <footer>
-      <div class="footer_container">
-        <div class="footer_head">
-          <img src="../img/logo.png" class="nav_logo footer_logo" alt="" />
-          <div class="footer_title">MyUniSched.</div>
+      <!-- Visible auth panel — populated by sidebar.js -->
+      <div class="sidebar_auth_panel"></div>
+    </aside>
+
+    <!-- ── Page content ── -->
+    <div class="page_content">
+      <section class="mySchedule">
+        <div class="mySchedule_menu">
+          <div class="mySchedule_menu_title">
+            <h1>My Schedule</h1>
+            <span class="mySchedule_menu_sub">View and manage your saved timetables</span>
+          </div>
+          <a href="./generate.html" class="addSchedule"
+            ><i class="fa-solid fa-plus"></i
+          ></a>
         </div>
-        <div class="footer_description d1">Created by Poggers.</div>
-        <div class="footer_description d2">All Rights Reserved.</div>
-      </div>
-    </footer>
+
+        <div class="mySchedule_container" id="myScheduleContainer">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Timetable viewer panel -->
+        <div class="schedule_viewer" id="scheduleViewer" style="display: none">
+          <div class="schedule_viewer_header">
+            <h2 id="viewerTitle">Timetable</h2>
+            <div class="viewer_actions">
+              <button
+                class="action_bar_btn download_btn pdf"
+                id="viewerDownloadPdf"
+              >
+                <i class="fa-solid fa-file-pdf"></i> PDF
+              </button>
+              <button
+                class="action_bar_btn download_btn excel"
+                id="viewerDownloadExcel"
+              >
+                <i class="fa-solid fa-file-excel"></i> Excel
+              </button>
+              <button class="schedule_viewer_close" id="viewerClose">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+          <div class="timetable_wrapper">
+            <div
+              class="timetable_container"
+              id="viewerTimetableContainer"
+            ></div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <div class="footer_container">
+          <div class="footer_head">
+            <img src="../img/logo.png" class="nav_logo footer_logo" alt="" />
+            <div class="footer_title">MyUniSched.</div>
+          </div>
+          <div class="footer_description d1">Created by Poggers.</div>
+          <div class="footer_description d2">All Rights Reserved.</div>
+        </div>
+      </footer>
+    </div>
 
     <script type="module" src="../js/mySchedule.js"></script>
+    <script type="module">
+      import { initSidebar } from "../js/sidebar.js";
+      document.addEventListener("DOMContentLoaded", () => initSidebar());
+    </script>
   </body>
 </html>

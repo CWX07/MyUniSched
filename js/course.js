@@ -1,5 +1,7 @@
-import { API_BASE, getProgrammeColor } from "./config.js";
+import { updateEntityCards } from "./addEntities.js";
+import { API_BASE, getProgrammeColor, resetProgrammeColors } from "./config.js";
 import { getCurrentUser, showNotification, showConfirm } from "./auth.js";
+import { openDrawer, avatarColor, avatarInitials } from "./drawer.js";
 
 function getUid() {
   const user = getCurrentUser();
@@ -49,11 +51,12 @@ export async function addCourse() {
         }
 
         showNotification("Course deleted successfully", "success");
+        resetProgrammeColors();
         resetCourseForm();
         const modal = document.querySelector(".addCourse_modal");
         const { closeModal } = await import("./addEntities.js");
         closeModal(modal);
-        await loadCourses();
+        updateEntityCards(null, null, await loadCourses());
       } catch (err) {
         showNotification("Error deleting course", "error");
       }
@@ -118,14 +121,14 @@ export async function addCourse() {
           showNotification(result.error, "error");
         } else {
           showNotification("Course updated successfully", "success");
+          resetProgrammeColors();
           resetCourseForm();
           const modal = document.querySelector(".addCourse_modal");
-          modal.style.opacity = "0";
-          modal.style.zIndex = "-100";
+          modal.classList.remove("active");
           // Only refresh the course list if we're on the My Entities page
           const courseList = document.querySelector(".myCourse_list");
           if (courseList) {
-            await loadCourses();
+            updateEntityCards(null, null, await loadCourses());
             await displayCourseDetails(editedCourseCode);
           }
           // Notify any registered listeners (e.g. generate page timetable refresh)
@@ -156,7 +159,7 @@ export async function addCourse() {
           );
           resetCourseForm();
         }
-        await loadCourses();
+        updateEntityCards(null, null, await loadCourses());
       }
     } catch (err) {
       showNotification("Network error", "error");
@@ -315,20 +318,27 @@ export async function populateProgrammeDropdown() {
 
 // Load and display courses
 export async function loadCourses() {
-  const res = await fetch(`${API_BASE}/api/courses?uid=${getUid()}`);
-  const data = await res.json();
-  console.log("[loadCourses] data:", data); 
-
-  if (!res.ok) {
-    console.error("Failed to load lecturers:", data.error || res.status);
-    // show an error state in the UI
-    return;
-  }
-
+  // Guard: this function is only meaningful on pages that have .myCourse_list
   const list = document.querySelector(".myCourse_list");
+  if (!list) return 0;
+
+  const res = await fetch(`${API_BASE}/api/courses?uid=${getUid()}`);
+  if (!res.ok) {
+    console.error("Failed to load courses:", res.status);
+    return 0;
+  }
+  const data = await res.json();
+
   list.innerHTML = "";
 
+  if (data.length === 0) {
+    const { showEmptyState } = await import("./addEntities.js");
+    showEmptyState(list, "course");
+    return 0;
+  }
+
   // Sort courses: programme level -> programme name -> year -> course name
+  const numId = (id) => parseInt(id.replace(/^\D+/, ""), 10) || 0;
   const levelOrder = ["Foundation", "Diploma", "Degree", "Master", "PhD"];
 
   data
@@ -345,7 +355,7 @@ export async function loadCourses() {
       const yearDiff = Number(a.programme_year) - Number(b.programme_year);
       if (yearDiff !== 0) return yearDiff;
 
-      return a.course_name.localeCompare(b.course_name);
+      return numId(a.course_code) - numId(b.course_code);
     })
     .forEach((c) => {
       // Create card
@@ -385,8 +395,7 @@ export async function loadCourses() {
 
       // Add click event to show details
       card.addEventListener("click", () => {
-        const courseId = card.dataset.courseId;
-        displayCourseDetails(courseId);
+        displayCourseDetails(c);
       });
 
       card.appendChild(displayId);
@@ -395,76 +404,68 @@ export async function loadCourses() {
 
       list.appendChild(card);
     });
+  return data.length;
 }
 
-async function displayCourseDetails(courseId) {
-  const res = await fetch(`${API_BASE}/api/courses?uid=${getUid()}`);
-  const data = await res.json();
-
-  const course = data.find((c) => c.course_code === courseId);
-
-  if (!course) {
-    console.error("Course not found:", courseId);
-    return;
+async function displayCourseDetails(courseOrId) {
+  // Accept either a course object (from loadCourses) or a course_code string
+  // (from editCourse callback after an update). Only fetch when given a string.
+  let course;
+  if (typeof courseOrId === "string") {
+    const res = await fetch(`${API_BASE}/api/courses?uid=${getUid()}`);
+    const data = await res.json();
+    course = data.find((c) => c.course_code === courseOrId);
+  } else {
+    course = courseOrId;
   }
 
-  const container = document.querySelector(".myEntities_details");
-  container.classList.add("course_details");
-  container.innerHTML = "";
+  if (!course) return;
 
-  // Title: course name + code, then separator line
-  const title = document.createElement("h1");
-  const namePart = course.course_name || "Course";
-  const codePart = course.course_code ? ` (${course.course_code})` : "";
-  title.textContent = `${namePart}${codePart}`;
-  container.appendChild(title);
+  const name     = course.course_name  || "Course";
+  const code     = course.course_code  || "";
+  const duration = course.duration_hours || 2;
+  const durationLabel = duration === 1 ? "1 hour" : `${duration} hours`;
+  const lecturerLabel = course.lecturer_name && course.lecturer_id
+    ? `${course.lecturer_id} — ${course.lecturer_name}`
+    : course.lecturer_name || course.lecturer_id || "N/A";
+  const programmeLabel = course.programme_level && course.programme_name && course.programme_year
+    ? `${course.programme_level} in ${course.programme_name}, Year ${course.programme_year}`
+    : course.programme_name || "N/A";
+  const color = getProgrammeColor(course.programme_level, course.programme_name, course.programme_year);
+  const inits = avatarInitials(name);
 
-  const separator = document.createElement("hr");
-  container.appendChild(separator);
-
-  function createDetail(label, value) {
-    const wrapper = document.createElement("div");
-    wrapper.classList.add("courseDetails");
-
-    const titleDiv = document.createElement("div");
-    titleDiv.classList.add("courseDetails_title");
-
-    const h3 = document.createElement("h3");
-    h3.textContent = label;
-
-    const colon = document.createElement("span");
-    colon.textContent = ":";
-
-    titleDiv.appendChild(h3);
-    titleDiv.appendChild(colon);
-
-    const ans = document.createElement("div");
-    ans.classList.add("courseDetailsAns");
-    ans.textContent = value || "N/A";
-
-    wrapper.appendChild(titleDiv);
-    wrapper.appendChild(ans);
-
-    return wrapper;
-  }
-
-  // Display only the key details (code is already in title)
-  container.appendChild(createDetail("Course Name", course.course_name));
-
-  const durationHours = course.duration_hours || 2;
-  const durationLabel =
-    durationHours === 1 ? "1 hour" : `${durationHours} hours`;
-  container.appendChild(createDetail("Duration", durationLabel));
-
-  const lecturerLabel =
-    course.lecturer_name && course.lecturer_id
-      ? `${course.lecturer_id} - ${course.lecturer_name}`
-      : course.lecturer_name || course.lecturer_id || "N/A";
-  container.appendChild(createDetail("Lecturer", lecturerLabel));
-
-  const programmeLabel =
-    course.programme_level && course.programme_name && course.programme_year
-      ? `${course.programme_level} in ${course.programme_name} Year ${course.programme_year}`
-      : course.programme_name || course.programme_id || "N/A";
-  container.appendChild(createDetail("Programme", programmeLabel));
+  openDrawer(`
+    <div class="drawer_profile">
+      <div class="drawer_avatar" style="background:${color}">${inits}</div>
+      <div class="drawer_profile_info">
+        <h2 class="drawer_name">${name}</h2>
+        <span class="drawer_id_badge">${code}</span>
+      </div>
+    </div>
+    <div class="drawer_type_badge drawer_type_course">
+      <i class="fa-solid fa-book"></i> Course
+    </div>
+    <div class="drawer_fields">
+      <div class="drawer_field">
+        <span class="drawer_field_label"><i class="fa-solid fa-barcode"></i> Course Code</span>
+        <span class="drawer_field_value">${code || "N/A"}</span>
+      </div>
+      <div class="drawer_field">
+        <span class="drawer_field_label"><i class="fa-solid fa-font"></i> Course Name</span>
+        <span class="drawer_field_value">${name}</span>
+      </div>
+      <div class="drawer_field">
+        <span class="drawer_field_label"><i class="fa-solid fa-clock"></i> Duration</span>
+        <span class="drawer_field_value">${durationLabel}</span>
+      </div>
+      <div class="drawer_field">
+        <span class="drawer_field_label"><i class="fa-solid fa-chalkboard-user"></i> Lecturer</span>
+        <span class="drawer_field_value">${lecturerLabel}</span>
+      </div>
+      <div class="drawer_field">
+        <span class="drawer_field_label"><i class="fa-solid fa-graduation-cap"></i> Programme</span>
+        <span class="drawer_field_value">${programmeLabel}</span>
+      </div>
+    </div>
+  `);
 }

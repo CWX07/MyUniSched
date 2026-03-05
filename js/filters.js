@@ -1,11 +1,13 @@
 import { TIME_SLOTS, DAYS } from "./config.js";
 
-export function filterTimetable(timetable, filters) {
-  const { filterType, filterValue } = filters;
+export function filterTimetable(timetable, activeFilters) {
+  if (!activeFilters || activeFilters.length === 0) return timetable;
 
-  if (!filterType || !filterValue || filterValue === "all") {
-    return timetable;
-  }
+  const programmeFilters = activeFilters.filter(f => f.type === "programme").map(f => f.value);
+  const lecturerFilters  = activeFilters.filter(f => f.type === "lecturer").map(f => f.value);
+  const dayFilters       = activeFilters.filter(f => f.type === "day").map(f => f.value);
+
+  const activeDays = dayFilters.length > 0 ? DAYS.filter(d => dayFilters.includes(d)) : DAYS;
 
   const filteredTimetable = {};
   DAYS.forEach((day) => {
@@ -15,23 +17,13 @@ export function filterTimetable(timetable, filters) {
     });
   });
 
-  DAYS.forEach((day) => {
+  activeDays.forEach((day) => {
     TIME_SLOTS.forEach((slot) => {
-      const courses = timetable[day][slot.id];
-
-      courses.forEach((course) => {
-        let shouldInclude = false;
-
-        if (filterType === "course") {
-          const key = `${course.programme_level}_${course.programme_name}_${course.programme_year}`;
-          shouldInclude = key === filterValue;
-        } else if (filterType === "lecturer") {
-          shouldInclude =
-            course.lecturer_id === filterValue ||
-            course.lecturer_name === filterValue;
-        }
-
-        if (shouldInclude) {
+      timetable[day][slot.id].forEach((course) => {
+        const progKey        = `${course.programme_level}_${course.programme_name}_${course.programme_year}`;
+        const passProgramme  = programmeFilters.length === 0 || programmeFilters.includes(progKey);
+        const passLecturer   = lecturerFilters.length === 0  || lecturerFilters.includes(course.lecturer_id) || lecturerFilters.includes(course.lecturer_name);
+        if (passProgramme && passLecturer) {
           filteredTimetable[day][slot.id].push(course);
         }
       });

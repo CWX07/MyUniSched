@@ -9,128 +9,251 @@
     <link rel="stylesheet" href="../css/myEntities.css" />
     <link rel="stylesheet" href="../css/auth.css" />
     <link rel="stylesheet" href="../css/mySchedule.css" />
+    <link rel="stylesheet" href="../css/sidebar.css" />
     <link rel="icon" type="image/png" href="../img/logo_whitebg.png" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <title>Generate | MyUniSched</title>
   </head>
   <body>
     <div class="main_bg"></div>
 
-    <nav class="navbar">
-      <a class="nav_logo" href="../index.html">
-        <img src="../img/logo.png" alt="" class="nav_logo_img" />
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar">
+      <button class="sidebar_toggle" aria-label="Toggle sidebar">
+        <i class="fa-solid fa-angles-right"></i>
+      </button>
+
+      <a class="sidebar_logo" href="../index.html">
+        <img
+          src="../img/logo_whitebg.png"
+          alt="MyUniSched logo"
+          class="sidebar_logo_img"
+        />
+        <span class="sidebar_logo_text">MyUniSched</span>
       </a>
 
-      <ul>
-        <li><a href="../index.html">Home</a></li>
-        <li><a href="./generate.html">Generate</a></li>
-        <li><a href="./myEntities.html">My Entities</a></li>
-        <li><a href="./mySchedule.html">My Schedule</a></li>
-      </ul>
+      <nav class="sidebar_nav">
+        <a href="../index.html" data-tooltip="Home">
+          <i class="fa-solid fa-house"></i>
+          <span class="sidebar_nav_label">Home</span>
+        </a>
+        <a href="./generate.html" data-tooltip="Generate">
+          <i class="fa-solid fa-calendar-plus"></i>
+          <span class="sidebar_nav_label">Generate</span>
+        </a>
+        <a href="./myEntities.html" data-tooltip="My Entities">
+          <i class="fa-solid fa-layer-group"></i>
+          <span class="sidebar_nav_label">My Entities</span>
+        </a>
+        <a href="./mySchedule.html" data-tooltip="My Schedule">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span class="sidebar_nav_label">My Schedule</span>
+        </a>
+      </nav>
 
-      <div class="profile_menu">
-        <img src="../img/pfp_icon.png" class="profile_img" alt="" />
-        <div class="dropdown">
-          <a href="#" id="openLogIn">Log In</a>
-          <a href="#" id="openSignUp">Sign up</a>
+      <div class="sidebar_divider"></div>
+
+      <!-- Hidden anchor for auth.js (targets .profile_menu .dropdown) -->
+      <div class="sidebar_profile" style="display: none" aria-hidden="true">
+        <div class="profile_menu">
+          <img src="../img/pfp_icon.png" class="profile_img" alt="" />
+          <span class="sidebar_profile_name"></span>
+          <div class="dropdown">
+            <a href="#" id="openLogIn">Log In</a>
+            <a href="#" id="openSignUp">Sign up</a>
+          </div>
         </div>
       </div>
-    </nav>
 
-    <section class="generate">
-      <div class="generate_container">
-        <h1 class="generate_title">Generate Timetable</h1>
-        <p class="generate_description">"Best Timetable. No Hassle"</p>
+      <!-- Visible auth panel — populated by sidebar.js -->
+      <div class="sidebar_auth_panel"></div>
+    </aside>
 
-        <div class="modifier_container">
-          <!-- Constraint Modifiers -->
-          <div class="constraint_section">
-            <h3 class="constraint_title">Timetable Constraints</h3>
-            <div class="constraint_controls">
-              <div class="constraint_item">
-                <label for="minCoursesPerSlot">Min Courses/Time Slot:</label>
-                <input type="number" id="minCoursesPerSlot" min="0" max="10" value="0" />
+    <!-- ── Page content ── -->
+    <div class="page_content">
+      <section class="generate">
+        <div class="generate_container">
+          <div class="generate_header">
+            <h1 class="generate_header_title">Generate Timetable</h1>
+            <p class="generate_header_sub">Configure constraints, apply filters, then generate</p>
+          </div>
+
+          <div class="modifier_container">
+            <!-- Constraint Modifiers -->
+            <div class="constraint_section">
+              <h3 class="constraint_title">Timetable Constraints</h3>
+              <div class="constraint_controls">
+                <div class="constraint_item">
+                  <label for="minCoursesPerSlot">Min Courses/Time Slot:</label>
+                  <input
+                    type="number"
+                    id="minCoursesPerSlot"
+                    min="0"
+                    max="10"
+                    value="0"
+                  />
+                </div>
+                <div class="constraint_item">
+                  <label for="maxCoursesPerSlot">Max Courses/Time Slot:</label>
+                  <input
+                    type="number"
+                    id="maxCoursesPerSlot"
+                    min="1"
+                    max="10"
+                    value="3"
+                  />
+                </div>
+                <div class="constraint_item">
+                  <label for="maxSlotsPerCoursePerDay"
+                    >Max Slots Course/Day:</label
+                  >
+                  <input
+                    type="number"
+                    id="maxSlotsPerCoursePerDay"
+                    min="1"
+                    max="10"
+                    value="2"
+                  />
+                </div>
               </div>
-              <div class="constraint_item">
-                <label for="maxCoursesPerSlot">Max Courses/Time Slot:</label>
-                <input type="number" id="maxCoursesPerSlot" min="1" max="10" value="3" />
-              </div>
-              <div class="constraint_item">
-                <label for="maxSlotsPerCoursePerDay">Max Slots Course/Day:</label>
-                <input type="number" id="maxSlotsPerCoursePerDay" min="1" max="10" value="2" />
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter_section">
+              <h3 class="filter_title">Filter Timetable</h3>
+              <div class="filter_controls">
+
+                <!-- Dropdown 1: Filter type -->
+                <div class="filter_item">
+                  <label>Filter By</label>
+                  <div class="filterType_container">
+                    <div id="filterTypeSelected" class="filterType_selected">
+                      <span>None</span>
+                    </div>
+                    <ul class="filterType_list">
+                      <li data-value="none">None</li>
+                      <li data-value="programme">Programme</li>
+                      <li data-value="lecturer">Lecturer</li>
+                      <li data-value="day">Day</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- Dropdown 2: Filter value -->
+                <div class="filter_item filter_item_value">
+                  <label>Select</label>
+                  <div class="filterValue_container disabled" id="filterValueContainer">
+                    <div id="filterValueSelected" class="filterValue_selected">
+                      <span>—</span>
+                    </div>
+                    <ul class="filterValue_list" id="filterValueList"></ul>
+                  </div>
+                </div>
+
+                <!-- Active filter tags -->
+                <div class="filter_tags" id="filterTags"></div>
+
               </div>
             </div>
           </div>
 
-          <!-- Filter Section -->
-          <div class="filter_section">
-            <h3 class="filter_title">Filter Timetable</h3>
-            <div class="filter_controls">
-              <div class="filter_item">
-                <label for="filterType">Filter By:</label>
-                <select id="filterType">
-                  <option value="none">No Filter</option>
-                  <option value="course">Programme</option>
-                  <option value="lecturer">Lecturer</option>
-                </select>
+          <!-- Action Buttons -->
+          <div class="generate_controls">
+            <button class="generate_btn" id="generateBtn">
+              <span>Generate Timetable</span>
+            </button>
+            <button class="reset_btn" id="resetBtn">
+              <span>Reset</span>
+            </button>
+          </div>
+
+          <div class="timetable_status" id="timetableStatus"></div>
+
+          <!-- Save / Download action bar -->
+          <div
+            class="timetable_action_bar"
+            id="timetableActionBar"
+            style="display: none"
+          >
+            <button class="action_bar_btn save_btn" id="saveTimetableBtn">
+              <i class="fa-solid fa-floppy-disk"></i> Save Timetable
+            </button>
+            <button
+              class="action_bar_btn download_btn dl_pdf_btn"
+              id="downloadPdfBtn"
+            >
+              <i class="fa-solid fa-file-pdf"></i> Download PDF
+            </button>
+            <button
+              class="action_bar_btn download_btn dl_excel_btn"
+              id="downloadExcelBtn"
+            >
+              <i class="fa-solid fa-file-excel"></i> Download Excel
+            </button>
+          </div>
+
+          <!-- Timetable stats bar — shown after generation -->
+          <div class="timetable_stats_bar" id="timetableStatsBar" style="display:none;">
+            <div class="stats_bar_card" id="statBarCourses">
+              <div class="stats_bar_icon"><i class="fa-solid fa-book"></i></div>
+              <div class="stats_bar_body">
+                <div class="stats_bar_value">—</div>
+                <div class="stats_bar_label">Total Courses</div>
               </div>
-              <div class="filter_item">
-                <label for="filterValue">Select:</label>
-                <select id="filterValue" disabled>
-                  <option value="all">All</option>
-                </select>
+            </div>
+            <div class="stats_bar_card" id="statBarBlocks">
+              <div class="stats_bar_icon"><i class="fa-solid fa-table-cells"></i></div>
+              <div class="stats_bar_body">
+                <div class="stats_bar_value">—</div>
+                <div class="stats_bar_label">Time Blocks Used</div>
+              </div>
+            </div>
+            <div class="stats_bar_card" id="statBarUtilization">
+              <div class="stats_bar_icon"><i class="fa-solid fa-chart-pie"></i></div>
+              <div class="stats_bar_body">
+                <div class="stats_bar_value">—</div>
+                <div class="stats_bar_label">Time Blocks Utilization</div>
+              </div>
+            </div>
+            <div class="stats_bar_card" id="statBarSessions">
+              <div class="stats_bar_icon"><i class="fa-solid fa-layer-group"></i></div>
+              <div class="stats_bar_body">
+                <div class="stats_bar_value">—</div>
+                <div class="stats_bar_label">Simultaneous Sessions</div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div class="generate_controls">
-          <button class="generate_btn" id="generateBtn">
-            <span>Generate Timetable</span>
-          </button>
-          <button class="reset_btn" id="resetBtn">
-            <span>Reset</span>
-          </button>
-        </div>
-
-        <div class="timetable_status" id="timetableStatus"></div>
-
-        <!-- Save / Download action bar (hidden until timetable is generated) -->
-        <div class="timetable_action_bar" id="timetableActionBar" style="display:none;">
-          <button class="action_bar_btn save_btn" id="saveTimetableBtn">
-            <i class="fa-solid fa-floppy-disk"></i> Save Timetable
-          </button>
-          <button class="action_bar_btn download_btn dl_pdf_btn" id="downloadPdfBtn">
-            <i class="fa-solid fa-file-pdf"></i> Download PDF
-          </button>
-          <button class="action_bar_btn download_btn dl_excel_btn" id="downloadExcelBtn">
-            <i class="fa-solid fa-file-excel"></i> Download Excel
-          </button>
-        </div>
-
-        <div class="timetable_wrapper">
-          <div class="timetable_container" id="timetableContainer">
-            <p class="no_timetable">
-              Click "Generate Timetable" to create your schedule
-            </p>
+          <div class="timetable_wrapper">
+            <div class="timetable_container" id="timetableContainer">
+              <p class="no_timetable">
+                Click "Generate Timetable" to create your schedule
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <footer>
-      <div class="footer_container">
-        <div class="footer_head">
-          <img src="../img/logo.png" class="nav_logo footer_logo" alt="" />
-          <div class="footer_title">MyUniSched.</div>
+      <footer>
+        <div class="footer_container">
+          <div class="footer_head">
+            <img src="../img/logo.png" class="nav_logo footer_logo" alt="" />
+            <div class="footer_title">MyUniSched.</div>
+          </div>
+          <div class="footer_description d1">Created by Poggers.</div>
+          <div class="footer_description d2">All Rights Reserved.</div>
         </div>
-        <div class="footer_description d1">Created by Poggers.</div>
-        <div class="footer_description d2">All Rights Reserved.</div>
-      </div>
-    </footer>
+      </footer>
+    </div>
 
     <script type="module" src="../js/generate.js"></script>
+    <script type="module">
+      import { initSidebar } from "../js/sidebar.js";
+      document.addEventListener("DOMContentLoaded", () => initSidebar());
+    </script>
 
     <!-- Add course modal (shared with My Entities) -->
     <div class="modal addCourse_modal">
@@ -141,13 +264,27 @@
         <form class="modal_content_form addCourse_modal_content_form">
           <div class="courseName">
             <label for="courseName" class="courseName_label">Course Name</label>
-            <input id="courseName" type="text" placeholder="Enter course name" class="input_field" required />
+            <input
+              id="courseName"
+              type="text"
+              placeholder="Enter course name"
+              class="input_field"
+              required
+            />
           </div>
 
           <div class="courseDuration">
-            <label for="courseDuration" class="courseDuration_label">Course Duration</label>
+            <label for="courseDuration" class="courseDuration_label"
+              >Course Duration</label
+            >
             <div class="courseDuration_container">
-              <div id="courseDuration" class="courseDuration_selected" data-value="2">2 hours</div>
+              <div
+                id="courseDuration"
+                class="courseDuration_selected"
+                data-value="2"
+              >
+                2 hours
+              </div>
               <ul class="courseDuration_list">
                 <li data-value="1">1 hour</li>
                 <li data-value="2">2 hours</li>
@@ -157,24 +294,37 @@
           </div>
 
           <div class="lecturerId">
-            <label for="lecturerId_course" class="lecturer_label">Lecturer</label>
+            <label for="lecturerId_course" class="lecturer_label"
+              >Lecturer</label
+            >
             <div class="lecturerId_container">
-              <div id="lecturerId_course" class="lecturerId_selected">Select lecturer</div>
+              <div id="lecturerId_course" class="lecturerId_selected">
+                Select lecturer
+              </div>
               <ul class="lecturerId_list"></ul>
             </div>
           </div>
 
           <div class="programmeName">
-            <label for="programmeName" class="programmeName_label">Course Programme</label>
+            <label for="programmeName" class="programmeName_label"
+              >Course Programme</label
+            >
             <div class="programmeName_container">
-              <div id="programmeName" class="programmeName_selected">Select programme</div>
+              <div id="programmeName" class="programmeName_selected">
+                Select programme
+              </div>
               <ul class="programmeName_list"></ul>
             </div>
           </div>
 
           <div class="modal_actions">
-            <button type="submit" class="submit_btn addCourse_submit_btn">Add Course</button>
-            <button type="button" class="submit_btn delete_btn deleteCourse_btn">
+            <button type="submit" class="submit_btn addCourse_submit_btn">
+              Add Course
+            </button>
+            <button
+              type="button"
+              class="submit_btn delete_btn deleteCourse_btn"
+            >
               <i class="fa-solid fa-trash"></i>
             </button>
           </div>

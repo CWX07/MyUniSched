@@ -1,4 +1,6 @@
+import { updateEntityCards } from "./addEntities.js";
 import { API_BASE } from "./config.js";
+import { openDrawer, avatarColor, avatarInitials } from "./drawer.js";
 import { getCurrentUser, showNotification, showConfirm } from "./auth.js";
 
 function getUid() {
@@ -47,7 +49,7 @@ export async function addLecturer() {
         const modal = document.querySelector(".addLecturer_modal");
         const { closeModal } = await import("./addEntities.js");
         closeModal(modal);
-        await loadLecturers();
+        updateEntityCards(await loadLecturers(), null, null);
       } catch (err) {
         showNotification("Error deleting lecturer", "error");
       }
@@ -86,7 +88,7 @@ export async function addLecturer() {
         const modal = document.querySelector(".addLecturer_modal");
         const { closeModal } = await import("./addEntities.js");
         closeModal(modal);
-        await loadLecturers();
+        updateEntityCards(await loadLecturers(), null, null);
         await displayLecturerDetails(editedLecturerId);
       } else {
         // CREATE new lecturer
@@ -111,7 +113,7 @@ export async function addLecturer() {
       }
 
       // Refresh list
-      await loadLecturers();
+      updateEntityCards(await loadLecturers(), null, null);
     } catch (err) {
       showNotification("Network error", "error");
     }
@@ -181,19 +183,26 @@ export function editLecturer(lecturerId) {
 
 // Load and display lecturers
 export async function loadLecturers() {
+  const list = document.querySelector(".myLecturer_list");
+  if (!list) return 0;
+
   const res = await fetch(`${API_BASE}/api/lecturers?uid=${getUid()}`);
+  if (!res.ok) {
+    console.error("Failed to load lecturers:", res.status);
+    return 0;
+  }
   const data = await res.json();
 
-  if (!res.ok) {
-    console.error("Failed to load lecturers:", data.error || res.status);
-    // show an error state in the UI
-    return;
-  }
-
-  const list = document.querySelector(".myLecturer_list");
   list.innerHTML = "";
 
-  data.forEach((l) => {
+  if (data.length === 0) {
+    const { showEmptyState } = await import("./addEntities.js");
+    showEmptyState(list, "lecturer");
+    return 0;
+  }
+
+  const numId = (id) => parseInt(id.replace(/^\D+/, ""), 10) || 0;
+  data.slice().sort((a, b) => numId(a.lecturer_id) - numId(b.lecturer_id)).forEach((l) => {
     // Create card
     const card = document.createElement("div");
     card.className = "myLecturer_card";
@@ -222,8 +231,7 @@ export async function loadLecturers() {
 
     // Add click event to show details
     card.addEventListener("click", () => {
-      const lecturerId = card.dataset.lecturerId;
-      displayLecturerDetails(lecturerId);
+      displayLecturerDetails(l);
     });
 
     card.appendChild(displayId);
@@ -232,57 +240,46 @@ export async function loadLecturers() {
 
     list.appendChild(card);
   });
+  return data.length;
 }
 
-async function displayLecturerDetails(lecturerId) {
-  const res = await fetch(`${API_BASE}/api/lecturers?uid=${getUid()}`);
-  const data = await res.json();
-  const lecturer = data.find((l) => l.lecturer_id === lecturerId);
-
-  if (!lecturer) {
-    console.error("Lecturer not found:", lecturerId);
-    return;
+async function displayLecturerDetails(lecturerOrId) {
+  let lecturer;
+  if (typeof lecturerOrId === "string") {
+    const res = await fetch(`${API_BASE}/api/lecturers?uid=${getUid()}`);
+    const data = await res.json();
+    lecturer = data.find((l) => l.lecturer_id === lecturerOrId);
+  } else {
+    lecturer = lecturerOrId;
   }
 
-  const container = document.querySelector(".myEntities_details");
-  container.classList.remove("course_details");
-  container.innerHTML = "";
+  if (!lecturer) return;
 
-  // Title: lecturer name + ID, then separator line
-  const title = document.createElement("h1");
-  const namePart = lecturer.lecturer_name || "Lecturer";
-  const idPart = lecturer.lecturer_id ? ` (${lecturer.lecturer_id})` : "";
-  title.textContent = `${namePart}${idPart}`;
-  container.appendChild(title);
+  const name  = lecturer.lecturer_name || "Lecturer";
+  const id    = lecturer.lecturer_id   || "";
+  const color = avatarColor(name);
+  const inits = avatarInitials(name);
 
-  const separator = document.createElement("hr");
-  container.appendChild(separator);
-
-  function createDetail(label, value) {
-    const wrapper = document.createElement("div");
-    wrapper.classList.add("lecturerDetails");
-
-    const titleDiv = document.createElement("div");
-    titleDiv.classList.add("lecturerDetails_title");
-
-    const h3 = document.createElement("h3");
-    h3.textContent = label;
-
-    const colon = document.createElement("span");
-    colon.textContent = ":";
-
-    titleDiv.appendChild(h3);
-    titleDiv.appendChild(colon);
-
-    const ans = document.createElement("div");
-    ans.classList.add("lecturerDetailsAns");
-    ans.textContent = value || "N/A";
-
-    wrapper.appendChild(titleDiv);
-    wrapper.appendChild(ans);
-
-    return wrapper;
-  }
-
-  container.appendChild(createDetail("Lecturer Name", lecturer.lecturer_name));
+  openDrawer(`
+    <div class="drawer_profile">
+      <div class="drawer_avatar" style="background:${color}">${inits}</div>
+      <div class="drawer_profile_info">
+        <h2 class="drawer_name">${name}</h2>
+        <span class="drawer_id_badge">${id}</span>
+      </div>
+    </div>
+    <div class="drawer_type_badge drawer_type_lecturer">
+      <i class="fa-solid fa-chalkboard-user"></i> Lecturer
+    </div>
+    <div class="drawer_fields">
+      <div class="drawer_field">
+        <span class="drawer_field_label"><i class="fa-solid fa-id-card"></i> Lecturer ID</span>
+        <span class="drawer_field_value">${id || "N/A"}</span>
+      </div>
+      <div class="drawer_field">
+        <span class="drawer_field_label"><i class="fa-solid fa-user"></i> Full Name</span>
+        <span class="drawer_field_value">${name}</span>
+      </div>
+    </div>
+  `);
 }

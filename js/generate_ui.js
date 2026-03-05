@@ -20,6 +20,18 @@ const drag = {
   slotRects: [],      // cached slot rects for the current table
 };
 
+// ── Debounce utility ─────────────────────────────────────────────────────────
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+}
+
+// ── Single resize handler (registered once, reused on every displayTimetable) ─
+const _onResize = debounce(() => {
+  const table = document.querySelector(".timetable_container .timetable");
+  if (table) positionGanttBars(table);
+}, 150);
+
 export function displayTimetable(timetable) {
   _timetable = timetable;
 
@@ -32,6 +44,10 @@ export function displayTimetable(timetable) {
   addLegendAndStats(container, timetable);
 
   requestAnimationFrame(() => positionGanttBars(table));
+
+  // Re-position bars when window resizes or sidebar toggles (which shifts layout)
+  window.removeEventListener("resize", _onResize);
+  window.addEventListener("resize", _onResize);
 }
 
 // ── Positioning ──────────────────────────────────────────────────────────────
@@ -438,11 +454,27 @@ function createCourseBlock(course) {
 // ── Legend & Stats ───────────────────────────────────────────────────────────
 
 function addLegendAndStats(container, timetable) {
+  // Update the stats bar cards at the top
+  updateStatsBar(timetable);
+
+  // Legend still lives below the timetable
   const infoSection = document.createElement("div");
   infoSection.className = "timetable_info";
   infoSection.appendChild(createLegend(timetable));
-  infoSection.appendChild(createStats(timetable));
   container.appendChild(infoSection);
+}
+
+export function updateStatsBar(timetable) {
+  const bar = document.getElementById("timetableStatsBar");
+  if (!bar) return;
+
+  const s = calculateStatistics(timetable);
+
+  bar.style.display = "grid";
+  document.getElementById("statBarCourses").querySelector(".stats_bar_value").textContent     = s.totalCourses;
+  document.getElementById("statBarBlocks").querySelector(".stats_bar_value").textContent      = `${s.blocksUsed} / ${s.totalBlocks}`;
+  document.getElementById("statBarUtilization").querySelector(".stats_bar_value").textContent = `${s.utilization}%`;
+  document.getElementById("statBarSessions").querySelector(".stats_bar_value").textContent    = s.simultaneousSessions;
 }
 
 function createLegend(timetable) {
@@ -532,21 +564,39 @@ function getUniqueProgrammes(timetable) {
 }
 
 function calculateStatistics(timetable) {
-  let totalCourses = 0, blocksUsed = 0, simultaneousSessions = 0;
+  const uniqueCourses = new Set();
+  let blocksUsed = 0, simultaneousSessions = 0;
 
   DAYS.forEach((day) => {
+    // Collect each course only once per day (keyed by course_code) using its
+    // canonical startSlot so multi-slot courses aren't counted per slot they occupy.
+    const seenCodes = new Set();
+    const allCourses = [];
     TIME_SLOTS.forEach((slot) => {
-      const courses = timetable[day][slot.id] || [];
-      if (courses.length > 0) {
-        totalCourses += courses.length;
-        blocksUsed++;
-        if (courses.length > 1) simultaneousSessions++;
-      }
+      (timetable[day][slot.id] || []).forEach((course) => {
+        uniqueCourses.add(course.course_code);
+        if (seenCodes.has(course.course_code)) return;
+        seenCodes.add(course.course_code);
+        const startIndex = TIME_SLOTS.findIndex((s) => s.id === course.startSlot);
+        if (startIndex === -1) return;
+        const duration = Number(course.duration_hours) || 2;
+        allCourses.push({ startIndex, endIndex: startIndex + duration - 1 });
+      });
+    });
+
+    // Per slot index, count how many courses are active (span across it)
+    TIME_SLOTS.forEach((slot, slotIndex) => {
+      const active = allCourses.filter(
+        (c) => slotIndex >= c.startIndex && slotIndex <= c.endIndex
+      ).length;
+      if (active > 0) blocksUsed++;
+      if (active > 1) simultaneousSessions++;
     });
   });
 
-  const totalBlocks = DAYS.length * (TIME_SLOTS.length - 1);
-  const utilization = ((blocksUsed / totalBlocks) * 100).toFixed(1);
+  const totalCourses = uniqueCourses.size;
+  const totalBlocks  = DAYS.length * (TIME_SLOTS.length - 1);
+  const utilization  = ((blocksUsed / totalBlocks) * 100).toFixed(1);
 
   return { totalCourses, blocksUsed, totalBlocks, utilization, simultaneousSessions };
 }

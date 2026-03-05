@@ -3,8 +3,14 @@ import {
   getCurrentUser,
   showNotification,
   showConfirm,
+  showPrompt,
 } from "./auth.js";
-import { TIME_SLOTS, DAYS, getProgrammeColor } from "./config.js";
+import { TIME_SLOTS, DAYS } from "./config.js";
+import {
+  buildGanttTable,
+  positionBars,
+  buildExportTableHTML,
+} from "./timetable_utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   initAuth();
@@ -62,7 +68,6 @@ function renderScheduleCard(container, tt) {
 
   const savedDate = new Date(tt.savedAt).toLocaleString();
 
-  // ── Card bar ──
   const card = document.createElement("div");
   card.className = "schedule_card";
   card.innerHTML = `
@@ -76,6 +81,12 @@ function renderScheduleCard(container, tt) {
       <button class="action_bar_btn view_btn">
         <i class="fa-solid fa-chevron-down view_chevron"></i> View
       </button>
+      <button class="action_bar_btn rename_btn" title="Rename">
+        <i class="fa-solid fa-pencil"></i>
+      </button>
+      <button class="action_bar_btn duplicate_btn" title="Duplicate">
+        <i class="fa-solid fa-copy"></i>
+      </button>
       <button class="action_bar_btn download_btn dl_pdf_btn">
         <i class="fa-solid fa-file-pdf"></i> PDF
       </button>
@@ -88,7 +99,6 @@ function renderScheduleCard(container, tt) {
     </div>
   `;
 
-  // ── Collapsible panel ──
   const panel = document.createElement("div");
   panel.className = "schedule_card_panel";
 
@@ -96,7 +106,6 @@ function renderScheduleCard(container, tt) {
   panelInner.className = "schedule_card_panel_inner";
   panel.appendChild(panelInner);
 
-  // ── State ──
   let isOpen = false;
   let isLoaded = false;
   let cachedTimetable = null;
@@ -109,7 +118,6 @@ function renderScheduleCard(container, tt) {
     isOpen = !isOpen;
 
     if (isOpen) {
-      // Open
       viewBtn.classList.add("active");
       chevron.classList.add("rotated");
       card.classList.add("card_expanded");
@@ -126,7 +134,6 @@ function renderScheduleCard(container, tt) {
           renderTimetableInPanel(panelInner, cachedTimetable);
         } catch (err) {
           panelInner.innerHTML = `<p class="error_msg">Failed to load: ${err.message}</p>`;
-          // Reset state so user can retry
           isOpen = false;
           isLoaded = false;
           panel.classList.remove("open");
@@ -136,11 +143,82 @@ function renderScheduleCard(container, tt) {
         }
       }
     } else {
-      // Close
       viewBtn.classList.remove("active");
       chevron.classList.remove("rotated");
       card.classList.remove("card_expanded");
       panel.classList.remove("open");
+    }
+  });
+
+  // ── Rename (#11) ──
+  card.querySelector(".rename_btn").addEventListener("click", async () => {
+    const nameEl = card.querySelector(".schedule_card_name");
+    const newName = await showPrompt(
+      "Enter a new name for this timetable:",
+      nameEl.textContent,
+    );
+    if (!newName || newName === nameEl.textContent) return;
+
+    try {
+      const res = await fetch(`/api/timetables/${tt.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName, uid: getCurrentUser()?.uid }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Rename failed");
+      }
+      tt.name = newName;
+      nameEl.textContent = newName;
+      showNotification("Timetable renamed.", "success");
+    } catch (err) {
+      showNotification("Error: " + err.message, "error");
+    }
+  });
+
+  // ── Duplicate (#12) ──
+  card.querySelector(".duplicate_btn").addEventListener("click", async () => {
+    const user = getCurrentUser();
+    if (!user) {
+      showNotification("Please log in to duplicate a timetable.", "info");
+      return;
+    }
+
+    const btn = card.querySelector(".duplicate_btn");
+    btn.disabled = true;
+    try {
+      // Always fetch fresh data for the duplicate so repeated duplications or
+      // server-side renames don't silently copy stale cached content.
+      const freshTimetable = await fetchTimetable(tt.id);
+      if (!cachedTimetable) cachedTimetable = freshTimetable;
+
+      const copyName = `${tt.name} (copy)`;
+      const res = await fetch(`/api/timetables`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: user.uid,
+          name: copyName,
+          timetable: freshTimetable,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Duplicate failed");
+
+      showNotification(`Duplicated as "${copyName}".`, "success");
+
+      // Append new card without a full page reload
+      const scheduleContainer = document.getElementById("myScheduleContainer");
+      renderScheduleCard(scheduleContainer, {
+        id: data.id,
+        name: copyName,
+        savedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      showNotification("Error: " + err.message, "error");
+    } finally {
+      btn.disabled = false;
     }
   });
 
@@ -207,341 +285,20 @@ function renderTimetableInPanel(container, timetable) {
   const tableContainer = document.createElement("div");
   tableContainer.className = "timetable_container";
 
-  const table = buildGanttTable(timetable);
+  const table = buildGanttTable(timetable); // shared util (#18)
   tableContainer.appendChild(table);
   wrapper.appendChild(tableContainer);
   container.appendChild(wrapper);
 
-  // Position bars after layout paint
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => positionBars(table));
+    requestAnimationFrame(() => positionBars(table)); // shared util (#18)
   });
-}
-
-// ── Build the Gantt table (same logic as generate_ui.js) ─────────────────────
-
-function buildGanttTable(timetable) {
-  const table = document.createElement("table");
-  table.className = "timetable";
-
-  // Header
-  const thead = document.createElement("thead");
-  const headerRow = document.createElement("tr");
-  const dayTh = document.createElement("th");
-  dayTh.textContent = "Day / Time";
-  dayTh.className = "day_header";
-  headerRow.appendChild(dayTh);
-  TIME_SLOTS.forEach((slot) => {
-    const th = document.createElement("th");
-    th.textContent = slot.time;
-    th.className = "time_header";
-    headerRow.appendChild(th);
-  });
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-
-  // Body
-  const tbody = document.createElement("tbody");
-  DAYS.forEach((day) => {
-    const row = document.createElement("tr");
-
-    const dayCell = document.createElement("td");
-    dayCell.className = "day_cell";
-    dayCell.textContent = day;
-    row.appendChild(dayCell);
-
-    const laneCell = document.createElement("td");
-    laneCell.className = "schedule_lane_cell";
-    laneCell.colSpan = TIME_SLOTS.length;
-
-    const lane = document.createElement("div");
-    lane.className = "timetable_lane";
-
-    // Collect unique courses for this day (stored at start slot only)
-    const coursesMap = new Map();
-    TIME_SLOTS.forEach((slot) => {
-      (timetable[day]?.[slot.id] || []).forEach((course) => {
-        if (!coursesMap.has(course.course_code))
-          coursesMap.set(course.course_code, course);
-      });
-    });
-
-    // Greedy lane assignment — same algorithm as generate_ui.js
-    const rawBars = Array.from(coursesMap.values())
-      .map((course) => {
-        const startIndex = TIME_SLOTS.findIndex(
-          (s) => s.id === course.startSlot,
-        );
-        const durationSlots = Number(course.duration_hours) || 2;
-        if (startIndex === -1) return null;
-        return {
-          course,
-          startIndex,
-          endIndex: startIndex + durationSlots - 1,
-          durationSlots,
-        };
-      })
-      .filter(Boolean);
-
-    const laneEnds = [];
-    const bars = [];
-    rawBars
-      .sort((a, b) => a.startIndex - b.startIndex)
-      .forEach((bar) => {
-        let laneIndex = 0;
-        while (
-          laneIndex < laneEnds.length &&
-          laneEnds[laneIndex] >= bar.startIndex
-        )
-          laneIndex++;
-        laneEnds[laneIndex] = bar.endIndex;
-        bars.push({ ...bar, laneIndex });
-      });
-
-    const laneRows = new Map();
-    bars.forEach((bar) => {
-      if (!laneRows.has(bar.laneIndex)) {
-        const lr = document.createElement("div");
-        lr.className = "timetable_lane_row";
-        laneRows.set(bar.laneIndex, lr);
-      }
-
-      const color = getProgrammeColor(
-        bar.course.programme_level,
-        bar.course.programme_name,
-        bar.course.programme_year,
-      );
-
-      const block = document.createElement("div");
-      block.className = "course_block course_bar";
-      block.dataset.startIndex = bar.startIndex;
-      block.dataset.durationSlots = bar.durationSlots;
-      block.style.borderLeftColor = color;
-      block.innerHTML = `
-        <div class="course_code">${bar.course.course_code}</div>
-        <div class="course_name">${bar.course.course_name}</div>
-        <div class="time_range">${bar.course.timeRange || ""}</div>
-        <div class="lecturer_name">${bar.course.lecturer_name || ""}</div>
-        <div class="programme_info">
-          <span class="programme_info_title">${bar.course.programme_level || ""} in ${bar.course.programme_name || ""}</span>
-          <span class="programme_info_year">Year ${bar.course.programme_year || ""}</span>
-        </div>
-      `;
-      laneRows.get(bar.laneIndex).appendChild(block);
-    });
-
-    [...laneRows.keys()]
-      .sort((a, b) => a - b)
-      .forEach((idx) => lane.appendChild(laneRows.get(idx)));
-
-    laneCell.appendChild(lane);
-    row.appendChild(laneCell);
-    tbody.appendChild(row);
-  });
-
-  table.appendChild(tbody);
-  return table;
-}
-
-// ── Position bars using pixel rects (same as generate_ui.js) ─────────────────
-
-function positionBars(table) {
-  const headerCells = table.querySelectorAll("thead th");
-  if (headerCells.length < 2) return;
-
-  const laneCell = table.querySelector(".schedule_lane_cell");
-  if (!laneCell) return;
-  const laneLeft = laneCell.getBoundingClientRect().left;
-
-  const slotRects = [];
-  for (let i = 1; i < headerCells.length; i++) {
-    const rect = headerCells[i].getBoundingClientRect();
-    slotRects.push({ left: rect.left - laneLeft, width: rect.width });
-  }
-
-  table.querySelectorAll(".course_bar").forEach((bar) => {
-    const startIndex = parseInt(bar.dataset.startIndex, 10);
-    const durationSlots = parseInt(bar.dataset.durationSlots, 10);
-    if (isNaN(startIndex) || isNaN(durationSlots)) return;
-    const startRect = slotRects[startIndex];
-    if (!startRect) return;
-    const endIndex = Math.min(
-      startIndex + durationSlots - 1,
-      slotRects.length - 1,
-    );
-    const endRect = slotRects[endIndex];
-    const totalWidth = endRect.left + endRect.width - startRect.left;
-    bar.style.left = `${startRect.left + 6}px`;
-    bar.style.width = `${totalWidth - 12}px`;
-  });
-}
-
-// ── Shared export table builder ───────────────────────────────────────────────
-// Builds an HTML <table> string using the row-per-lane layout:
-//   - One column per hour (08:00–18:00)
-//   - One row per simultaneous-course "lane" per day
-//   - Day cell uses rowspan across all its lanes
-//   - Course cell uses colspan across its duration hours
-//   - Empty slots are blank <td>s
-//
-// `styleMode` is either "pdf" or "excel" to switch minor style differences.
-
-function buildExportTableHTML(timetable, styleMode = "pdf") {
-  const isPdf = styleMode === "pdf";
-
-  const thStyle = isPdf
-    ? `background:#1a1a2e;color:#fff;padding:6px 4px;border:1px solid #555;text-align:center;vertical-align:middle;min-width:55px;font-size:9px;`
-    : `background:#1a1a2e;color:#fff;font-weight:600;min-width:60px;padding:6px 4px;border:1px solid #555;text-align:center;`;
-
-  const dayThStyle = isPdf
-    ? `background:#1a1a2e;color:#fff;padding:6px 8px;border:1px solid #555;min-width:72px;font-size:10px;text-align:center;vertical-align:middle;`
-    : `background:#1a1a2e;color:#fff;font-weight:700;min-width:80px;padding:6px 8px;border:1px solid #555;`;
-
-  // Equal-width time columns: day col is fixed, remaining width split evenly across all time slots.
-  // table-layout:fixed + % widths ensures every slot column is the same width,
-  // regardless of whether it has a course (colspan) or is empty.
-  const dayColPct = 6;
-  const timeColPct = ((100 - dayColPct) / TIME_SLOTS.length).toFixed(4);
-
-  const colGroup = `<colgroup>
-    <col style="width:${dayColPct}%;">
-    ${TIME_SLOTS.map(() => `<col style="width:${timeColPct}%;">`).join("")}
-  </colgroup>`;
-
-  // Header row
-  let tableHTML = `<table style="table-layout:fixed;border-collapse:collapse;width:100%;">${colGroup}<thead><tr>
-    <th style="${dayThStyle}">Day / Time</th>
-    ${TIME_SLOTS.map((s) => `<th style="${thStyle}">${s.time}</th>`).join("")}
-  </tr></thead><tbody>`;
-
-  DAYS.forEach((day) => {
-    // ── Step 1: collect unique courses for this day ──
-    const courseMap = new Map();
-    TIME_SLOTS.forEach((slot) => {
-      (timetable[day]?.[slot.id] || []).forEach((c) => {
-        if (!courseMap.has(c.course_code)) courseMap.set(c.course_code, c);
-      });
-    });
-
-    // ── Step 2: compute start/end index for each course ──
-    const rawBars = Array.from(courseMap.values())
-      .map((c) => {
-        const startIndex = TIME_SLOTS.findIndex((s) => s.id === c.startSlot);
-        if (startIndex === -1) return null;
-        const durationSlots = Number(c.duration_hours) || 2;
-        return {
-          course: c,
-          startIndex,
-          endIndex: startIndex + durationSlots - 1,
-          durationSlots,
-        };
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.startIndex - b.startIndex);
-
-    // ── Step 3: greedy lane assignment (same as Gantt renderer) ──
-    const laneEnds = [];
-    const lanes = []; // array of lanes, each lane = array of bar objects
-
-    rawBars.forEach((bar) => {
-      let laneIndex = 0;
-      while (
-        laneIndex < laneEnds.length &&
-        laneEnds[laneIndex] >= bar.startIndex
-      ) {
-        laneIndex++;
-      }
-      laneEnds[laneIndex] = bar.endIndex;
-      if (!lanes[laneIndex]) lanes[laneIndex] = [];
-      lanes[laneIndex].push(bar);
-    });
-
-    const laneCount = lanes.length || 1;
-
-    // ── Step 4: render one <tr> per lane ──
-    lanes.forEach((laneBars, laneIdx) => {
-      tableHTML += `<tr>`;
-
-      // Day cell — only on the first lane row, with rowspan
-      if (laneIdx === 0) {
-        const dayCellStyle = isPdf
-          ? `font-weight:700;background:#f0f0f5;padding:6px;border:1px solid #ccc;vertical-align:middle;text-align:center;width:72px;font-size:10px;`
-          : `font-weight:700;background:#f0f0f5;padding:6px 8px;border:1px solid #ccc;vertical-align:middle;text-align:center;`;
-        tableHTML += `<td rowspan="${laneCount}" style="${dayCellStyle}">${day}</td>`;
-      }
-
-      // Build a lookup: startIndex -> bar for this lane
-      const barByStart = new Map();
-      laneBars.forEach((bar) => barByStart.set(bar.startIndex, bar));
-
-      // Walk through every slot and emit cells
-      let slotIdx = 0;
-      while (slotIdx < TIME_SLOTS.length) {
-        const bar = barByStart.get(slotIdx);
-
-        if (bar) {
-          const colspan = Math.min(
-            bar.durationSlots,
-            TIME_SLOTS.length - slotIdx,
-          );
-          const c = bar.course;
-          const color = getProgrammeColor(
-            c.programme_level,
-            c.programme_name,
-            c.programme_year,
-          );
-
-          const cellStyle = `border:1px solid #ccc;padding:4px;vertical-align:middle;`;
-          const contentStyle = `padding:5px 7px;border-left:4px solid ${color};background:#f5f5ff;border-radius:3px;`;
-          const codeStyle = isPdf
-            ? `font-weight:700;font-size:10px;`
-            : `font-weight:700;font-size:11px;`;
-          const nameStyle = isPdf ? `font-size:10px;` : `font-size:11px;`;
-          const metaStyle = isPdf
-            ? `font-size:9px;color:#555;`
-            : `font-size:10px;color:#555;`;
-
-          tableHTML += `<td colspan="${colspan}" style="${cellStyle}">
-            <div style="${contentStyle}">
-              <div style="${codeStyle}">${c.course_code}
-                <span style="font-weight:400;color:#888;font-size:9px;">${c.timeRange || ""}</span>
-              </div>
-              <div style="${nameStyle}">${c.course_name}</div>
-              <div style="${metaStyle};font-style:italic;">${c.lecturer_name || ""}</div>
-              <div style="${metaStyle}">${c.programme_level || ""} ${c.programme_name || ""} Yr${c.programme_year || ""}</div>
-            </div>
-          </td>`;
-
-          slotIdx += bar.durationSlots;
-        } else {
-          tableHTML += `<td style="border:1px solid #eee;"></td>`;
-          slotIdx++;
-        }
-      }
-
-      tableHTML += `</tr>`;
-    });
-
-    // If day had zero courses, render a single empty row
-    if (lanes.length === 0) {
-      const dayCellStyle = isPdf
-        ? `font-weight:700;background:#f0f0f5;padding:6px;border:1px solid #ccc;vertical-align:middle;text-align:center;width:72px;font-size:10px;`
-        : `font-weight:700;background:#f0f0f5;padding:6px 8px;border:1px solid #ccc;vertical-align:middle;text-align:center;`;
-      tableHTML += `<tr>
-        <td style="${dayCellStyle}">${day}</td>
-        ${TIME_SLOTS.map(() => `<td style="border:1px solid #eee;"></td>`).join("")}
-      </tr>`;
-    }
-  });
-
-  tableHTML += `</tbody></table>`;
-  return tableHTML;
 }
 
 // ── PDF export ────────────────────────────────────────────────────────────────
 
 function openPrintWindow(timetable, name) {
-  const tableHTML = buildExportTableHTML(timetable, "pdf");
+  const tableHTML = buildExportTableHTML(timetable, "pdf"); // shared util (#18)
 
   const pw = window.open("", "_blank");
   pw.document.write(`<!DOCTYPE html><html><head><title>${name}</title>
@@ -552,7 +309,6 @@ function openPrintWindow(timetable, name) {
     p{font-size:11px;color:#555;margin-bottom:10px;}
     table{border-collapse:collapse;width:100%;}
     td,th{word-break:break-word;overflow:hidden;}
-    td, th { word-break: break-word; }
     @media print{@page{size:landscape;margin:8mm;}body{margin:0;}}
   </style></head><body>
   <h1>MyUniSched — ${name}</h1>
@@ -567,7 +323,7 @@ function openPrintWindow(timetable, name) {
 // ── Excel export ──────────────────────────────────────────────────────────────
 
 function exportExcel(timetable, name) {
-  const tableHTML = buildExportTableHTML(timetable, "excel");
+  const tableHTML = buildExportTableHTML(timetable, "excel"); // shared util (#18)
 
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
     xmlns:x="urn:schemas-microsoft-com:office:excel"
@@ -599,7 +355,10 @@ async function deleteTimetable(id, wrapper) {
   );
   if (!confirmed) return;
   try {
-    const res = await fetch(`/api/timetables/${id}`, { method: "DELETE" });
+    const res = await fetch(
+      `/api/timetables/${id}?uid=${getCurrentUser()?.uid}`,
+      { method: "DELETE" },
+    );
     if (!res.ok) throw new Error("Delete failed");
     wrapper.remove();
 

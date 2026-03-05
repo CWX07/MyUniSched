@@ -7,54 +7,200 @@
     <link rel="stylesheet" href="./css/home.css" />
     <link rel="stylesheet" href="./css/animation.css" />
     <link rel="stylesheet" href="./css/auth.css" />
+    <link rel="stylesheet" href="./css/sidebar.css" />
     <link rel="icon" type="image/png" href="./img/logo_whitebg.png" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <title>Home | MyUniSched</title>
   </head>
   <body>
     <div class="main_bg"></div>
 
-    <nav class="navbar">
-      <a class="nav_logo" href="./index.html">
-        <img src="./img/logo.png" alt="" class="nav_logo_img" />
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar">
+      <button class="sidebar_toggle" aria-label="Toggle sidebar">
+        <i class="fa-solid fa-angles-right"></i>
+      </button>
+
+      <a class="sidebar_logo" href="./index.html">
+        <img
+          src="./img/logo_whitebg.png"
+          alt="MyUniSched logo"
+          class="sidebar_logo_img"
+        />
+        <span class="sidebar_logo_text">MyUniSched</span>
       </a>
 
-      <ul>
-        <li><a href="./index.html">Home</a></li>
-        <li><a href="./html/generate.html">Generate</a></li>
-        <li><a href="./html/myEntities.html">My Entities</a></li>
-        <li><a href="./html/mySchedule.html">My Schedule</a></li>
-      </ul>
+      <nav class="sidebar_nav">
+        <a href="./index.html" data-tooltip="Home">
+          <i class="fa-solid fa-house"></i>
+          <span class="sidebar_nav_label">Home</span>
+        </a>
+        <a href="./html/generate.html" data-tooltip="Generate">
+          <i class="fa-solid fa-calendar-plus"></i>
+          <span class="sidebar_nav_label">Generate</span>
+        </a>
+        <a href="./html/myEntities.html" data-tooltip="My Entities">
+          <i class="fa-solid fa-layer-group"></i>
+          <span class="sidebar_nav_label">My Entities</span>
+        </a>
+        <a href="./html/mySchedule.html" data-tooltip="My Schedule">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span class="sidebar_nav_label">My Schedule</span>
+        </a>
+      </nav>
 
-      <div class="profile_menu">
-        <img src="./img/pfp_icon.png" class="profile_img" alt="" />
-        <div class="dropdown">
-          <a href="#" id="openLogIn">Log In</a>
-          <a href="#" id="openSignUp">Sign up</a>
+      <div class="sidebar_divider"></div>
+
+      <!-- Hidden anchor for auth.js (targets .profile_menu .dropdown) -->
+      <div class="sidebar_profile" style="display: none" aria-hidden="true">
+        <div class="profile_menu">
+          <img src="./img/pfp_icon.png" class="profile_img" alt="" />
+          <span class="sidebar_profile_name"></span>
+          <div class="dropdown">
+            <a href="#" id="openLogIn">Log In</a>
+            <a href="#" id="openSignUp">Sign up</a>
+          </div>
         </div>
       </div>
-    </nav>
 
-    <section class="home">
-      <div class="home_container">
-        <h1>MyUniSched</h1>
-        <p>"Best Schedule. No Hassle."</p>
-      </div>
-    </section>
+      <!-- Visible auth panel — populated by sidebar.js -->
+      <div class="sidebar_auth_panel"></div>
+    </aside>
 
-    <footer>
-      <div class="footer_container">
-        <div class="footer_head">
-          <img src="./img/logo.png" class="nav_logo footer_logo" alt="" />
-          <div class="footer_title">MyUniSched.</div>
+    <!-- ── Page content ── -->
+    <div class="page_content">
+      <section class="home">
+        <div class="home_container">
+          <!-- Hero -->
+          <h1>MyUniSched</h1>
+          <p>"Best Schedule. No Hassle."</p>
+
+          <!-- Greeting — filled by home.js -->
+          <p class="home_greeting" style="display: none"></p>
+
+          <!-- Stats grid — shown only when logged in -->
+          <div class="home_stats_grid" style="display: none">
+            <div class="home_stat_card" id="statCourses">
+              <div class="home_stat_icon"><i class="fa-solid fa-book"></i></div>
+              <div class="home_stat_body">
+                <div class="home_stat_value">—</div>
+                <div class="home_stat_label">Courses</div>
+              </div>
+            </div>
+            <div class="home_stat_card" id="statLecturers">
+              <div class="home_stat_icon">
+                <i class="fa-solid fa-chalkboard-user"></i>
+              </div>
+              <div class="home_stat_body">
+                <div class="home_stat_value">—</div>
+                <div class="home_stat_label">Lecturers</div>
+              </div>
+            </div>
+            <div class="home_stat_card" id="statProgrammes">
+              <div class="home_stat_icon">
+                <i class="fa-solid fa-graduation-cap"></i>
+              </div>
+              <div class="home_stat_body">
+                <div class="home_stat_value">—</div>
+                <div class="home_stat_label">Programmes</div>
+              </div>
+            </div>
+            <div class="home_stat_card" id="statSchedules">
+              <div class="home_stat_icon">
+                <i class="fa-solid fa-calendar-days"></i>
+              </div>
+              <div class="home_stat_body">
+                <div class="home_stat_value">—</div>
+                <div class="home_stat_label">Timetables</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick actions — shown only when logged in -->
+          <div class="home_actions" style="display: none">
+            <h2 class="home_actions_title">Quick Actions</h2>
+            <div class="home_actions_grid">
+              <a href="./html/generate.html" class="home_action_card">
+                <div class="home_action_icon">
+                  <i class="fa-solid fa-calendar-plus"></i>
+                  <span class="home_action_label">Generate Timetable</span>
+                </div>
+                <span class="home_action_desc"
+                  >Create a new conflict-free schedule</span
+                >
+              </a>
+              <a href="./html/myEntities.html" class="home_action_card">
+                <div class="home_action_icon">
+                  <i class="fa-solid fa-layer-group"></i>
+                  <span class="home_action_label">Manage Entities</span>
+                </div>
+                <span class="home_action_desc"
+                  >Add or edit courses, lecturers & programmes</span
+                >
+              </a>
+              <a href="./html/mySchedule.html" class="home_action_card">
+                <div class="home_action_icon">
+                  <i class="fa-solid fa-calendar-days"></i>
+                  <span class="home_action_label">My Schedule</span>
+                </div>
+                <span class="home_action_desc"
+                  >View and download saved timetables</span
+                >
+              </a>
+            </div>
+          </div>
+
+          <!-- Logged-out state — shown only when logged out -->
+          <div class="home_loggedout" style="display: none">
+            <p class="home_loggedout_desc">
+              Sign in to manage your entities — then
+              generate a conflict-free timetable in seconds.
+            </p>
+            <div class="home_loggedout_btns">
+              <button class="home_cta_btn primary" id="homeLoginBtn">
+                <i class="fa-solid fa-right-to-bracket"></i> Log In
+              </button>
+              <button class="home_cta_btn secondary" id="homeSignupBtn">
+                <i class="fa-solid fa-user-plus"></i> Sign Up
+              </button>
+            </div>
+            <div class="home_features">
+              <div class="home_feature">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Auto-generate conflict-free timetables</span>
+              </div>
+              <div class="home_feature">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Customisable constraints &amp; filters</span>
+              </div>
+              <div class="home_feature">
+                <i class="fa-solid fa-file-export"></i>
+                <span>Export to PDF or Excel</span>
+              </div>
+              <div class="home_feature">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Save and manage multiple timetables</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="footer_description d1">Created by Poggers.</div>
-        <div class="footer_description d2">All Rights Reserved.</div>
-      </div>
-    </footer>
+      </section>
 
-    <script type="module">
-      import { initAuth } from "./js/auth.js";
-      document.addEventListener("DOMContentLoaded", () => initAuth());
-    </script>
+      <footer>
+        <div class="footer_container">
+          <div class="footer_head">
+            <img src="./img/logo.png" class="nav_logo footer_logo" alt="" />
+            <div class="footer_title">MyUniSched.</div>
+          </div>
+          <div class="footer_description d1">Created by Poggers.</div>
+          <div class="footer_description d2">All Rights Reserved.</div>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="./js/home.js"></script>
   </body>
 </html>

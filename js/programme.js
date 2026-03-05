@@ -1,4 +1,6 @@
-import { API_BASE, getProgrammeColor } from "./config.js";
+import { updateEntityCards } from "./addEntities.js";
+import { API_BASE, getProgrammeColor, resetProgrammeColors } from "./config.js";
+import { openDrawer, avatarColor, avatarInitials } from "./drawer.js";
 import { getCurrentUser, showNotification, showConfirm } from "./auth.js";
 
 function getUid() {
@@ -28,7 +30,7 @@ export async function addProgramme() {
 
       try {
         const res = await fetch(
-          `/api/programmes/${currentEditProgrammeId}?uid=${getUid()}`,
+          `${API_BASE}/api/programmes/${currentEditProgrammeId}?uid=${getUid()}`,
           {
             method: "DELETE",
           },
@@ -44,11 +46,12 @@ export async function addProgramme() {
         }
 
         showNotification("Programme deleted successfully", "success");
+        resetProgrammeColors();
         resetProgrammeForm();
         const modal = document.querySelector(".addProgramme_modal");
         const { closeModal } = await import("./addEntities.js");
         closeModal(modal);
-        await loadProgrammes();
+        updateEntityCards(null, await loadProgrammes(), null);
       } catch (err) {
         showNotification("Error deleting programme", "error");
       }
@@ -76,7 +79,7 @@ export async function addProgramme() {
         // UPDATE existing programme
         const editedProgrammeId = currentEditProgrammeId;
         res = await fetch(
-          `/api/programmes/${currentEditProgrammeId}?uid=${getUid()}`,
+          `${API_BASE}/api/programmes/${currentEditProgrammeId}?uid=${getUid()}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -96,11 +99,12 @@ export async function addProgramme() {
         }
 
         showNotification("Programme updated successfully", "success");
+        resetProgrammeColors();
         resetProgrammeForm();
         const modal = document.querySelector(".addProgramme_modal");
         const { closeModal } = await import("./addEntities.js");
         closeModal(modal);
-        await loadProgrammes();
+        updateEntityCards(null, await loadProgrammes(), null);
         await displayProgrammeDetails(editedProgrammeId);
       } else {
         // CREATE new programme
@@ -126,11 +130,12 @@ export async function addProgramme() {
           `Programme added successfully with ID: ${result.programme_id}`,
           "success",
         );
+        resetProgrammeColors();
         resetProgrammeForm();
       }
 
       // Refresh list
-      await loadProgrammes();
+      updateEntityCards(null, await loadProgrammes(), null);
     } catch (err) {
       showNotification("Network error", "error");
     }
@@ -167,7 +172,7 @@ export function editProgramme(programmeId) {
   currentEditProgrammeId = programmeId;
 
   // Fetch programme details and populate form
-      fetch(`${API_BASE}/api/programmes?uid=${getUid()}`)
+  fetch(`${API_BASE}/api/programmes?uid=${getUid()}`)
     .then((res) => res.json())
     .then((data) => {
       const programme = data.find((p) => p.programme_id === programmeId);
@@ -212,21 +217,26 @@ export function editProgramme(programmeId) {
 
 // Load and display programmes
 export async function loadProgrammes() {
-  const res = await fetch(`${API_BASE}/api/programmes?uid=${getUid()}`);
-  const data = await res.json();
-
-  if (!res.ok) {
-    console.error("Failed to load lecturers:", data.error || res.status);
-    // show an error state in the UI
-    return;
-  }
-
   const list = document.querySelector(".myProgramme_list");
-  if (!list) return; // If programme list doesn't exist yet
+  if (!list) return 0;
+
+  const res = await fetch(`${API_BASE}/api/programmes?uid=${getUid()}`);
+  if (!res.ok) {
+    console.error("Failed to load programmes:", res.status);
+    return 0;
+  }
+  const data = await res.json();
 
   list.innerHTML = "";
 
-  // Sort programmes: level -> name -> year
+  if (data.length === 0) {
+    const { showEmptyState } = await import("./addEntities.js");
+    showEmptyState(list, "programme");
+    return 0;
+  }
+
+  // Sort programmes: level -> name -> year -> numeric programme_id
+  const numId = (id) => parseInt(id.replace(/^\D+/, ""), 10) || 0;
   const levelOrder = ["Foundation", "Diploma", "Degree", "Master", "PhD"];
   data
     .slice()
@@ -239,7 +249,10 @@ export async function loadProgrammes() {
       const nameDiff = a.programme_name.localeCompare(b.programme_name);
       if (nameDiff !== 0) return nameDiff;
 
-      return Number(a.programme_year) - Number(b.programme_year);
+      const yearDiff = Number(a.programme_year) - Number(b.programme_year);
+      if (yearDiff !== 0) return yearDiff;
+
+      return numId(a.programme_id) - numId(b.programme_id);
     })
     .forEach((p) => {
       // Create card
@@ -278,8 +291,7 @@ export async function loadProgrammes() {
 
       // Add click event to show details
       card.addEventListener("click", () => {
-        const programmeId = card.dataset.programmeId;
-        displayProgrammeDetails(programmeId);
+        displayProgrammeDetails(p);
       });
 
       card.appendChild(displayId);
@@ -288,65 +300,56 @@ export async function loadProgrammes() {
 
       list.appendChild(card);
     });
+  return data.length;
 }
 
-async function displayProgrammeDetails(programmeId) {
-  const res = await fetch(`${API_BASE}/api/programmes?uid=${getUid()}`);
-  const data = await res.json();
-
-  const programme = data.find((p) => p.programme_id === programmeId);
-
-  if (!programme) {
-    console.error("Programme not found:", programmeId);
-    return;
+async function displayProgrammeDetails(programmeOrId) {
+  let programme;
+  if (typeof programmeOrId === "string") {
+    const res = await fetch(`${API_BASE}/api/programmes?uid=${getUid()}`);
+    const data = await res.json();
+    programme = data.find((p) => p.programme_id === programmeOrId);
+  } else {
+    programme = programmeOrId;
   }
 
-  const container = document.querySelector(".myEntities_details");
-  container.classList.remove("course_details");
-  container.innerHTML = "";
+  if (!programme) return;
 
-  // Title: programme name + ID, then separator line
-  const title = document.createElement("h1");
-  const namePart = programme.programme_name || "Programme";
-  const idPart = programme.programme_id ? ` (${programme.programme_id})` : "";
-  title.textContent = `${namePart}${idPart}`;
-  container.appendChild(title);
+  const name  = programme.programme_name  || "Programme";
+  const level = programme.programme_level || "";
+  const year  = programme.programme_year  || "";
+  const id    = programme.programme_id    || "";
+  const color = getProgrammeColor(level, name, year);
+  const inits = avatarInitials(name);
 
-  const separator = document.createElement("hr");
-  container.appendChild(separator);
-
-  function createDetail(label, value) {
-    const wrapper = document.createElement("div");
-    wrapper.classList.add("programmeDetails");
-
-    const titleDiv = document.createElement("div");
-    titleDiv.classList.add("programmeDetails_title");
-
-    const h3 = document.createElement("h3");
-    h3.textContent = label;
-
-    const colon = document.createElement("span");
-    colon.textContent = ":";
-
-    titleDiv.appendChild(h3);
-    titleDiv.appendChild(colon);
-
-    const ans = document.createElement("div");
-    ans.textContent = value || "N/A";
-
-    wrapper.appendChild(titleDiv);
-    wrapper.appendChild(ans);
-
-    return wrapper;
-  }
-
-  container.appendChild(
-    createDetail("Programme Name", programme.programme_name),
-  );
-  container.appendChild(
-    createDetail("Programme Level", programme.programme_level),
-  );
-  container.appendChild(
-    createDetail("Programme Year", programme.programme_year),
-  );
+  openDrawer(`
+    <div class="drawer_profile">
+      <div class="drawer_avatar" style="background:${color}">${inits}</div>
+      <div class="drawer_profile_info">
+        <h2 class="drawer_name">${name}</h2>
+        <span class="drawer_id_badge">${id}</span>
+      </div>
+    </div>
+    <div class="drawer_type_badge drawer_type_programme">
+      <i class="fa-solid fa-graduation-cap"></i> Programme
+    </div>
+    <div class="drawer_fields">
+      <div class="drawer_field">
+        <span class="drawer_field_label"><i class="fa-solid fa-id-card"></i> Programme ID</span>
+        <span class="drawer_field_value">${id || "N/A"}</span>
+      </div>
+      <div class="drawer_field">
+        <span class="drawer_field_label"><i class="fa-solid fa-font"></i> Name</span>
+        <span class="drawer_field_value">${name}</span>
+      </div>
+      <div class="drawer_field">
+        <span class="drawer_field_label"><i class="fa-solid fa-layer-group"></i> Level</span>
+        <span class="drawer_field_value">${level || "N/A"}</span>
+      </div>
+      <div class="drawer_field">
+        <span class="drawer_field_label"><i class="fa-solid fa-calendar"></i> Year</span>
+        <span class="drawer_field_value">${year ? "Year " + year : "N/A"}</span>
+      </div>
+    </div>
+  `);
 }
