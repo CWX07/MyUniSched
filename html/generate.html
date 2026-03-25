@@ -78,7 +78,9 @@
         <div class="generate_container">
           <div class="generate_header">
             <h1 class="generate_header_title">Generate Timetable</h1>
-            <p class="generate_header_sub">Configure constraints, apply filters, then generate</p>
+            <p class="generate_header_sub">
+              Configure constraints, apply filters, then generate
+            </p>
           </div>
 
           <div class="modifier_container">
@@ -110,13 +112,18 @@
                   <label for="maxSlotsPerCoursePerDay"
                     >Max Slots Course/Day:</label
                   >
-                  <input
-                    type="number"
-                    id="maxSlotsPerCoursePerDay"
-                    min="1"
-                    max="10"
-                    value="2"
-                  />
+                  <div class="constraint_input_wrap">
+                    <input
+                      type="number"
+                      id="maxSlotsPerCoursePerDay"
+                      min="1"
+                      max="10"
+                      value="2"
+                    />
+                    <span class="constraint_tooltip" id="maxSlotsTip"
+                      >Minimum is 1</span
+                    >
+                  </div>
                 </div>
               </div>
             </div>
@@ -125,7 +132,6 @@
             <div class="filter_section">
               <h3 class="filter_title">Filter Timetable</h3>
               <div class="filter_controls">
-
                 <!-- Dropdown 1: Filter type -->
                 <div class="filter_item">
                   <label>Filter By</label>
@@ -145,7 +151,10 @@
                 <!-- Dropdown 2: Filter value -->
                 <div class="filter_item filter_item_value">
                   <label>Select</label>
-                  <div class="filterValue_container disabled" id="filterValueContainer">
+                  <div
+                    class="filterValue_container disabled"
+                    id="filterValueContainer"
+                  >
                     <div id="filterValueSelected" class="filterValue_selected">
                       <span>—</span>
                     </div>
@@ -155,7 +164,6 @@
 
                 <!-- Active filter tags -->
                 <div class="filter_tags" id="filterTags"></div>
-
               </div>
             </div>
           </div>
@@ -196,7 +204,11 @@
           </div>
 
           <!-- Timetable stats bar — shown after generation -->
-          <div class="timetable_stats_bar" id="timetableStatsBar" style="display:none;">
+          <div
+            class="timetable_stats_bar"
+            id="timetableStatsBar"
+            style="display: none"
+          >
             <div class="stats_bar_card" id="statBarCourses">
               <div class="stats_bar_icon"><i class="fa-solid fa-book"></i></div>
               <div class="stats_bar_body">
@@ -205,21 +217,27 @@
               </div>
             </div>
             <div class="stats_bar_card" id="statBarBlocks">
-              <div class="stats_bar_icon"><i class="fa-solid fa-table-cells"></i></div>
+              <div class="stats_bar_icon">
+                <i class="fa-solid fa-table-cells"></i>
+              </div>
               <div class="stats_bar_body">
                 <div class="stats_bar_value">—</div>
                 <div class="stats_bar_label">Time Blocks Used</div>
               </div>
             </div>
             <div class="stats_bar_card" id="statBarUtilization">
-              <div class="stats_bar_icon"><i class="fa-solid fa-chart-pie"></i></div>
+              <div class="stats_bar_icon">
+                <i class="fa-solid fa-chart-pie"></i>
+              </div>
               <div class="stats_bar_body">
                 <div class="stats_bar_value">—</div>
                 <div class="stats_bar_label">Time Blocks Utilization</div>
               </div>
             </div>
             <div class="stats_bar_card" id="statBarSessions">
-              <div class="stats_bar_icon"><i class="fa-solid fa-layer-group"></i></div>
+              <div class="stats_bar_icon">
+                <i class="fa-solid fa-layer-group"></i>
+              </div>
               <div class="stats_bar_body">
                 <div class="stats_bar_value">—</div>
                 <div class="stats_bar_label">Simultaneous Sessions</div>

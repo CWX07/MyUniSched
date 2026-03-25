@@ -13,17 +13,20 @@ let _timetable = null;
 
 // ── Drag state ───────────────────────────────────────────────────────────────
 const drag = {
-  bar: null,          // the .course_bar element being dragged
-  course: null,       // course data object
-  sourceDay: null,    // day it came from
+  bar: null, // the .course_bar element being dragged
+  course: null, // course data object
+  sourceDay: null, // day it came from
   sourceSlotId: null, // startSlot it came from
-  slotRects: [],      // cached slot rects for the current table
+  slotRects: [], // cached slot rects for the current table
 };
 
 // ── Debounce utility ─────────────────────────────────────────────────────────
 function debounce(fn, ms) {
   let timer;
-  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
 }
 
 // ── Single resize handler (registered once, reused on every displayTimetable) ─
@@ -84,14 +87,16 @@ function positionBar(bar) {
   const startRect = slotRects[startIndex];
   if (!startRect) return;
 
-  const endIndex = Math.min(startIndex + durationSlots - 1, slotRects.length - 1);
+  const endIndex = Math.min(
+    startIndex + durationSlots - 1,
+    slotRects.length - 1,
+  );
   const endRect = slotRects[endIndex];
   const totalWidth = endRect.left + endRect.width - startRect.left;
 
   bar.style.left = `${startRect.left + 6}px`;
   bar.style.width = `${totalWidth - 12}px`;
 }
-
 
 // ── Table construction ───────────────────────────────────────────────────────
 
@@ -160,7 +165,7 @@ function createDayRow(day, timetable) {
   const bars = buildCourseBarsForDay(Array.from(coursesMap.values()));
 
   const laneRows = new Map();
-  bars.forEach((bar) => {
+  bars.forEach((bar, i) => {
     if (!laneRows.has(bar.laneIndex)) {
       const laneRow = document.createElement("div");
       laneRow.className = "timetable_lane_row";
@@ -172,10 +177,11 @@ function createDayRow(day, timetable) {
     courseBlock.dataset.durationSlots = bar.durationSlots;
     courseBlock.dataset.courseCode = bar.course.course_code;
     courseBlock.dataset.day = day;
+    courseBlock.style.setProperty("--i", i);
 
     // Click to edit — opens the same modal as My Entities
-    courseBlock.addEventListener('click', () => {
-      if (courseBlock.classList.contains('dragging')) return;
+    courseBlock.addEventListener("click", () => {
+      if (courseBlock.classList.contains("dragging")) return;
       editCourse(bar.course.course_code);
     });
 
@@ -185,9 +191,11 @@ function createDayRow(day, timetable) {
     laneRows.get(bar.laneIndex).appendChild(courseBlock);
   });
 
-  [...laneRows.keys()].sort((a, b) => a - b).forEach((idx) => {
-    lane.appendChild(laneRows.get(idx));
-  });
+  [...laneRows.keys()]
+    .sort((a, b) => a - b)
+    .forEach((idx) => {
+      lane.appendChild(laneRows.get(idx));
+    });
 
   laneCell.appendChild(lane);
   row.appendChild(laneCell);
@@ -249,7 +257,10 @@ function attachLaneDropListeners(lane, day) {
     const slotRects = drag.slotRects;
     const startRect = slotRects[snapped.slotIndex];
     const duration = parseInt(drag.bar.dataset.durationSlots, 10);
-    const endIdx = Math.min(snapped.slotIndex + duration - 1, slotRects.length - 1);
+    const endIdx = Math.min(
+      snapped.slotIndex + duration - 1,
+      slotRects.length - 1,
+    );
     const endRect = slotRects[endIdx];
     const totalWidth = endRect.left + endRect.width - startRect.left;
 
@@ -285,7 +296,14 @@ function attachLaneDropListeners(lane, day) {
     // Bounds check — course must fit within TIME_SLOTS
     if (snapped.slotIndex + duration > TIME_SLOTS.length) return;
 
-    moveCourse(drag.course, drag.sourceDay, drag.sourceSlotId, day, newSlotId, duration);
+    moveCourse(
+      drag.course,
+      drag.sourceDay,
+      drag.sourceSlotId,
+      day,
+      newSlotId,
+      duration,
+    );
   });
 }
 
@@ -314,7 +332,14 @@ function getSnappedSlot(e, lane) {
 
 // ── Timetable mutation ───────────────────────────────────────────────────────
 
-function moveCourse(course, fromDay, fromSlotId, toDay, toSlotId, durationSlots) {
+function moveCourse(
+  course,
+  fromDay,
+  fromSlotId,
+  toDay,
+  toSlotId,
+  durationSlots,
+) {
   // Remove from old position in every slot it occupied
   const oldStartIndex = TIME_SLOTS.findIndex((s) => s.id === fromSlotId);
   for (let i = 0; i < durationSlots; i++) {
@@ -327,7 +352,8 @@ function moveCourse(course, fromDay, fromSlotId, toDay, toSlotId, durationSlots)
 
   // Build updated course object with new slot info
   const newStartIndex = TIME_SLOTS.findIndex((s) => s.id === toSlotId);
-  const newEndSlot = TIME_SLOTS[newStartIndex + durationSlots - 1]?.id ?? toSlotId;
+  const newEndSlot =
+    TIME_SLOTS[newStartIndex + durationSlots - 1]?.id ?? toSlotId;
   const newEndTime = TIME_SLOTS[newStartIndex + durationSlots]?.time ?? "18:00";
 
   const updatedCourse = {
@@ -377,7 +403,11 @@ function buildCourseBarsForDay(courses) {
       // breaks when slot IDs are not strictly 1-apart.
       if (course.duration_hours) {
         durationSlots = Number(course.duration_hours) || 2;
-      } else if (typeof startId === "number" && typeof endId === "number" && startIndex !== -1) {
+      } else if (
+        typeof startId === "number" &&
+        typeof endId === "number" &&
+        startIndex !== -1
+      ) {
         durationSlots = endId - startId + 1;
       }
 
@@ -398,7 +428,10 @@ function buildCourseBarsForDay(courses) {
     .sort((a, b) => a.startIndex - b.startIndex)
     .forEach((bar) => {
       let laneIndex = 0;
-      while (laneIndex < laneEnds.length && laneEnds[laneIndex] >= bar.startIndex) {
+      while (
+        laneIndex < laneEnds.length &&
+        laneEnds[laneIndex] >= bar.startIndex
+      ) {
         laneIndex++;
       }
       laneEnds[laneIndex] = bar.endIndex;
@@ -418,7 +451,10 @@ function createCourseBlock(course) {
     { className: "course_code", text: course.course_code },
     { className: "course_name", text: course.course_name },
     { className: "time_range", text: course.timeRange },
-    { className: "lecturer_name", text: course.lecturer_name || course.lecturer_id },
+    {
+      className: "lecturer_name",
+      text: course.lecturer_name || course.lecturer_id,
+    },
   ].forEach(({ className, text }) => {
     const el = document.createElement("div");
     el.className = className;
@@ -471,10 +507,19 @@ export function updateStatsBar(timetable) {
   const s = calculateStatistics(timetable);
 
   bar.style.display = "grid";
-  document.getElementById("statBarCourses").querySelector(".stats_bar_value").textContent     = s.totalCourses;
-  document.getElementById("statBarBlocks").querySelector(".stats_bar_value").textContent      = `${s.blocksUsed} / ${s.totalBlocks}`;
-  document.getElementById("statBarUtilization").querySelector(".stats_bar_value").textContent = `${s.utilization}%`;
-  document.getElementById("statBarSessions").querySelector(".stats_bar_value").textContent    = s.simultaneousSessions;
+  document
+    .getElementById("statBarCourses")
+    .querySelector(".stats_bar_value").textContent = s.totalCourses;
+  document
+    .getElementById("statBarBlocks")
+    .querySelector(".stats_bar_value").textContent =
+    `${s.blocksUsed} / ${s.totalBlocks}`;
+  document
+    .getElementById("statBarUtilization")
+    .querySelector(".stats_bar_value").textContent = `${s.utilization}%`;
+  document
+    .getElementById("statBarSessions")
+    .querySelector(".stats_bar_value").textContent = s.simultaneousSessions;
 }
 
 function createLegend(timetable) {
@@ -490,7 +535,9 @@ function createLegend(timetable) {
   getUniqueProgrammes(timetable)
     .slice()
     .sort((a, b) => {
-      const ld = levelOrder.indexOf(a.programme_level) - levelOrder.indexOf(b.programme_level);
+      const ld =
+        levelOrder.indexOf(a.programme_level) -
+        levelOrder.indexOf(b.programme_level);
       if (ld !== 0) return ld;
       const nd = a.programme_name.localeCompare(b.programme_name);
       if (nd !== 0) return nd;
@@ -531,7 +578,10 @@ function createStats(timetable) {
 
   [
     { label: "Total Courses", value: statistics.totalCourses },
-    { label: "Time Blocks Used", value: `${statistics.blocksUsed} / ${statistics.totalBlocks}` },
+    {
+      label: "Time Blocks Used",
+      value: `${statistics.blocksUsed} / ${statistics.totalBlocks}`,
+    },
     { label: "Utilization", value: `${statistics.utilization}%` },
     { label: "Simultaneous Sessions", value: statistics.simultaneousSessions },
   ].forEach(({ label, value }) => {
@@ -565,7 +615,8 @@ function getUniqueProgrammes(timetable) {
 
 function calculateStatistics(timetable) {
   const uniqueCourses = new Set();
-  let blocksUsed = 0, simultaneousSessions = 0;
+  let blocksUsed = 0,
+    simultaneousSessions = 0;
 
   DAYS.forEach((day) => {
     // Collect each course only once per day (keyed by course_code) using its
@@ -577,7 +628,9 @@ function calculateStatistics(timetable) {
         uniqueCourses.add(course.course_code);
         if (seenCodes.has(course.course_code)) return;
         seenCodes.add(course.course_code);
-        const startIndex = TIME_SLOTS.findIndex((s) => s.id === course.startSlot);
+        const startIndex = TIME_SLOTS.findIndex(
+          (s) => s.id === course.startSlot,
+        );
         if (startIndex === -1) return;
         const duration = Number(course.duration_hours) || 2;
         allCourses.push({ startIndex, endIndex: startIndex + duration - 1 });
@@ -587,7 +640,7 @@ function calculateStatistics(timetable) {
     // Per slot index, count how many courses are active (span across it)
     TIME_SLOTS.forEach((slot, slotIndex) => {
       const active = allCourses.filter(
-        (c) => slotIndex >= c.startIndex && slotIndex <= c.endIndex
+        (c) => slotIndex >= c.startIndex && slotIndex <= c.endIndex,
       ).length;
       if (active > 0) blocksUsed++;
       if (active > 1) simultaneousSessions++;
@@ -595,8 +648,14 @@ function calculateStatistics(timetable) {
   });
 
   const totalCourses = uniqueCourses.size;
-  const totalBlocks  = DAYS.length * (TIME_SLOTS.length - 1);
-  const utilization  = ((blocksUsed / totalBlocks) * 100).toFixed(1);
+  const totalBlocks = DAYS.length * (TIME_SLOTS.length - 1);
+  const utilization = ((blocksUsed / totalBlocks) * 100).toFixed(1);
 
-  return { totalCourses, blocksUsed, totalBlocks, utilization, simultaneousSessions };
+  return {
+    totalCourses,
+    blocksUsed,
+    totalBlocks,
+    utilization,
+    simultaneousSessions,
+  };
 }

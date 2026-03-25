@@ -54,7 +54,7 @@ async function loadSchedules() {
     }
 
     container.innerHTML = "";
-    timetables.forEach((tt) => renderScheduleCard(container, tt));
+    timetables.forEach((tt, i) => renderScheduleCard(container, tt, i));
   } catch (err) {
     container.innerHTML = `<p class="error_msg">Error loading schedules: ${err.message}</p>`;
   }
@@ -62,11 +62,15 @@ async function loadSchedules() {
 
 // ── Render one card with inline dropdown ──────────────────────────────────────
 
-function renderScheduleCard(container, tt) {
+function renderScheduleCard(container, tt, index = 0) {
   const wrapper = document.createElement("div");
   wrapper.className = "schedule_card_wrapper";
+  wrapper.style.setProperty("--card-i", index);
 
-  const savedDate = new Date(tt.savedAt).toLocaleString();
+  const savedDate =
+    tt.savedAt && !isNaN(new Date(tt.savedAt))
+      ? new Date(tt.savedAt).toLocaleString()
+      : "Unknown date";
 
   const card = document.createElement("div");
   card.className = "schedule_card";
@@ -81,21 +85,28 @@ function renderScheduleCard(container, tt) {
       <button class="action_bar_btn view_btn">
         <i class="fa-solid fa-chevron-down view_chevron"></i> View
       </button>
-      <button class="action_bar_btn rename_btn" title="Rename">
-        <i class="fa-solid fa-pencil"></i>
-      </button>
-      <button class="action_bar_btn duplicate_btn" title="Duplicate">
-        <i class="fa-solid fa-copy"></i>
-      </button>
       <button class="action_bar_btn download_btn dl_pdf_btn">
         <i class="fa-solid fa-file-pdf"></i> PDF
       </button>
       <button class="action_bar_btn download_btn dl_excel_btn">
         <i class="fa-solid fa-file-excel"></i> Excel
       </button>
-      <button class="action_bar_btn delete_tt_btn">
-        <i class="fa-solid fa-trash"></i>
-      </button>
+      <div class="card_overflow_menu">
+        <button class="action_bar_btn overflow_btn" title="More options">
+          <i class="fa-solid fa-ellipsis"></i>
+        </button>
+        <div class="overflow_dropdown">
+          <button class="overflow_item rename_btn">
+            <i class="fa-solid fa-pencil"></i> Rename
+          </button>
+          <button class="overflow_item duplicate_btn">
+            <i class="fa-solid fa-copy"></i> Duplicate
+          </button>
+          <button class="overflow_item delete_tt_btn">
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        </div>
+      </div>
     </div>
   `;
 
@@ -114,6 +125,26 @@ function renderScheduleCard(container, tt) {
   const viewBtn = card.querySelector(".view_btn");
   const chevron = card.querySelector(".view_chevron");
 
+  // ── Overflow menu toggle ──
+  const overflowMenu = card.querySelector(".card_overflow_menu");
+  const overflowBtn = card.querySelector(".overflow_btn");
+  overflowBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpening = !overflowMenu.classList.contains("open");
+    overflowMenu.classList.toggle("open");
+    wrapper.classList.toggle("menu_open", isOpening);
+  });
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!overflowMenu.contains(e.target)) {
+        overflowMenu.classList.remove("open");
+        wrapper.classList.remove("menu_open");
+      }
+    },
+    { capture: true },
+  );
+
   viewBtn.addEventListener("click", async () => {
     isOpen = !isOpen;
 
@@ -122,6 +153,7 @@ function renderScheduleCard(container, tt) {
       chevron.classList.add("rotated");
       card.classList.add("card_expanded");
       panel.classList.add("open");
+      panel.style.maxHeight = panel.scrollHeight + "px";
 
       if (!isLoaded) {
         panelInner.innerHTML = `
@@ -132,10 +164,13 @@ function renderScheduleCard(container, tt) {
           cachedTimetable = await fetchTimetable(tt.id);
           isLoaded = true;
           renderTimetableInPanel(panelInner, cachedTimetable);
+          // Update height now that content is rendered
+          panel.style.maxHeight = panel.scrollHeight + "px";
         } catch (err) {
           panelInner.innerHTML = `<p class="error_msg">Failed to load: ${err.message}</p>`;
           isOpen = false;
           isLoaded = false;
+          panel.style.maxHeight = "0";
           panel.classList.remove("open");
           card.classList.remove("card_expanded");
           viewBtn.classList.remove("active");
@@ -146,6 +181,7 @@ function renderScheduleCard(container, tt) {
       viewBtn.classList.remove("active");
       chevron.classList.remove("rotated");
       card.classList.remove("card_expanded");
+      panel.style.maxHeight = "0";
       panel.classList.remove("open");
     }
   });
@@ -187,11 +223,9 @@ function renderScheduleCard(container, tt) {
 
     const btn = card.querySelector(".duplicate_btn");
     btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Duplicating…`;
     try {
-      // Always fetch fresh data for the duplicate so repeated duplications or
-      // server-side renames don't silently copy stale cached content.
-      const freshTimetable = await fetchTimetable(tt.id);
-      if (!cachedTimetable) cachedTimetable = freshTimetable;
+      if (!cachedTimetable) cachedTimetable = await fetchTimetable(tt.id);
 
       const copyName = `${tt.name} (copy)`;
       const res = await fetch(`/api/timetables`, {
@@ -200,7 +234,7 @@ function renderScheduleCard(container, tt) {
         body: JSON.stringify({
           uid: user.uid,
           name: copyName,
-          timetable: freshTimetable,
+          timetable: cachedTimetable,
         }),
       });
       const data = await res.json();
@@ -210,15 +244,23 @@ function renderScheduleCard(container, tt) {
 
       // Append new card without a full page reload
       const scheduleContainer = document.getElementById("myScheduleContainer");
-      renderScheduleCard(scheduleContainer, {
-        id: data.id,
-        name: copyName,
-        savedAt: new Date().toISOString(),
-      });
+      const existingCount = scheduleContainer.querySelectorAll(
+        ".schedule_card_wrapper",
+      ).length;
+      renderScheduleCard(
+        scheduleContainer,
+        {
+          id: data.id,
+          name: copyName,
+          savedAt: new Date().toISOString(),
+        },
+        existingCount,
+      );
     } catch (err) {
       showNotification("Error: " + err.message, "error");
     } finally {
       btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-copy"></i> Duplicate`;
     }
   });
 

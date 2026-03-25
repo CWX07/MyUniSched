@@ -124,7 +124,8 @@ export async function addCourse() {
           resetProgrammeColors();
           resetCourseForm();
           const modal = document.querySelector(".addCourse_modal");
-          modal.classList.remove("active");
+          modal.style.opacity = "0";
+          modal.style.zIndex = "-100";
           // Only refresh the course list if we're on the My Entities page
           const courseList = document.querySelector(".myCourse_list");
           if (courseList) {
@@ -318,17 +319,16 @@ export async function populateProgrammeDropdown() {
 
 // Load and display courses
 export async function loadCourses() {
-  // Guard: this function is only meaningful on pages that have .myCourse_list
-  const list = document.querySelector(".myCourse_list");
-  if (!list) return 0;
-
   const res = await fetch(`${API_BASE}/api/courses?uid=${getUid()}`);
+  const data = await res.json();
+  console.log("[loadCourses] data:", data);
+
   if (!res.ok) {
-    console.error("Failed to load courses:", res.status);
+    console.error("Failed to load lecturers:", data.error || res.status);
     return 0;
   }
-  const data = await res.json();
 
+  const list = document.querySelector(".myCourse_list");
   list.innerHTML = "";
 
   if (data.length === 0) {
@@ -357,10 +357,11 @@ export async function loadCourses() {
 
       return numId(a.course_code) - numId(b.course_code);
     })
-    .forEach((c) => {
+    .forEach((c, i) => {
       // Create card
       const card = document.createElement("div");
       card.className = "myCourse_card";
+      card.style.setProperty("--card-i", i);
 
       // Apply color-coded left border based on programme
       const color = getProgrammeColor(
@@ -421,17 +422,23 @@ async function displayCourseDetails(courseOrId) {
 
   if (!course) return;
 
-  const name     = course.course_name  || "Course";
-  const code     = course.course_code  || "";
+  const name = course.course_name || "Course";
+  const code = course.course_code || "";
   const duration = course.duration_hours || 2;
   const durationLabel = duration === 1 ? "1 hour" : `${duration} hours`;
-  const lecturerLabel = course.lecturer_name && course.lecturer_id
-    ? `${course.lecturer_id} — ${course.lecturer_name}`
-    : course.lecturer_name || course.lecturer_id || "N/A";
-  const programmeLabel = course.programme_level && course.programme_name && course.programme_year
-    ? `${course.programme_level} in ${course.programme_name}, Year ${course.programme_year}`
-    : course.programme_name || "N/A";
-  const color = getProgrammeColor(course.programme_level, course.programme_name, course.programme_year);
+  const lecturerLabel =
+    course.lecturer_name && course.lecturer_id
+      ? `${course.lecturer_id} — ${course.lecturer_name}`
+      : course.lecturer_name || course.lecturer_id || "N/A";
+  const programmeLabel =
+    course.programme_level && course.programme_name && course.programme_year
+      ? `${course.programme_level} in ${course.programme_name}, Year ${course.programme_year}`
+      : course.programme_name || "N/A";
+  const color = getProgrammeColor(
+    course.programme_level,
+    course.programme_name,
+    course.programme_year,
+  );
   const inits = avatarInitials(name);
 
   openDrawer(`

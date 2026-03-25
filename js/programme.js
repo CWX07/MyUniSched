@@ -217,15 +217,16 @@ export function editProgramme(programmeId) {
 
 // Load and display programmes
 export async function loadProgrammes() {
-  const list = document.querySelector(".myProgramme_list");
-  if (!list) return 0;
-
   const res = await fetch(`${API_BASE}/api/programmes?uid=${getUid()}`);
+  const data = await res.json();
+
   if (!res.ok) {
-    console.error("Failed to load programmes:", res.status);
+    console.error("Failed to load lecturers:", data.error || res.status);
     return 0;
   }
-  const data = await res.json();
+
+  const list = document.querySelector(".myProgramme_list");
+  if (!list) return 0;
 
   list.innerHTML = "";
 
@@ -254,10 +255,11 @@ export async function loadProgrammes() {
 
       return numId(a.programme_id) - numId(b.programme_id);
     })
-    .forEach((p) => {
+    .forEach((p, i) => {
       // Create card
       const card = document.createElement("div");
       card.className = "myProgramme_card";
+      card.style.setProperty("--card-i", i);
 
       // Apply color-coded left border based on programme
       const color = getProgrammeColor(
@@ -315,10 +317,10 @@ async function displayProgrammeDetails(programmeOrId) {
 
   if (!programme) return;
 
-  const name  = programme.programme_name  || "Programme";
+  const name = programme.programme_name || "Programme";
   const level = programme.programme_level || "";
-  const year  = programme.programme_year  || "";
-  const id    = programme.programme_id    || "";
+  const year = programme.programme_year || "";
+  const id = programme.programme_id || "";
   const color = getProgrammeColor(level, name, year);
   const inits = avatarInitials(name);
 

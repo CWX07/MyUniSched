@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "You have an unsaved timetable.<br>Leave without saving?",
         "Leave",
         "Stay",
-        "warn"
+        "warn",
       );
       if (confirmed) {
         isSaved = true; // suppress beforeunload on the programmatic navigation
@@ -140,17 +140,40 @@ function initializeConstraints() {
 }
 
 function updateConstraints() {
-  let min = parseInt(document.getElementById("minCoursesPerSlot").value) || 0;
-  let max = parseInt(document.getElementById("maxCoursesPerSlot").value) || 3;
-  let maxSlotsPerCoursePerDay =
-    parseInt(document.getElementById("maxSlotsPerCoursePerDay").value) ||
-    DEFAULT_MAX_SLOTS_PER_COURSE_PER_DAY;
+  const rawMin = parseInt(document.getElementById("minCoursesPerSlot").value);
+  const rawMax = parseInt(document.getElementById("maxCoursesPerSlot").value);
+  const rawMaxSlots = parseInt(
+    document.getElementById("maxSlotsPerCoursePerDay").value,
+  );
+
+  // Use ?? so 0 is respected as a valid value (|| would replace 0 with the fallback)
+  let min = isNaN(rawMin) ? 0 : rawMin;
+  let max = isNaN(rawMax) ? 3 : rawMax;
+  // maxSlotsPerCoursePerDay of 0 makes no sense (no course could ever be placed),
+  // so clamp to a minimum of 1
+  let maxSlotsPerCoursePerDay = isNaN(rawMaxSlots)
+    ? DEFAULT_MAX_SLOTS_PER_COURSE_PER_DAY
+    : Math.max(1, rawMaxSlots);
 
   if (min < 0) min = 0;
+  if (max < 1) max = 1;
   if (max > 10) max = 10;
   if (min > max) {
     min = max;
     document.getElementById("minCoursesPerSlot").value = min;
+  }
+  // Reflect clamped value back to input so user sees what was actually applied
+  document.getElementById("maxSlotsPerCoursePerDay").value =
+    maxSlotsPerCoursePerDay;
+
+  // Show tooltip briefly if the value was clamped up from < 1
+  if (!isNaN(rawMaxSlots) && rawMaxSlots < 1) {
+    const tip = document.getElementById("maxSlotsTip");
+    if (tip) {
+      clearTimeout(tip._hideTimer);
+      tip.classList.add("visible");
+      tip._hideTimer = setTimeout(() => tip.classList.remove("visible"), 2000);
+    }
   }
 
   currentConstraints = {
@@ -185,10 +208,12 @@ async function generateTimetable() {
   if (!user) {
     statusDiv.innerHTML =
       '<p class="status_error">Please <a href="#" class="status_login_link">log in</a> to generate a timetable.</p>';
-    statusDiv.querySelector(".status_login_link")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      document.querySelector(".authModal.login")?.classList.add("active");
-    });
+    statusDiv
+      .querySelector(".status_login_link")
+      ?.addEventListener("click", (e) => {
+        e.preventDefault();
+        document.querySelector(".authModal.login")?.classList.add("active");
+      });
     return;
   }
 
@@ -209,7 +234,7 @@ async function generateTimetable() {
     const timetable = generateSchedule(courses, currentConstraints);
     hideLoadingOverlay();
 
-    if (timetable) {
+    if (timetable && !timetable.error) {
       originalTimetable = timetable;
       isSaved = false;
       displayTimetable(timetable);
@@ -218,8 +243,8 @@ async function generateTimetable() {
       statusDiv.innerHTML =
         '<p class="status_success">✓ Timetable generated successfully!</p>';
     } else {
-      statusDiv.innerHTML =
-        '<p class="status_error">Unable to generate conflict-free timetable. Try adjusting constraints or reducing courses.</p>';
+      const result = timetable; // structured { error, course?, reasons[] } or null
+      statusDiv.innerHTML = buildFailureMessage(result);
     }
   } catch (err) {
     hideLoadingOverlay();
@@ -229,11 +254,43 @@ async function generateTimetable() {
   }
 }
 
+function buildFailureMessage(result) {
+  if (!result) {
+    return `<div class="status_error">
+      <strong>Could not generate a conflict-free timetable.</strong>
+      <span>Try adjusting your constraints or reducing the number of courses.</span>
+    </div>`;
+  }
+
+  if (result.error === "unassignable") {
+    const reasonItems = result.reasons.map((r) => `<li>${r}</li>`).join("");
+    return `<div class="status_error">
+      <strong>Could not place: "${result.course}"</strong>
+      <ul class="status_reason_list">${reasonItems}</ul>
+      <span class="status_hint">💡 Try raising Max Courses/Slot, lowering Max Slots/Day, or assigning a different lecturer.</span>
+    </div>`;
+  }
+
+  if (result.error === "minCoursesPerSlot") {
+    const reasonItems = result.reasons.map((r) => `<li>${r}</li>`).join("");
+    return `<div class="status_error">
+      <strong>Min Courses/Slot constraint could not be satisfied.</strong>
+      <ul class="status_reason_list">${reasonItems}</ul>
+    </div>`;
+  }
+
+  return `<div class="status_error"><strong>Generation failed.</strong> <span>Please try again.</span></div>`;
+}
+
 function showActionButtons(show) {
   const bar = document.getElementById("timetableActionBar");
   if (bar) bar.style.display = show ? "flex" : "none";
-  const statsBar = document.getElementById("timetableStatsBar");
-  if (statsBar) statsBar.style.display = show ? "grid" : "none";
+  // Stats bar visibility is owned by updateStatsBar (called inside displayTimetable)
+  // and resetTimetable — not here, to avoid a visible gap between timetable and stats.
+  if (!show) {
+    const statsBar = document.getElementById("timetableStatsBar");
+    if (statsBar) statsBar.style.display = "none";
+  }
 }
 
 // ── Filter dropdowns ──────────────────────────────────────────────────────────
@@ -242,28 +299,30 @@ let activeFilters = []; // [{ type, value, label }]
 let currentFilterType = "none";
 
 const DAY_OPTIONS = [
-  { value: "Monday",    label: "Monday"    },
-  { value: "Tuesday",   label: "Tuesday"   },
+  { value: "Monday", label: "Monday" },
+  { value: "Tuesday", label: "Tuesday" },
   { value: "Wednesday", label: "Wednesday" },
-  { value: "Thursday",  label: "Thursday"  },
-  { value: "Friday",    label: "Friday"    },
+  { value: "Thursday", label: "Thursday" },
+  { value: "Friday", label: "Friday" },
 ];
 
 function initFilterDropdowns() {
   setupCustomDropdown({
-    containerId:  "filterTypeSelected",
+    containerId: "filterTypeSelected",
     listSelector: ".filterType_list",
     onSelect(value, label) {
       currentFilterType = value;
       // Reset value dropdown
       setValueDropdownLabel("—");
-      document.getElementById("filterValueContainer").classList.toggle("disabled", value === "none");
+      document
+        .getElementById("filterValueContainer")
+        .classList.toggle("disabled", value === "none");
       populateFilterValues(originalTimetable);
     },
   });
 
   setupCustomDropdown({
-    containerId:  "filterValueSelected",
+    containerId: "filterValueSelected",
     listSelector: ".filterValue_list",
     onSelect(value, label) {
       if (currentFilterType === "none" || !value) return;
@@ -276,8 +335,9 @@ function initFilterDropdowns() {
 
 function setupCustomDropdown({ containerId, listSelector, onSelect }) {
   const selected = document.getElementById(containerId);
-  const list     = selected.closest("[class$='_container']")?.querySelector(listSelector)
-                || selected.parentElement.querySelector(listSelector);
+  const list =
+    selected.closest("[class$='_container']")?.querySelector(listSelector) ||
+    selected.parentElement.querySelector(listSelector);
 
   if (!selected || !list) return;
 
@@ -316,9 +376,15 @@ function populateFilterValues(timetable) {
 
   let items = [];
   if (currentFilterType === "programme" && timetable) {
-    items = getUniqueCourses(timetable).map(p => ({ value: p.id, label: p.label }));
+    items = getUniqueCourses(timetable).map((p) => ({
+      value: p.id,
+      label: p.label,
+    }));
   } else if (currentFilterType === "lecturer" && timetable) {
-    items = getUniqueLecturers(timetable).map(l => ({ value: l.id, label: l.name }));
+    items = getUniqueLecturers(timetable).map((l) => ({
+      value: l.id,
+      label: l.name,
+    }));
   } else if (currentFilterType === "day") {
     items = DAY_OPTIONS;
   }
@@ -326,7 +392,9 @@ function populateFilterValues(timetable) {
   items.forEach(({ value, label }) => {
     const li = document.createElement("li");
     li.dataset.value = value;
-    const isActive = activeFilters.some(f => f.type === currentFilterType && f.value === value);
+    const isActive = activeFilters.some(
+      (f) => f.type === currentFilterType && f.value === value,
+    );
     if (isActive) li.classList.add("selected");
     li.innerHTML = `${label}${isActive ? ' <i class="fa-solid fa-check filter_check"></i>' : ""}`;
     list.appendChild(li);
@@ -335,7 +403,7 @@ function populateFilterValues(timetable) {
 
 function addFilter(type, value, label) {
   // Prevent duplicates
-  if (activeFilters.some(f => f.type === type && f.value === value)) return;
+  if (activeFilters.some((f) => f.type === type && f.value === value)) return;
   activeFilters.push({ type, value, label });
   renderFilterTags();
   populateFilterValues(originalTimetable); // refresh ticks
@@ -350,7 +418,9 @@ function renderFilterTags() {
     tag.className = "filter_tag";
     tag.innerHTML = `<span>${label}</span><button class="filter_tag_remove"><i class="fa-solid fa-xmark"></i></button>`;
     tag.querySelector(".filter_tag_remove").addEventListener("click", () => {
-      activeFilters = activeFilters.filter(f => !(f.type === type && f.value === value));
+      activeFilters = activeFilters.filter(
+        (f) => !(f.type === type && f.value === value),
+      );
       renderFilterTags();
       populateFilterValues(originalTimetable);
       applyFilter();
@@ -437,7 +507,6 @@ async function saveTimetable() {
     showNotification("Error saving timetable: " + err.message, "error");
   }
 }
-
 
 // ── Download PDF ──────────────────────────────────────────────────────────────
 
@@ -556,7 +625,7 @@ function initDropdown(containerSelector) {
   container.dataset.dropdownInit = "1";
 
   const selected = container.querySelector("[class$='_selected']");
-  const list     = container.querySelector("[class$='_list']");
+  const list = container.querySelector("[class$='_list']");
   if (!selected || !list) return;
 
   selected.addEventListener("click", (e) => {
@@ -585,6 +654,12 @@ function initDropdown(containerSelector) {
   document.addEventListener("click", outsideHandler);
 }
 
-function toggleLecturerDropdown()        { initDropdown(".lecturerId_container"); }
-function toggleCourseProgrammeDropdown() { initDropdown(".programmeName_container"); }
-function toggleCourseDurationDropdown()  { initDropdown(".courseDuration_container"); }
+function toggleLecturerDropdown() {
+  initDropdown(".lecturerId_container");
+}
+function toggleCourseProgrammeDropdown() {
+  initDropdown(".programmeName_container");
+}
+function toggleCourseDurationDropdown() {
+  initDropdown(".courseDuration_container");
+}

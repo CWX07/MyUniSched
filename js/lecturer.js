@@ -183,16 +183,15 @@ export function editLecturer(lecturerId) {
 
 // Load and display lecturers
 export async function loadLecturers() {
-  const list = document.querySelector(".myLecturer_list");
-  if (!list) return 0;
-
   const res = await fetch(`${API_BASE}/api/lecturers?uid=${getUid()}`);
-  if (!res.ok) {
-    console.error("Failed to load lecturers:", res.status);
-    return 0;
-  }
   const data = await res.json();
 
+  if (!res.ok) {
+    console.error("Failed to load lecturers:", data.error || res.status);
+    return 0;
+  }
+
+  const list = document.querySelector(".myLecturer_list");
   list.innerHTML = "";
 
   if (data.length === 0) {
@@ -202,44 +201,48 @@ export async function loadLecturers() {
   }
 
   const numId = (id) => parseInt(id.replace(/^\D+/, ""), 10) || 0;
-  data.slice().sort((a, b) => numId(a.lecturer_id) - numId(b.lecturer_id)).forEach((l) => {
-    // Create card
-    const card = document.createElement("div");
-    card.className = "myLecturer_card";
+  data
+    .slice()
+    .sort((a, b) => numId(a.lecturer_id) - numId(b.lecturer_id))
+    .forEach((l, i) => {
+      // Create card
+      const card = document.createElement("div");
+      card.className = "myLecturer_card";
+      card.style.setProperty("--card-i", i);
 
-    // displayItem1 <-- Lecturer ID
-    const displayId = document.createElement("div");
-    displayId.className = "displayItem1";
-    displayId.textContent = l.lecturer_id;
+      // displayItem1 <-- Lecturer ID
+      const displayId = document.createElement("div");
+      displayId.className = "displayItem1";
+      displayId.textContent = l.lecturer_id;
 
-    // displayItem2 <-- Lecturer Name
-    const displayName = document.createElement("div");
-    displayName.className = "displayItem2";
-    displayName.textContent = l.lecturer_name;
+      // displayItem2 <-- Lecturer Name
+      const displayName = document.createElement("div");
+      displayName.className = "displayItem2";
+      displayName.textContent = l.lecturer_name;
 
-    // viewEntity_btn
-    const btn = document.createElement("button");
-    btn.className = "viewEntity_btn";
-    btn.innerHTML = "&#9881;"; // gear icon
+      // viewEntity_btn
+      const btn = document.createElement("button");
+      btn.className = "viewEntity_btn";
+      btn.innerHTML = "&#9881;"; // gear icon
 
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation(); // Prevent card click from firing
-      editLecturer(l.lecturer_id);
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent card click from firing
+        editLecturer(l.lecturer_id);
+      });
+
+      card.dataset.lecturerId = l.lecturer_id;
+
+      // Add click event to show details
+      card.addEventListener("click", () => {
+        displayLecturerDetails(l);
+      });
+
+      card.appendChild(displayId);
+      card.appendChild(displayName);
+      card.appendChild(btn);
+
+      list.appendChild(card);
     });
-
-    card.dataset.lecturerId = l.lecturer_id;
-
-    // Add click event to show details
-    card.addEventListener("click", () => {
-      displayLecturerDetails(l);
-    });
-
-    card.appendChild(displayId);
-    card.appendChild(displayName);
-    card.appendChild(btn);
-
-    list.appendChild(card);
-  });
   return data.length;
 }
 
@@ -255,8 +258,8 @@ async function displayLecturerDetails(lecturerOrId) {
 
   if (!lecturer) return;
 
-  const name  = lecturer.lecturer_name || "Lecturer";
-  const id    = lecturer.lecturer_id   || "";
+  const name = lecturer.lecturer_name || "Lecturer";
+  const id = lecturer.lecturer_id || "";
   const color = avatarColor(name);
   const inits = avatarInitials(name);
 

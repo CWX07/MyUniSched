@@ -200,14 +200,90 @@ export function generateSchedule(courses, constraints = {}) {
     }
 
     if (!assigned) {
-      console.error(`Could not assign course: ${course.course_code}`);
-      return null;
+      // Diagnose why this course couldn't be placed
+      const reasons = [];
+
+      // Check if lecturer is completely overbooked across all days
+      const lecturerDaysBlocked = DAYS.filter((day) =>
+        candidateSlots.every((slot) => {
+          const si = TIME_SLOTS.findIndex((s) => s.id === slot.id);
+          return (
+            lecturerSchedule[course.lecturer_id]?.has(`${day}_${slot.id}`) ||
+            wouldBreakLecturerBlockRules(
+              lecturerBlocks,
+              course.lecturer_id,
+              day,
+              si,
+              si + durationSlots - 1,
+              MAX_CONTINUOUS_CLASSES_PER_LECTURER,
+            )
+          );
+        }),
+      );
+      if (lecturerDaysBlocked.length === DAYS.length) {
+        reasons.push(
+          `Lecturer "${course.lecturer_name || course.lecturer_id}" has no available slots across the whole week`,
+        );
+      } else if (lecturerDaysBlocked.length > 0) {
+        reasons.push(
+          `Lecturer "${course.lecturer_name || course.lecturer_id}" is fully booked on ${lecturerDaysBlocked.join(", ")}`,
+        );
+      }
+
+      // Check if programme-year group is overbooked
+      const progKey = `${course.programme_name}_${course.programme_year}`;
+      const progDaysBlocked = DAYS.filter((day) =>
+        candidateSlots.every((slot) => {
+          const si = TIME_SLOTS.findIndex((s) => s.id === slot.id);
+          const ei = si + durationSlots - 1;
+          for (let i = si; i <= ei; i++) {
+            if (
+              programmeYearSchedule[progKey]?.has(`${day}_${TIME_SLOTS[i]?.id}`)
+            )
+              return true;
+          }
+          return false;
+        }),
+      );
+      if (progDaysBlocked.length === DAYS.length) {
+        reasons.push(
+          `Programme "${course.programme_name} Year ${course.programme_year}" has no free slots left in the week`,
+        );
+      }
+
+      // Check if maxSlotsPerCoursePerDay is blocking every day
+      const maxSlotBlocked = DAYS.every((day) => {
+        const key = `${course.programme_level}_${course.programme_name}_${course.programme_year}_${day}`;
+        return (programmeDayUsage[key] || 0) + 1 > maxSlotsPerCoursePerDay;
+      });
+      if (maxSlotBlocked) {
+        reasons.push(
+          `Max slots per course per day (${maxSlotsPerCoursePerDay}) is too restrictive — not enough days to spread all courses`,
+        );
+      }
+
+      if (reasons.length === 0) {
+        reasons.push(
+          `Too many constraints active simultaneously — no valid slot found`,
+        );
+      }
+
+      return {
+        error: "unassignable",
+        course: course.course_name || course.course_code,
+        reasons,
+      };
     }
   }
 
   // Post-generation safety check for minCoursesPerSlot
   if (!validateMinCoursesPerSlot(timetable, minCoursesPerSlot)) {
-    return null;
+    return {
+      error: "minCoursesPerSlot",
+      reasons: [
+        `Some time slots ended up with fewer than ${minCoursesPerSlot} course(s). Try lowering the minimum, adding more courses, or raising the max courses per slot.`,
+      ],
+    };
   }
 
   return timetable;

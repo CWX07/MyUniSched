@@ -132,8 +132,12 @@
   border-radius: var(--radius-xl);
   border: 1px solid rgba(148, 163, 184, 0.2);
   box-shadow: var(--shadow-card);
-  overflow: hidden;
   transition: box-shadow 0.25s ease, transform 0.25s ease;
+  position: relative;
+}
+
+.schedule_card_wrapper.menu_open {
+  z-index: 10;
 }
 
 .schedule_card_wrapper:hover {
@@ -150,7 +154,7 @@
   align-items: center;
   gap: 16px;
   background: transparent;
-  border-radius: 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   border: none;
   box-shadow: none;
   transition: background 0.2s ease;
@@ -299,6 +303,69 @@
   transform: scale(1.08);
 }
 
+/* ── Overflow (…) menu ───────────────────────────────────── */
+.card_overflow_menu {
+  position: relative;
+}
+
+.overflow_dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 150px;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+  padding: 8px;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 200;
+}
+
+.card_overflow_menu.open .overflow_dropdown {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.overflow_item {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: var(--fw-semi);
+  color: #0f172a;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  text-align: left;
+  border-radius: var(--radius-sm);
+  transition: var(--t-fast);
+}
+
+.overflow_item:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.overflow_item.delete_tt_btn {
+  color: var(--danger);
+}
+
+.overflow_item.delete_tt_btn:hover {
+  background: var(--primary-soft);
+  color: var(--danger);
+}
+
 /* Chevron — rotates when open */
 .view_chevron {
   display: inline-block;
@@ -313,13 +380,9 @@
 .schedule_card_panel {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   background: #fafafa;
-}
-
-.schedule_card_panel.open {
-  max-height: 3000px;
-  transition: max-height 1.5s cubic-bezier(0.0, 0, 0.2, 1);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
 .schedule_card_panel_inner {

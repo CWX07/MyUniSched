@@ -5,64 +5,133 @@
 /* ── Keyframes ───────────────────────────────────────────────── */
 /* slideInFromLeft / Right kept only for modal_content entry */
 @keyframes slideInFromLeft {
-  from { transform: translateX(-40px); opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
+  from {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInFromRight {
-  from { transform: translateX(40px); opacity: 0; }
-  to   { transform: translateX(0);    opacity: 1; }
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideOutToLeft {
-  from { transform: translateX(0);     opacity: 1; }
-  to   { transform: translateX(-100%); opacity: 0; }
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
 }
 
 @keyframes slideOutToRight {
-  from { transform: translateX(0);    opacity: 1; }
-  to   { transform: translateX(100%); opacity: 0; }
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.92); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.45; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
 }
 
 @keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position:  400px 0; }
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
 }
 
 @keyframes popIn {
-  0%   { opacity: 0; transform: scale(0.75); }
-  70%  { transform: scale(1.06); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  70% {
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes slideDownFade {
-  from { opacity: 0; transform: translateY(-10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes tagIn {
-  from { opacity: 0; transform: scale(0.8) translateY(4px); }
-  to   { opacity: 1; transform: scale(1)   translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 /* ── Sidebar ────────────────────────────────────────────────── */
@@ -71,10 +140,18 @@
   opacity: 0;
   animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-.sidebar_nav a:nth-child(1) { animation-delay: 0.15s; }
-.sidebar_nav a:nth-child(2) { animation-delay: 0.22s; }
-.sidebar_nav a:nth-child(3) { animation-delay: 0.29s; }
-.sidebar_nav a:nth-child(4) { animation-delay: 0.36s; }
+.sidebar_nav a:nth-child(1) {
+  animation-delay: 0.15s;
+}
+.sidebar_nav a:nth-child(2) {
+  animation-delay: 0.22s;
+}
+.sidebar_nav a:nth-child(3) {
+  animation-delay: 0.29s;
+}
+.sidebar_nav a:nth-child(4) {
+  animation-delay: 0.36s;
+}
 
 .sidebar_auth_panel {
   opacity: 0;
@@ -98,41 +175,75 @@ footer {
   opacity: 0;
   animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-.home_container > *:nth-child(1) { animation-delay: 0.15s; }
-.home_container > *:nth-child(2) { animation-delay: 0.22s; }
-.home_container > *:nth-child(3) { animation-delay: 0.29s; }
-.home_container > *:nth-child(4) { animation-delay: 0.36s; }
-.home_container > *:nth-child(5) { animation-delay: 0.43s; }
-.home_container > *:nth-child(6) { animation-delay: 0.50s; }
+.home_container > *:nth-child(1) {
+  animation-delay: 0.15s;
+}
+.home_container > *:nth-child(2) {
+  animation-delay: 0.22s;
+}
+.home_container > *:nth-child(3) {
+  animation-delay: 0.29s;
+}
+.home_container > *:nth-child(4) {
+  animation-delay: 0.36s;
+}
+.home_container > *:nth-child(5) {
+  animation-delay: 0.43s;
+}
+.home_container > *:nth-child(6) {
+  animation-delay: 0.5s;
+}
 
 /* Stat cards */
 .home_stat_card {
   opacity: 0;
   animation: fadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-#statCourses   { animation-delay: 0.38s; }
-#statLecturers { animation-delay: 0.46s; }
-#statProgrammes{ animation-delay: 0.54s; }
-#statSchedules { animation-delay: 0.62s; }
+#statCourses {
+  animation-delay: 0.38s;
+}
+#statLecturers {
+  animation-delay: 0.46s;
+}
+#statProgrammes {
+  animation-delay: 0.54s;
+}
+#statSchedules {
+  animation-delay: 0.62s;
+}
 
 /* Quick-action cards */
 .home_action_card {
   opacity: 0;
   animation: fadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-.home_actions_grid .home_action_card:nth-child(1) { animation-delay: 0.50s; }
-.home_actions_grid .home_action_card:nth-child(2) { animation-delay: 0.58s; }
-.home_actions_grid .home_action_card:nth-child(3) { animation-delay: 0.66s; }
+.home_actions_grid .home_action_card:nth-child(1) {
+  animation-delay: 0.5s;
+}
+.home_actions_grid .home_action_card:nth-child(2) {
+  animation-delay: 0.58s;
+}
+.home_actions_grid .home_action_card:nth-child(3) {
+  animation-delay: 0.66s;
+}
 
 /* Feature tiles */
 .home_feature {
   opacity: 0;
   animation: fadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-.home_features .home_feature:nth-child(1) { animation-delay: 0.50s; }
-.home_features .home_feature:nth-child(2) { animation-delay: 0.56s; }
-.home_features .home_feature:nth-child(3) { animation-delay: 0.62s; }
-.home_features .home_feature:nth-child(4) { animation-delay: 0.68s; }
+.home_features .home_feature:nth-child(1) {
+  animation-delay: 0.5s;
+}
+.home_features .home_feature:nth-child(2) {
+  animation-delay: 0.56s;
+}
+.home_features .home_feature:nth-child(3) {
+  animation-delay: 0.62s;
+}
+.home_features .home_feature:nth-child(4) {
+  animation-delay: 0.68s;
+}
 
 /* ── Generate page ──────────────────────────────────────────── */
 /* Container scales in, then each direct child fades up in sequence —
@@ -146,27 +257,55 @@ footer {
   opacity: 0;
   animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-.generate_container > *:nth-child(1) { animation-delay: 0.15s; } /* header     */
-.generate_container > *:nth-child(2) { animation-delay: 0.22s; } /* modifier   */
-.generate_container > *:nth-child(3) { animation-delay: 0.29s; } /* controls   */
-.generate_container > *:nth-child(4) { animation-delay: 0.36s; } /* status     */
-.generate_container > *:nth-child(5) { animation-delay: 0.43s; } /* action bar */
-.generate_container > *:nth-child(6) { animation-delay: 0.50s; } /* stats bar  */
-.generate_container > *:nth-child(7) { animation-delay: 0.57s; } /* table wrap */
+.generate_container > *:nth-child(1) {
+  animation-delay: 0.15s;
+} /* header     */
+.generate_container > *:nth-child(2) {
+  animation-delay: 0.22s;
+} /* modifier   */
+.generate_container > *:nth-child(3) {
+  animation-delay: 0.29s;
+} /* controls   */
+.generate_container > *:nth-child(4) {
+  animation-delay: 0.36s;
+} /* status     */
+.generate_container > *:nth-child(5) {
+  animation-delay: 0.43s;
+} /* action bar */
+.generate_container > *:nth-child(6) {
+  animation-delay: 0.5s;
+} /* stats bar  */
+.generate_container > *:nth-child(7) {
+  animation-delay: 0.57s;
+} /* table wrap */
 
-/* Stats bar cards stagger within their parent */
-.timetable_stats_bar .stats_bar_card {
+/* Stats bar cards stagger within their parent — page load only */
+.timetable_stats_bar:not(.ready) .stats_bar_card {
   opacity: 0;
   animation: fadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-.timetable_stats_bar .stats_bar_card:nth-child(1) { animation-delay: 0.53s; }
-.timetable_stats_bar .stats_bar_card:nth-child(2) { animation-delay: 0.60s; }
-.timetable_stats_bar .stats_bar_card:nth-child(3) { animation-delay: 0.67s; }
-.timetable_stats_bar .stats_bar_card:nth-child(4) { animation-delay: 0.74s; }
+.timetable_stats_bar:not(.ready) .stats_bar_card:nth-child(1) {
+  animation-delay: 0.53s;
+}
+.timetable_stats_bar:not(.ready) .stats_bar_card:nth-child(2) {
+  animation-delay: 0.6s;
+}
+.timetable_stats_bar:not(.ready) .stats_bar_card:nth-child(3) {
+  animation-delay: 0.67s;
+}
+.timetable_stats_bar:not(.ready) .stats_bar_card:nth-child(4) {
+  animation-delay: 0.74s;
+}
+
+/* After first generation, .ready is added — cards animate in immediately */
+.timetable_stats_bar.ready .stats_bar_card {
+  animation: fadeUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
 
 /* Course blocks — pop in staggered via --i set by JS */
 .course_block {
-  animation: popIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) calc(var(--i, 0) * 40ms) both;
+  animation: popIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) calc(var(--i, 0) * 40ms)
+    both;
 }
 
 /* Filter tags — snap in when added */
@@ -181,10 +320,22 @@ footer {
   animation: scaleIn 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.myEntities_header   { opacity: 0; animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards; }
-.entity_stats_bar    { opacity: 0; animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.22s forwards; }
-.myEntities_menu     { opacity: 0; animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.29s forwards; }
-.myEntities_container{ opacity: 0; animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.43s forwards; }
+.myEntities_header {
+  opacity: 0;
+  animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards;
+}
+.entity_stats_bar {
+  opacity: 0;
+  animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.22s forwards;
+}
+.myEntities_menu {
+  opacity: 0;
+  animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.29s forwards;
+}
+.myEntities_container {
+  opacity: 0;
+  animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.43s forwards;
+}
 /* .modal, .entity_drawer, .entity_drawer_backdrop intentionally omitted —
    they manage their own visibility and must not have opacity:1 forced on them. */
 
@@ -193,9 +344,15 @@ footer {
   opacity: 0;
   animation: fadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-.entity_stats_bar .stats_bar_card:nth-child(1) { animation-delay: 0.25s; }
-.entity_stats_bar .stats_bar_card:nth-child(2) { animation-delay: 0.32s; }
-.entity_stats_bar .stats_bar_card:nth-child(3) { animation-delay: 0.39s; }
+.entity_stats_bar .stats_bar_card:nth-child(1) {
+  animation-delay: 0.25s;
+}
+.entity_stats_bar .stats_bar_card:nth-child(2) {
+  animation-delay: 0.32s;
+}
+.entity_stats_bar .stats_bar_card:nth-child(3) {
+  animation-delay: 0.39s;
+}
 
 /* Entity list cards stagger via --card-i set by JS */
 .myCourse_card,
@@ -203,7 +360,7 @@ footer {
 .myProgramme_card {
   opacity: 0;
   animation: fadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  animation-delay: calc(var(--card-i, 0) * 55ms + 0.45s);
+  animation-delay: calc(var(--card-i, 0) * 10ms + 0.15s);
 }
 
 /* Entity drawer — open/close handled by myEntities.css transitions on .open class.
@@ -220,8 +377,12 @@ footer {
   opacity: 0;
   animation: fadeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-.mySchedule > *:nth-child(1) { animation-delay: 0.15s; } /* menu bar  */
-.mySchedule > *:nth-child(2) { animation-delay: 0.22s; } /* container */
+.mySchedule > *:nth-child(1) {
+  animation-delay: 0.15s;
+} /* menu bar  */
+.mySchedule > *:nth-child(2) {
+  animation-delay: 0.22s;
+} /* container */
 
 /* Schedule cards stagger via --card-i set by JS */
 .schedule_card_wrapper {
@@ -256,12 +417,7 @@ footer {
 }
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    #f1f5f9 25%,
-    #e2e8f0 50%,
-    #f1f5f9 75%
-  );
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 800px 100%;
   animation: shimmer 1.4s infinite linear;
   border-radius: 6px;
